@@ -1,8 +1,7 @@
-use std::collections::VecDeque;
-use std::process::exit;
+use std::collections::{HashMap, VecDeque};
 
 #[allow(dead_code)]
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 enum TokenType {
     Number,         // A value such as "45"
     Identifier,     // Human readable identifier, such as variable name
@@ -25,7 +24,6 @@ enum TokenType {
     Eof,       // Represents the end of the code (EOF all caps appears to be a reserved
                // word of some kind)
 }
-
 #[derive(Debug)]
 pub struct Token {
     value: String,
@@ -42,9 +40,7 @@ pub fn tokenize(file_content: String) -> VecDeque<Token> {
 
     // Prepare the source code for lexing.
     for src_char in file_content.chars() {
-        if src_char != ' ' && src_char != '\n' && src_char != '\r' {
-            src_code.push_back(src_char);
-        }
+        src_code.push_back(src_char);
     }
 
     while !src_code.is_empty() {
@@ -201,7 +197,9 @@ pub fn tokenize(file_content: String) -> VecDeque<Token> {
          * Defaults to error message.
          */
         } else {
-            println!("Invalid char supplied: {}", current_char);
+            if *current_char != ' ' && *current_char != '\n' && *current_char != '\r' {
+                println!("Invalid char supplied: {}", current_char);
+            }
             src_code.pop_front();
             continue;
             // TODO: Replace with error handling and error message
@@ -226,12 +224,30 @@ fn is_num(cur_char: &char) -> bool {
 
 /// Returns if a detected word is reserved (eg. void, int, etc)
 fn check_reserved_keywords(word: &str) -> Option<String> {
+    let reserved_words: [&str; 8] = [
+        "void", "int", "float", "string", "char", "if", "else", "while",
+    ];
+
+    for keyword in reserved_words {
+        if word == keyword {
+            return Some(String::from(keyword));
+        }
+    }
     None
 }
 
 /// Returns the TokenType of a given reserved word.
 fn get_reserved_keyword_type(word: &str) -> TokenType {
-    TokenType::Eof
+    let keyword_map: HashMap<&str, TokenType> = HashMap::from([
+        ("void", TokenType::Primitive),
+        ("int", TokenType::Primitive),
+        ("float", TokenType::Primitive),
+        ("string", TokenType::Primitive),
+        ("char", TokenType::Primitive),
+        ("if", TokenType::Comparison),
+        ("while", TokenType::Loop),
+    ]);
+    keyword_map[word]
 }
 
 /// Builds a string (or a name) from a series of chars.
