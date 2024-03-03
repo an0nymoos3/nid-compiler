@@ -34,9 +34,13 @@ pub struct Token {
 
 /// Tokenize source code.
 pub fn tokenize(file_content: String) -> VecDeque<Token> {
+    // Returns queue with tokens.
     let mut token_queue: VecDeque<Token> = VecDeque::new();
+
+    // Queue for source code to work on.
     let mut src_code: VecDeque<char> = VecDeque::new();
 
+    // Prepare the source code for lexing.
     for src_char in file_content.chars() {
         if src_char != ' ' && src_char != '\n' && src_char != '\r' {
             src_code.push_back(src_char);
@@ -47,6 +51,9 @@ pub fn tokenize(file_content: String) -> VecDeque<Token> {
         let current_char: &char = src_code.front().expect("Failed to get front()");
         let token: Token;
 
+        /*
+         * Parenthesis
+         */
         if *current_char == '(' {
             token = Token {
                 value: String::from("("),
@@ -57,6 +64,10 @@ pub fn tokenize(file_content: String) -> VecDeque<Token> {
                 value: String::from(")"),
                 token_type: TokenType::CloseParen,
             }
+
+        /*
+         * Curly braces or "blocks" or "scopes"
+         */
         } else if *current_char == '{' {
             token = Token {
                 value: String::from("{"),
@@ -67,21 +78,38 @@ pub fn tokenize(file_content: String) -> VecDeque<Token> {
                 value: String::from("}"),
                 token_type: TokenType::CloseScope,
             }
+
+        /*
+         * Comma seperator, used for shit like parameters
+         */
         } else if *current_char == ',' {
             token = Token {
                 value: String::from(","),
                 token_type: TokenType::Seperator,
             }
+
+        /*
+         * Member operator, for getting fields in structs, etc...
+         */
         } else if *current_char == '.' {
             token = Token {
                 value: String::from("."),
                 token_type: TokenType::Member,
             }
+
+        /*
+         * End of line sign, used to symbolize a code line ending. Allows for
+         * user to write multiple lines of code on one line with ; seperating.
+         */
         } else if *current_char == ';' {
             token = Token {
                 value: String::from(";"),
                 token_type: TokenType::Eol,
             }
+
+        /*
+         * Checks whether "=" is assigning or comparing.
+         */
         } else if *current_char == '=' {
             src_code.pop_front();
 
@@ -97,6 +125,10 @@ pub fn tokenize(file_content: String) -> VecDeque<Token> {
                 };
                 src_code.push_front('='); // Push back to src_code to not pop() the next char
             }
+
+        /*
+         * Checking for pointer or multiplication sign.
+         */
         } else if *current_char == '*' {
             src_code.pop_front();
 
@@ -114,6 +146,10 @@ pub fn tokenize(file_content: String) -> VecDeque<Token> {
                     token_type: TokenType::BinaryOperator,
                 }
             }
+
+        /*
+         * Getting refrence and var_name for refrence.
+         */
         } else if *current_char == '&' {
             src_code.pop_front();
             let mut token_value: String = String::from("&");
@@ -123,18 +159,47 @@ pub fn tokenize(file_content: String) -> VecDeque<Token> {
                 value: token_value,
                 token_type: TokenType::Refrence,
             }
+
+        /*
+         * Lexes binary operations.
+         */
+        } else if *current_char == '+' || *current_char == '-' || *current_char == '/' {
+            token = Token {
+                value: String::from(*current_char),
+                token_type: TokenType::BinaryOperator,
+            };
+
+        /*
+         * Finds words, such as reserved keywords, function names, variable names, etc.
+         */
         } else if is_letter(current_char) {
             let token_value: String = build_word(&mut src_code, false);
-            token = Token {
-                value: token_value,
-                token_type: TokenType::Identifier,
-            };
+
+            if let Some(reserved_word) = check_reserved_keywords(&token_value) {
+                token = Token {
+                    value: reserved_word.clone(),
+                    token_type: get_reserved_keyword_type(&reserved_word),
+                }
+            } else {
+                token = Token {
+                    value: token_value,
+                    token_type: TokenType::Identifier,
+                };
+            }
+
+        /*
+         * Gets the full number instead of a single digit at the time.
+         */
         } else if is_num(current_char) {
             let token_value: String = build_word(&mut src_code, true);
             token = Token {
                 value: token_value,
                 token_type: TokenType::Number,
             };
+
+        /*
+         * Defaults to error message.
+         */
         } else {
             println!("Invalid char supplied: {}", current_char);
             src_code.pop_front();
@@ -160,7 +225,14 @@ fn is_num(cur_char: &char) -> bool {
 }
 
 /// Returns if a detected word is reserved (eg. void, int, etc)
-fn check_reserved_keywords(word: &str) {}
+fn check_reserved_keywords(word: &str) -> Option<String> {
+    None
+}
+
+/// Returns the TokenType of a given reserved word.
+fn get_reserved_keyword_type(word: &str) -> TokenType {
+    TokenType::Eof
+}
 
 /// Builds a string (or a name) from a series of chars.
 fn build_word(src_code: &mut VecDeque<char>, looking_for_num: bool) -> String {
