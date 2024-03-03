@@ -9,3 +9,12 @@ of machine or assembly code.
 ## Can I run it?
 Yes! But...
 You need to support our custom instructions that can be found (TODO: Link to instructionset).
+
+## How to build.
+This is partially why i switched to Rust.  
+Just clone this repo and run:
+```
+cargo build --release
+```
+
+The binary can then be found under `target/release/`
