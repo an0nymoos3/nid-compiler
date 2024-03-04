@@ -1,8 +1,9 @@
 use std::{collections::VecDeque, fs};
 
-use crate::{compiler::lexer::tokenize, utils::command_line::Args};
-
-use super::lexer::Token;
+use crate::{
+    compiler::lexer::{tokenize, Token},
+    utils::command_line::Args,
+};
 
 pub fn compile(args: &Args) -> String {
     let output_name: String = args.filename.to_string().replace(".nid", ".ass");

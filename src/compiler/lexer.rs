@@ -25,6 +25,7 @@ enum TokenType {
                // word of some kind)
 }
 #[derive(Debug)]
+#[allow(dead_code)] // TODO: Remove once fields are being read
 pub struct Token {
     value: String,
     token_type: TokenType,
