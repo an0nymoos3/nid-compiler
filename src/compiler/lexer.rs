@@ -3,17 +3,19 @@ use std::collections::{HashMap, VecDeque};
 #[allow(dead_code)]
 #[derive(Debug, Clone, Copy)]
 enum TokenType {
-    Number,         // A value such as "45"
-    Identifier,     // Human readable identifier, such as variable name
-    Assignment,     // Assigning operator
-    OpenParen,      // (
-    CloseParen,     // )
-    OpenScope,      // {
-    CloseScope,     // }
-    BinaryOperator, // +, -, *, /
-    Comparison,     // ==, <=, >=
-    LogicOperator,  // &&, ||
-    Primitive,      // Used to declare variable type and function return
+    Number,           // A value such as "45"
+    Identifier,       // Human readable identifier, such as variable name
+    Assignment,       // Assigning operator
+    OpenParen,        // (
+    CloseParen,       // )
+    OpenScope,        // {
+    CloseScope,       // }
+    ArrayAccessOpen,  // [
+    ArrayAccessClose, // ]
+    BinaryOperator,   // +, -, *, /
+    Comparison,       // ==, <=, >=
+    LogicOperator,    // &&, ||
+    Primitive,        // Used to declare variable type and function return
     Loop,
     Condition, // If conditions etc...
     Seperator, // for identifying seperations for things like parameters (,)
@@ -75,6 +77,20 @@ pub fn tokenize(file_content: String) -> VecDeque<Token> {
             token = Token {
                 value: String::from("}"),
                 token_type: TokenType::CloseScope,
+            }
+
+        /*
+         * Check for [], indicating array access
+         */
+        } else if *current_char == '[' {
+            token = Token {
+                value: String::from("["),
+                token_type: TokenType::ArrayAccessOpen,
+            }
+        } else if *current_char == ']' {
+            token = Token {
+                value: String::from("]"),
+                token_type: TokenType::ArrayAccessClose,
             }
 
         /*
