@@ -20,6 +20,7 @@ enum TokenType {
     Member,    // . representing a field for something like a struct
     Pointer,   // Same as ptrs in C and C++, points to a memory address
     Refrence,  // -- || --
+    Return,    // Return statement
     Eol,       // End of line, basically ; representing end of line.
     Eof,       // Represents the end of the code (EOF all caps appears to be a reserved
                // word of some kind)
@@ -233,6 +234,7 @@ fn check_reserved_keywords(word: &str) -> Option<TokenType> {
         ("char", TokenType::Primitive),
         ("if", TokenType::Comparison),
         ("while", TokenType::Loop),
+        ("return", TokenType::Return),
     ]);
 
     if keyword_map.contains_key(word) {
