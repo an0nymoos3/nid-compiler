@@ -128,7 +128,7 @@ pub fn tokenize(file_content: String) -> VecDeque<Token> {
         } else if *current_char == '*' {
             src_code.pop_front();
 
-            if is_letter(src_code.front().unwrap()) {
+            if is_letter(*src_code.front().unwrap()) {
                 let mut token_value: String = String::from("*");
                 let var_name: String = build_word(&mut src_code, false);
                 token_value.push_str(&var_name);
@@ -168,13 +168,13 @@ pub fn tokenize(file_content: String) -> VecDeque<Token> {
         /*
          * Finds words, such as reserved keywords, function names, variable names, etc.
          */
-        } else if is_letter(current_char) {
+        } else if is_letter(*current_char) {
             let token_value: String = build_word(&mut src_code, false);
 
             if let Some(reserved_word) = check_reserved_keywords(&token_value) {
                 token = Token {
-                    value: reserved_word.clone(),
-                    token_type: get_reserved_keyword_type(&reserved_word),
+                    value: token_value,
+                    token_type: reserved_word,
                 }
             } else {
                 token = Token {
@@ -186,7 +186,7 @@ pub fn tokenize(file_content: String) -> VecDeque<Token> {
         /*
          * Gets the full number instead of a single digit at the time.
          */
-        } else if is_num(current_char) {
+        } else if is_num(*current_char) {
             let token_value: String = build_word(&mut src_code, true);
             token = Token {
                 value: token_value,
@@ -213,31 +213,17 @@ pub fn tokenize(file_content: String) -> VecDeque<Token> {
 }
 
 /// Returns if character counts as a letter.
-fn is_letter(cur_char: &char) -> bool {
-    cur_char.is_alphabetic() || *cur_char == '_'
+fn is_letter(cur_char: char) -> bool {
+    cur_char.is_alphabetic() || cur_char == '_'
 }
 
 /// Returns whether char counts as a num.
-fn is_num(cur_char: &char) -> bool {
+fn is_num(cur_char: char) -> bool {
     cur_char.is_numeric()
 }
 
 /// Returns if a detected word is reserved (eg. void, int, etc)
-fn check_reserved_keywords(word: &str) -> Option<String> {
-    let reserved_words: [&str; 8] = [
-        "void", "int", "float", "string", "char", "if", "else", "while",
-    ];
-
-    for keyword in reserved_words {
-        if word == keyword {
-            return Some(String::from(keyword));
-        }
-    }
-    None
-}
-
-/// Returns the TokenType of a given reserved word.
-fn get_reserved_keyword_type(word: &str) -> TokenType {
+fn check_reserved_keywords(word: &str) -> Option<TokenType> {
     let keyword_map: HashMap<&str, TokenType> = HashMap::from([
         ("void", TokenType::Primitive),
         ("int", TokenType::Primitive),
@@ -247,36 +233,31 @@ fn get_reserved_keyword_type(word: &str) -> TokenType {
         ("if", TokenType::Comparison),
         ("while", TokenType::Loop),
     ]);
-    keyword_map[word]
+
+    if keyword_map.contains_key(word) {
+        return Some(keyword_map[word]);
+    }
+    None
 }
 
 /// Builds a string (or a name) from a series of chars.
 fn build_word(src_code: &mut VecDeque<char>, looking_for_num: bool) -> String {
-    let mut current_char = src_code
-        .front()
-        .expect("Failed to get front() (build_name())");
-    let mut string_val: String = String::from(*current_char);
+    let mut string_val: String = String::new();
 
     if !looking_for_num {
-        while is_letter(current_char) {
+        while is_letter(*src_code.front().unwrap()) {
+            string_val.push(*src_code.front().unwrap());
             src_code.pop_front();
-            current_char = &src_code
-                .front()
-                .expect("Failed to get front() (build_word())");
-            string_val.push(*current_char);
         }
     } else {
-        while is_num(current_char) {
+        while is_num(*src_code.front().unwrap()) {
+            string_val.push(*src_code.front().unwrap());
             src_code.pop_front();
-            current_char = &src_code
-                .front()
-                .expect("Failed to get front() (build_word())");
-            string_val.push(*current_char);
         }
     }
 
     // Push back last char to not remove next char with src_code.pop() when this function Returns
-    src_code.push_front(*current_char);
+    src_code.push_front(*src_code.front().unwrap());
 
     string_val
 }
