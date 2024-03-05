@@ -1,8 +1,8 @@
 use std::collections::{HashMap, VecDeque};
 
 #[allow(dead_code)]
-#[derive(Debug, Clone, Copy)]
-enum TokenType {
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum TokenType {
     Number,           // A value such as "45"
     Identifier,       // Human readable identifier, such as variable name
     Assignment,       // Assigning operator
@@ -30,8 +30,8 @@ enum TokenType {
 #[derive(Debug)]
 #[allow(dead_code)] // TODO: Remove once fields are being read
 pub struct Token {
-    value: String,
-    token_type: TokenType,
+    pub value: String,
+    pub token_type: TokenType,
 }
 
 /// Tokenize source code.
