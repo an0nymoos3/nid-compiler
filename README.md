@@ -1,4 +1,9 @@
-# Rid-Lang
+# Nid-Compiler
+
+## Nid-Lang 
+The new blazingly fast high-level programming language. Giving you the simplicity of writing C code with
+the performance of writing native assembly code. Work with you favourite data structures like, int, structs, enums,
+pointers, void pointers and more!
 
 ## What is this project?
 This is a rewrite of a compiler in Rust for our custom high-level language we call Nid-lang. I got pissed at
@@ -18,3 +23,7 @@ cargo build --release
 ```
 
 The binary can then be found under `target/release/`
+
+## Contributing
+Anyone dumb enough is free to contribute to this project. I would love to see Nid-Lang
+supported on more platforms.
