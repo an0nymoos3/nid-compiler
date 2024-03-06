@@ -6,7 +6,7 @@ the performance of writing native assembly code. Work with you favourite data st
 `pointers` and more!
 
 ## What is this project?
-This is a compiler in Rust for our custom high-level language we call Nid-lang.  
+This is a compiler written in Rust for our custom high-level language we call Nid-lang.  
 This is meant to be a tool to help us develop a game on our custom CPU architecture in a high-level languages instead
 of machine or assembly code.
 
