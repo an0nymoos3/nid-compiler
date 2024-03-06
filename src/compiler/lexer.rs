@@ -34,7 +34,7 @@ pub struct Token {
     pub token_type: TokenType,
 }
 
-/// Tokenize source code.
+/// Converts the source code from a contious string of text to a queue of tokens.
 pub fn tokenize(file_content: String) -> VecDeque<Token> {
     // Returns queue with tokens.
     let mut token_queue: VecDeque<Token> = VecDeque::new();
@@ -189,7 +189,7 @@ pub fn tokenize(file_content: String) -> VecDeque<Token> {
         } else if is_letter(*current_char) {
             let token_value: String = build_word(&mut src_code, false);
 
-            if let Some(reserved_word) = check_reserved_keywords(&token_value) {
+            if let Some(reserved_word) = is_reserved_keywords(&token_value) {
                 token = Token {
                     value: token_value,
                     token_type: reserved_word,
@@ -241,7 +241,7 @@ fn is_num(cur_char: char) -> bool {
 }
 
 /// Returns if a detected word is reserved (eg. void, int, etc)
-fn check_reserved_keywords(word: &str) -> Option<TokenType> {
+fn is_reserved_keywords(word: &str) -> Option<TokenType> {
     let keyword_map: HashMap<&str, TokenType> = HashMap::from([
         ("void", TokenType::Primitive),
         ("int", TokenType::Primitive),
@@ -259,7 +259,7 @@ fn check_reserved_keywords(word: &str) -> Option<TokenType> {
     None
 }
 
-/// Builds a string (or a name) from a series of chars.
+/// Builds a string (a word or number) from a series of chars.
 fn build_word(src_code: &mut VecDeque<char>, looking_for_num: bool) -> String {
     let mut string_val: String = String::new();
 

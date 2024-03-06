@@ -9,6 +9,7 @@ use compiler::compiler_main::compile;
 use utils::command_line::{build_args, Args};
 use utils::compile_times::{calc_total_time, time_now};
 
+/// main()
 fn main() {
     let args: Args = build_args();
 
