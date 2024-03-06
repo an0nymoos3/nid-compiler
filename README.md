@@ -6,16 +6,16 @@ the performance of writing native assembly code. Work with you favourite data st
 `pointers` and more!
 
 ## What is this project?
-This is a compiler written in Rust for our custom high-level language we call Nid-lang.  
+This is a compiler written in Rust for our custom high-level language we call Nid-Lang.  
 This is meant to be a tool to help us develop a game on our custom CPU architecture in a high-level languages instead
 of machine or assembly code.
 
 ## Can I run it?
-Yes! But...
+Yes! But...  
 You need to support our custom instructions that can be found (TODO: Link to instructionset).
 
 ## How to build.
-Make sure you have Rust/Cargo installed.
+Make sure you have Rust/Cargo installed.  
 Downloading and compiling can be done in one simple command: 
 ```
 git clone https://github.com/an0nymoos3/nid-compiler.git && cd nid-compiler/ && cargo build --release
