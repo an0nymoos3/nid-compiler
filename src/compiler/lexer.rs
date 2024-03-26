@@ -15,7 +15,7 @@ pub enum TokenType {
     BinaryOperator,   // +, -, *, /
     Comparison,       // ==, <=, >=
     LogicOperator,    // &&, ||
-    Primitive,        // Used to declare variable type and function return
+    TypeDecleration,  // Used to declare variable type and function return
     Loop,
     Condition, // If conditions etc...
     Seperator, // for identifying seperations for things like parameters (,)
@@ -23,6 +23,7 @@ pub enum TokenType {
     Pointer,   // Same as ptrs in C and C++, points to a memory address
     Refrence,  // -- || --
     Return,    // Return statement
+    Asm,       // Allows for inline assembly
     Eol,       // End of line, basically ; representing end of line.
     Eof,       // Represents the end of the code (EOF all caps appears to be a reserved
                // word of some kind)
@@ -243,14 +244,15 @@ fn is_num(cur_char: char) -> bool {
 /// Returns if a detected word is reserved (eg. void, int, etc)
 fn is_reserved_keywords(word: &str) -> Option<TokenType> {
     let keyword_map: HashMap<&str, TokenType> = HashMap::from([
-        ("void", TokenType::Primitive),
-        ("int", TokenType::Primitive),
-        ("float", TokenType::Primitive),
-        ("string", TokenType::Primitive),
-        ("char", TokenType::Primitive),
-        ("if", TokenType::Comparison),
+        ("void", TokenType::TypeDecleration),
+        ("int", TokenType::TypeDecleration),
+        ("float", TokenType::TypeDecleration),
+        ("string", TokenType::TypeDecleration),
+        ("char", TokenType::TypeDecleration),
+        ("if", TokenType::TypeDecleration),
         ("while", TokenType::Loop),
         ("return", TokenType::Return),
+        ("asm", TokenType::Asm),
     ]);
 
     if keyword_map.contains_key(word) {
