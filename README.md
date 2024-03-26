@@ -45,6 +45,21 @@ To view more options, simply run:
 | Imports between files    | 🔴 Planned    |
 | std library              | 🔴 Planned    |
 
+## Syntax
+### Reserved keywords
+| Keyword | Meaning  |
+| ------- | -------- |
+| void    | No type.                      |
+| int     | 16 bit integer.               |
+| float   | 16 bit floating point.        |
+| string  | Char array type.              |
+| char    | Single character type.        |
+| if      | If-statments.                 |
+| else    | Else condition.               |
+| while   | Basic conditional while loop. |
+| return  | Return instruction.           |
+| asm     | Inline assembly code.         |
+
 ## Contributing
 Anyone dumb enough is free to contribute to this project. I would love to see Nid-Lang
 supported on more platforms.
