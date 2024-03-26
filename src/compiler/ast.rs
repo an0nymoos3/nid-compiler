@@ -1,3 +1,5 @@
+use std::fmt;
+
 #[allow(dead_code)] // TODO: Remove later
 #[derive(Debug)]
 pub enum Value {
@@ -7,16 +9,14 @@ pub enum Value {
     Char(char),
     Void,
 }
-
 #[derive(Debug)]
 pub struct Node {
-    pub kind: NodeType,
     pub value: String,
 }
 
 #[derive(Debug)]
 pub struct Ast {
-    pub body: Vec<Node>,
+    pub body: Vec<NodeType>,
 }
 
 #[allow(dead_code)] // TODO: Remove later
@@ -84,5 +84,32 @@ pub enum NodeType {
     ArrayAccess(i32),                   // Access in array could be good
     Eol,                                // To allow lines to span multiple editor lines
     //
-    Debug, // Meant for debugging, when specific type is not required
+    Debug(Node), // Meant for debugging, when specific type is not required
+}
+
+impl fmt::Display for NodeType {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Self::FuncDecleration(value) => write!(f, "{value}"),
+            Self::VarDecleration(value) => write!(f, "{value}"),
+            Self::AssignmentStatement(value) => write!(f, "{value}"),
+            Self::BranchStatement(_) => write!(f, "BRANCH"),
+            Self::LoopStatement(_) => write!(f, "LOOP"),
+            Self::BlockStatement(_) => write!(f, "SCOPE"),
+            Self::ReturnStatement => write!(f, "RETURN"),
+            Self::FunctionCall(value) => write!(f, "{value}"),
+            Self::UnaryExpression(_) => write!(f, "UNARY"),
+            Self::BinaryExpression(_) => write!(f, "BINARY"),
+            Self::Literal(_) => write!(f, "LITERAL"),
+            Self::ArrayDecleration(_) => write!(f, "ARRAYDEC"),
+            Self::PointerType(value) => write!(f, "*{value}"),
+            Self::RefrenceType(value) => write!(f, "&{value}"),
+            Self::StructDecleration(value) => write!(f, "struct {value}"),
+            Self::EnumDecleration(value) => write!(f, "enum {value}"),
+            Self::TypeSpecifier(value) => write!(f, "Type: {value}"),
+            Self::ArrayAccess(value) => write!(f, "array: {value}"),
+            Self::Debug(node) => write!(f, "{}", node.value),
+            _ => write!(f, "UNKNOWN!"),
+        }
+    }
 }
