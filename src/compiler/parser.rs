@@ -1,6 +1,6 @@
 use std::collections::VecDeque;
 
-use super::ast::{Ast, BlockStatement, Node, NodeType, Value};
+use super::ast::{Ast, BlockStatement, Decleration, Node, NodeType, Value};
 use super::lexer::{Token, TokenType};
 
 /// Builds an AST from a queue of tokens.
@@ -73,7 +73,7 @@ fn parse_token(token: &Token) -> NodeType {
      * Assignment token
      */
     } else if token.token_type == TokenType::Assignment {
-        nodetype = NodeType::VarDecleration(token.value.to_owned());
+        nodetype = NodeType::VarDecleration(Decleration())
 
     /*
      * Debugging node
