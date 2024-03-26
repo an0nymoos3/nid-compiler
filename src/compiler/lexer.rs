@@ -23,7 +23,7 @@ pub enum TokenType {
     Pointer,   // Same as ptrs in C and C++, points to a memory address
     Refrence,  // -- || --
     Return,    // Return statement
-    Asm,       // Allows for inline assembly
+    Asm,       // Allows for inline assembly code
     Eol,       // End of line, basically ; representing end of line.
     Eof,       // Represents the end of the code (EOF all caps appears to be a reserved
                // word of some kind)
@@ -142,7 +142,7 @@ pub fn tokenize(file_content: String) -> VecDeque<Token> {
                 }
             } else {
                 token = Token {
-                    value: String::from("="),
+                    value: token_queue.back().unwrap().value.clone(),
                     token_type: TokenType::Assignment,
                 };
                 src_code.push_front('='); // Push back to src_code to not pop() the next char

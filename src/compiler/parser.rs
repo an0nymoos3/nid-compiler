@@ -1,12 +1,11 @@
 use std::collections::VecDeque;
 
-use super::ast::{Ast, BlockStatement, Node, NodeType};
+use super::ast::{Ast, BlockStatement, Node, NodeType, Value};
 use super::lexer::{Token, TokenType};
 
 /// Builds an AST from a queue of tokens.
 pub fn generate_ast(tokens: &mut VecDeque<Token>) -> Ast {
     let mut ast: Ast = Ast { body: Vec::new() };
-
     while !tokens.is_empty() && tokens.front().unwrap().token_type != TokenType::Eof {
         let token: Token = tokens.pop_front().unwrap();
 
@@ -57,6 +56,24 @@ fn parse_token(token: &Token) -> NodeType {
      */
     } else if token.token_type == TokenType::Eol {
         nodetype = NodeType::Eol;
+
+    /*
+     * Parse number.
+     */
+    } else if token.token_type == TokenType::Number {
+        nodetype = NodeType::Literal(Value::Int(token.value.parse::<i32>().unwrap()));
+
+    /*
+     * Parse identifiers
+     */
+    } else if token.token_type == TokenType::Identifier {
+        nodetype = NodeType::VarIdentifier(token.value.to_owned());
+
+    /*
+     * Assignment token
+     */
+    } else if token.token_type == TokenType::Assignment {
+        nodetype = NodeType::VarDecleration(token.value.to_owned());
 
     /*
      * Debugging node

@@ -58,31 +58,40 @@ pub struct ArrayStatement {
     pub datatype: Value,
 }
 
+#[allow(dead_code)]
+#[derive(Debug)]
+pub struct Decleration {
+    pub identifier: String,
+    pub value: Value,
+}
+
 /**
  * Define some types that will be required for parsing.
  */
 #[allow(dead_code)] // TODO: Remove later
 #[derive(Debug)]
 pub enum NodeType {
-    FuncDecleration(String),            // Function decleration (eg. void main())
-    VarDecleration(String),             // Variable decleration (eg. int x)
-    AssignmentStatement(String),        // Represents assignment (eg. x = 5)
-    BranchStatement(BranchStatement),   // If, else if, else
-    LoopStatement(BranchStatement),     // While loops (maybe for in the future)
-    BlockStatement(BlockStatement),     // A block within {} could be used to scope variables
-    ReturnStatement,                    // Return statements (eg. return x)
-    FunctionCall(String),               // Function call (eg. my_func())
-    UnaryExpression(UnaryExpression),   // Unary operators (eg. !condition)
+    FuncIdentifier(String), // Function decleration (eg. void main())
+    VarIdentifier(String),  // Variable decleration (eg. int x)
+    FuncDecleration(Decleration),
+    VarDecleration(Decleration),
+    AssignmentStatement(String),      // Represents assignment (eg. x = 5)
+    BranchStatement(BranchStatement), // If, else if, else
+    LoopStatement(BranchStatement),   // While loops (maybe for in the future)
+    BlockStatement(BlockStatement),   // A block within {} could be used to scope variables
+    ReturnStatement,                  // Return statements (eg. return x)
+    FunctionCall(String),             // Function call (eg. my_func())
+    UnaryExpression(UnaryExpression), // Unary operators (eg. !condition)
     BinaryExpression(BinaryExpression), // Binary expressions, like arithmetic
-    Literal(Value),                     // String or numeric literal
-    ArrayDecleration(ArrayStatement),   // Arrays are cool
-    PointerType(String),                // Pointers and refrences can be useful
-    RefrenceType(String),               // For handling refrences
-    StructDecleration(String),          // Structs are cool
-    EnumDecleration(String),            // Enums could be good
-    TypeSpecifier(String),              // Type specifier like int, string, float, etc
-    ArrayAccess(i32),                   // Access in array could be good
-    Eol,                                // To allow lines to span multiple editor lines
+    Literal(Value),                   // String or numeric literal
+    ArrayDecleration(ArrayStatement), // Arrays are cool
+    PointerType(String),              // Pointers and refrences can be useful
+    RefrenceType(String),             // For handling refrences
+    StructDecleration(String),        // Structs are cool
+    EnumDecleration(String),          // Enums could be good
+    TypeSpecifier(String),            // Type specifier like int, string, float, etc
+    ArrayAccess(i32),                 // Access in array could be good
+    Eol,                              // To allow lines to span multiple editor lines
     //
     Debug(Node), // Meant for debugging, when specific type is not required
 }
@@ -90,8 +99,10 @@ pub enum NodeType {
 impl fmt::Display for NodeType {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            Self::FuncDecleration(value) => write!(f, "{value}"),
-            Self::VarDecleration(value) => write!(f, "{value}"),
+            Self::FuncIdentifier(value) => write!(f, "{value}"),
+            Self::VarIdentifier(value) => write!(f, "{value}"),
+            Self::FuncDecleration(value) => write!(f, "{}", value.identifier),
+            Self::VarDecleration(value) => write!(f, "{}", value.identifier),
             Self::AssignmentStatement(value) => write!(f, "{value}"),
             Self::BranchStatement(_) => write!(f, "BRANCH"),
             Self::LoopStatement(_) => write!(f, "LOOP"),
@@ -116,7 +127,9 @@ impl fmt::Display for NodeType {
 
 /// Debugging function. Prints all nodes in AST to terminal. TODO: Export to file instead of printing.
 pub fn export_ast(ast: &Ast) {
-    traverse_ast_body(&ast.body, 0)
+    println!();
+    traverse_ast_body(&ast.body, 0);
+    println!("\n");
 }
 
 /// Recursive function to traverse the body of an AST
