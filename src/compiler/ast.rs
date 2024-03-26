@@ -113,3 +113,34 @@ impl fmt::Display for NodeType {
         }
     }
 }
+
+/// Debugging function. Prints all nodes in AST to terminal. TODO: Export to file instead of printing.
+pub fn export_ast(ast: &Ast) {
+    traverse_ast_body(&ast.body, 0)
+}
+
+/// Recursive function to traverse the body of an AST
+fn traverse_ast_body(body: &[NodeType], depth: i32) {
+    print_branch(depth);
+
+    for node in body.iter() {
+        if let NodeType::BlockStatement(code_block) = node {
+            println!();
+            traverse_ast_body(&code_block.body, depth + 1);
+        } else if let NodeType::Eol = node {
+            println!();
+            print_branch(depth);
+        } else {
+            print!("{} ", node);
+        }
+    }
+}
+
+/// Pretty printing function for drawing an AST
+fn print_branch(depth: i32) {
+    let mut branch: String = String::from("|");
+    for _ in 0..depth {
+        branch.push('-');
+    }
+    print!("{} ", branch);
+}

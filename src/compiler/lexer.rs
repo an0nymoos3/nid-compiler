@@ -35,6 +35,13 @@ pub struct Token {
     pub token_type: TokenType,
 }
 
+/// Debugging function. Prints all tokens to terminal. TODO: Export to file instead of printing.
+pub fn export_tokens(tokens: &VecDeque<Token>) {
+    for token in tokens {
+        println!("Token: {:?}", token);
+    }
+}
+
 /// Converts the source code from a contious string of text to a queue of tokens.
 pub fn tokenize(file_content: String) -> VecDeque<Token> {
     // Returns queue with tokens.
