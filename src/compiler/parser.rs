@@ -5,19 +5,8 @@ use super::lexer::{Token, TokenType};
 
 /// Builds an AST from a queue of tokens.
 pub fn generate_ast(tokens: &mut VecDeque<Token>) -> ast::Ast<dyn ast::Node> {
-    let mut ast: ast::Ast<dyn ast::Node> = ast::Ast { body: Vec::new() };
-    while !tokens.is_empty() && tokens.front().unwrap().token_type != TokenType::Eof {
-        let token: Token = tokens.pop_front().unwrap();
-
-        if token.token_type == TokenType::OpenScope {
-            let body: Vec<Box<dyn ast::Node>> = parse_body(tokens);
-            let block: Box<ast::Block> = Box::new(ast::Block { body });
-            ast.body.push(block);
-        } else {
-            ast.body.push(parse_token(&token));
-        }
-    }
-
+    let body: Vec<Box<dyn ast::Node>> = parse_body(tokens);
+    let ast: ast::Ast<dyn ast::Node> = ast::Ast { body };
     ast
 }
 
@@ -25,26 +14,65 @@ pub fn generate_ast(tokens: &mut VecDeque<Token>) -> ast::Ast<dyn ast::Node> {
 fn parse_body(tokens: &mut VecDeque<Token>) -> Vec<Box<dyn ast::Node>> {
     let mut code_body: Vec<Box<dyn ast::Node>> = Vec::new();
 
-    while tokens.front().unwrap().token_type != TokenType::CloseScope {
-        let token: Token = tokens.pop_front().unwrap(); // Assume error won't happen due to while-loop condition
+    while !tokens.is_empty()
+        && tokens.front().unwrap().token_type != TokenType::Eof
+        && tokens.front().unwrap().token_type != TokenType::CloseScope
+    {
+        let token: Token = tokens.pop_front().unwrap(); // Assume no error because of while loop
+                                                        // above.
 
-        // Either recursively call parse_body on a new scope or parse token normally
-        if token.token_type == TokenType::OpenScope {
-        } else {
-            code_body.push(parse_token(&token));
+        /*
+         * End of file
+         */
+        if token.token_type == TokenType::Eof {
+            panic!("End of file while parsing token!");
         }
+
+        // Create a new Node.
+        let new_node: Box<dyn ast::Node> = match token.token_type {
+            // Inner block, traversed via recursion
+            TokenType::OpenScope => Box::new(ast::Block {
+                body: parse_body(tokens),
+            }),
+            // A branch instruction
+            TokenType::Branch => Box::new(ast::Debug {}),
+            // While loops
+            TokenType::Loop => Box::new(ast::Debug {}),
+            // Return statement
+            TokenType::Return => Box::new(ast::Return { return_value: None }),
+
+            // Not really sure what to do with EOL rn...
+            TokenType::Eol => Box::new(ast::Debug {}),
+
+            // Anything else turns into Debug rn
+            _ => panic!(
+                "Unknown TokenType supplied! TokenType: {:?}",
+                token.token_type
+            ),
+        };
+
+        // Push to body of current scope.
+        code_body.push(new_node);
     }
 
     code_body
 }
 
-fn parse_token(token: &Token) -> Box<dyn ast::Node> {
-    /*
-     * End of file
-     */
-    if token.token_type == TokenType::Eof {
-        panic!("End of file while parsing token!");
-    } else {
-        Box::new(ast::Debug {})
-    }
-}
+/// Returns the token after current.
+fn next_token() {}
+
+/// Returns the token before current.
+fn prev_token() {}
+
+/*
+* Helper functions for building the different Node types.
+*/
+
+/// Builds a branch Node at current position in tokens.
+fn build_branch() {}
+
+/// Build a loop Node at current position in tokens.
+fn build_loop() {}
+
+/// Builds a return Node at current position in tokens.
+fn build_return() {}

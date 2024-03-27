@@ -8,6 +8,21 @@ pub enum Value {
     Void,
 }
 
+#[allow(dead_code)] // TODO: Remove later
+#[derive(Debug)]
+pub enum ConditionalOperator {
+    And,
+    Or,
+    Not,
+}
+
+#[allow(dead_code)] // TODO: Remove later
+#[derive(Debug)]
+pub enum VarOrValue {
+    Variable,
+    Value,
+}
+
 #[derive(Debug)]
 pub struct Ast<T: Node + ?Sized> {
     pub body: Vec<Box<T>>,
@@ -15,42 +30,59 @@ pub struct Ast<T: Node + ?Sized> {
 
 pub trait Node {}
 
-pub struct FuncDecleration;
-pub struct VarDecleration;
-pub struct ArrayDecleration;
-pub struct StructDecleration;
-pub struct EnumDecleration;
-pub struct Assignment;
-pub struct Branch;
-pub struct Loop;
+/*
+* Structs used as the Nodes in the AST
+*/
+
+/// Code block, essentially scopes ({...})
 pub struct Block {
     pub body: Vec<Box<dyn Node>>,
 }
-pub struct Return;
-pub struct FunctionCall;
-pub struct UnaryExpression;
-pub struct BinaryExpression;
-pub struct TypeSpecifier;
-pub struct ArrayAccess;
-pub struct Eol;
+
+/// Branches, (if-statements)
+pub struct Branch {
+    pub condition: Condition,
+    pub true_body: Block,  // If block
+    pub false_body: Block, // Else block
+}
+
+/// Condition, used by branches and loops
+pub struct Condition {
+    pub operator: ConditionalOperator,
+    pub left_operand: VarOrValue,
+    pub right_operand: VarOrValue,
+}
+
+/// Loops, currently ony while is supported
+pub struct Loop {
+    pub condition: Condition,
+    pub body: Block,
+}
+
+/// Return statement, can either contain a return value or not.
+pub struct Return {
+    pub return_value: Option<VarOrValue>,
+}
+
+/// Variable Node
+pub struct Variable {
+    pub identifier: String,
+    pub value: Option<Value>, // Option allows for uninitialized value. Up to compiler to later verify
+                              // that uninitialized variable isn't read.
+}
+
+/// Debug trait. TODO: Remove this
 pub struct Debug;
 
-impl Node for FuncDecleration {}
-impl Node for VarDecleration {}
-impl Node for ArrayDecleration {}
-impl Node for StructDecleration {}
-impl Node for EnumDecleration {}
-impl Node for Assignment {}
-impl Node for Branch {}
-impl Node for Loop {}
+/*
+* Impl the Node trait on all Nodes
+*/
 impl Node for Block {}
+impl Node for Branch {}
+impl Node for Condition {}
+impl Node for Loop {}
 impl Node for Return {}
-impl Node for FunctionCall {}
-impl Node for UnaryExpression {}
-impl Node for BinaryExpression {}
-impl Node for TypeSpecifier {}
-impl Node for ArrayAccess {}
-impl Node for Eol {}
+impl Node for Variable {}
 impl Node for Debug {}
 
 /// Debugging function. Prints all nodes in AST to terminal. TODO: Export to file instead of printing.

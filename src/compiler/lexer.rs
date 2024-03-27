@@ -17,7 +17,7 @@ pub enum TokenType {
     LogicOperator,    // &&, ||
     TypeDecleration,  // Used to declare variable type and function return
     Loop,
-    Condition, // If conditions etc...
+    Branch,    // If conditions etc...
     Seperator, // for identifying seperations for things like parameters (,)
     Member,    // . representing a field for something like a struct
     Pointer,   // Same as ptrs in C and C++, points to a memory address
@@ -256,7 +256,7 @@ fn is_reserved_keywords(word: &str) -> Option<TokenType> {
         ("float", TokenType::TypeDecleration),
         ("string", TokenType::TypeDecleration),
         ("char", TokenType::TypeDecleration),
-        ("if", TokenType::TypeDecleration),
+        ("if", TokenType::Branch),
         ("while", TokenType::Loop),
         ("return", TokenType::Return),
         ("asm", TokenType::Asm),
