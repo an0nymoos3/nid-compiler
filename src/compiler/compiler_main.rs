@@ -1,7 +1,7 @@
 use std::fs;
 
 use crate::{
-    compiler::ast::Ast,
+    compiler::ast::{Ast, Node},
     compiler::lexer::{export_tokens, tokenize},
     compiler::parser::generate_ast,
     utils::command_line::Args,
@@ -21,7 +21,7 @@ pub fn compile(args: &Args) -> String {
         export_tokens(&tokens);
     }
 
-    let ast: Ast = generate_ast(&mut tokens);
+    let ast: Ast<dyn Node> = generate_ast(&mut tokens);
 
     if args.debug {
         export_ast(&ast);
