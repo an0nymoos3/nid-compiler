@@ -84,7 +84,7 @@ fn build_return(tokens: &mut VecDeque<Token>) -> Box<ast::Return> {
             identifier: token.value,
             value: None,
         }));
-    } else if token.token_type == TokenType::Number {
+    } else if token.token_type == TokenType::Integer {
         return_value = Some(VarOrValue::Value(Value::Int(
             token.value.parse::<i32>().unwrap(),
         )));

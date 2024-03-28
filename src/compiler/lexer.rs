@@ -3,7 +3,10 @@ use std::collections::{HashMap, VecDeque};
 #[allow(dead_code)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum TokenType {
-    Number,           // A value such as "45"
+    Integer, // A value such as "45"
+    Floating,
+    String,
+    Char,
     Identifier,       // Human readable identifier, such as variable name
     Assignment,       // Assigning operator
     OpenParen,        // (
@@ -56,18 +59,18 @@ pub fn tokenize(file_content: String) -> VecDeque<Token> {
     }
 
     while !src_code.is_empty() {
-        let current_char: &char = src_code.front().expect("Failed to get front()");
+        let current_char: char = src_code.pop_front().expect("Failed to get front()");
         let token: Token;
 
         /*
          * Parenthesis
          */
-        if *current_char == '(' {
+        if current_char == '(' {
             token = Token {
                 value: String::from("("),
                 token_type: TokenType::OpenParen,
             };
-        } else if *current_char == ')' {
+        } else if current_char == ')' {
             token = Token {
                 value: String::from(")"),
                 token_type: TokenType::CloseParen,
@@ -76,12 +79,12 @@ pub fn tokenize(file_content: String) -> VecDeque<Token> {
         /*
          * Curly braces or "blocks" or "scopes"
          */
-        } else if *current_char == '{' {
+        } else if current_char == '{' {
             token = Token {
                 value: String::from("{"),
                 token_type: TokenType::OpenScope,
             }
-        } else if *current_char == '}' {
+        } else if current_char == '}' {
             token = Token {
                 value: String::from("}"),
                 token_type: TokenType::CloseScope,
@@ -90,12 +93,12 @@ pub fn tokenize(file_content: String) -> VecDeque<Token> {
         /*
          * Check for [], indicating array access
          */
-        } else if *current_char == '[' {
+        } else if current_char == '[' {
             token = Token {
                 value: String::from("["),
                 token_type: TokenType::ArrayAccessOpen,
             }
-        } else if *current_char == ']' {
+        } else if current_char == ']' {
             token = Token {
                 value: String::from("]"),
                 token_type: TokenType::ArrayAccessClose,
@@ -104,7 +107,7 @@ pub fn tokenize(file_content: String) -> VecDeque<Token> {
         /*
          * Comma seperator, used for shit like parameters
          */
-        } else if *current_char == ',' {
+        } else if current_char == ',' {
             token = Token {
                 value: String::from(","),
                 token_type: TokenType::Seperator,
@@ -113,7 +116,7 @@ pub fn tokenize(file_content: String) -> VecDeque<Token> {
         /*
          * Member operator, for getting fields in structs, etc...
          */
-        } else if *current_char == '.' {
+        } else if current_char == '.' {
             token = Token {
                 value: String::from("."),
                 token_type: TokenType::Member,
@@ -123,7 +126,7 @@ pub fn tokenize(file_content: String) -> VecDeque<Token> {
          * End of line sign, used to symbolize a code line ending. Allows for
          * user to write multiple lines of code on one line with ; seperating.
          */
-        } else if *current_char == ';' {
+        } else if current_char == ';' {
             token = Token {
                 value: String::from(";"),
                 token_type: TokenType::Eol,
@@ -132,7 +135,7 @@ pub fn tokenize(file_content: String) -> VecDeque<Token> {
         /*
          * Checks whether "=" is assigning or comparing.
          */
-        } else if *current_char == '=' {
+        } else if current_char == '=' {
             src_code.pop_front();
 
             if *src_code.front().unwrap() == '=' {
@@ -151,7 +154,7 @@ pub fn tokenize(file_content: String) -> VecDeque<Token> {
         /*
          * Checking for pointer or multiplication sign.
          */
-        } else if *current_char == '*' {
+        } else if current_char == '*' {
             src_code.pop_front();
 
             if is_letter(*src_code.front().unwrap()) {
@@ -172,7 +175,7 @@ pub fn tokenize(file_content: String) -> VecDeque<Token> {
         /*
          * Getting refrence and var_name for refrence.
          */
-        } else if *current_char == '&' {
+        } else if current_char == '&' {
             src_code.pop_front();
             let mut token_value: String = String::from("&");
             let var_name: String = build_word(&mut src_code, false);
@@ -185,17 +188,28 @@ pub fn tokenize(file_content: String) -> VecDeque<Token> {
         /*
          * Lexes binary operations.
          */
-        } else if *current_char == '+' || *current_char == '-' || *current_char == '/' {
+        } else if current_char == '+' || current_char == '-' || current_char == '/' {
             token = Token {
-                value: String::from(*current_char),
+                value: String::from(current_char),
                 token_type: TokenType::BinaryOperator,
             };
+        } else if current_char == '"' {
+            token = Token {
+                value: build_word(&mut src_code, false),
+                token_type: TokenType::String,
+            }
+        } else if current_char == '\'' {
+            token = Token {
+                value: String::from(src_code.pop_front().unwrap()),
+                token_type: TokenType::Char,
+            }
 
         /*
          * Finds words, such as reserved keywords, function names, variable names, etc.
          */
-        } else if is_letter(*current_char) {
-            let token_value: String = build_word(&mut src_code, false);
+        } else if is_letter(current_char) {
+            let mut token_value: String = String::from(current_char);
+            token_value.push_str(&build_word(&mut src_code, false));
 
             if let Some(reserved_word) = is_reserved_keywords(&token_value) {
                 token = Token {
@@ -212,27 +226,27 @@ pub fn tokenize(file_content: String) -> VecDeque<Token> {
         /*
          * Gets the full number instead of a single digit at the time.
          */
-        } else if is_num(*current_char) {
-            let token_value: String = build_word(&mut src_code, true);
+        } else if is_num(current_char) {
+            let mut token_value: String = String::from(current_char);
+            token_value.push_str(&build_word(&mut src_code, true));
             token = Token {
                 value: token_value,
-                token_type: TokenType::Number,
+                token_type: TokenType::Integer,
             };
 
         /*
          * Defaults to error message.
          */
         } else {
-            if *current_char != ' ' && *current_char != '\n' && *current_char != '\r' {
+            if current_char != ' ' && current_char != '\n' && current_char != '\r' {
                 println!("Invalid char supplied: {}", current_char);
+                std::process::exit(1);
             }
-            src_code.pop_front();
-            continue;
-            // TODO: Replace with error handling and error message
+            continue; // If not invalid character, jump to next loop
+                      // TODO: Replace with error handling and error message
         }
 
         token_queue.push_back(token);
-        src_code.pop_front();
     }
 
     token_queue
@@ -283,9 +297,5 @@ fn build_word(src_code: &mut VecDeque<char>, looking_for_num: bool) -> String {
             src_code.pop_front();
         }
     }
-
-    // Push back last char to not remove next char with src_code.pop() when this function Returns
-    src_code.push_front(*src_code.front().unwrap());
-
     string_val
 }
