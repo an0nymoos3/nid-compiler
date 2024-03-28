@@ -136,27 +136,23 @@ pub fn tokenize(file_content: String) -> VecDeque<Token> {
          * Checks whether "=" is assigning or comparing.
          */
         } else if current_char == '=' {
-            src_code.pop_front();
-
             if *src_code.front().unwrap() == '=' {
                 token = Token {
                     value: String::from("=="),
                     token_type: TokenType::Comparison,
-                }
+                };
+                src_code.pop_front();
             } else {
                 token = Token {
-                    value: token_queue.back().unwrap().value.clone(),
+                    value: String::from("="),
                     token_type: TokenType::Assignment,
                 };
-                src_code.push_front('='); // Push back to src_code to not pop() the next char
             }
 
         /*
          * Checking for pointer or multiplication sign.
          */
         } else if current_char == '*' {
-            src_code.pop_front();
-
             if is_letter(*src_code.front().unwrap()) {
                 let mut token_value: String = String::from("*");
                 let var_name: String = build_word(&mut src_code, false);
@@ -194,14 +190,18 @@ pub fn tokenize(file_content: String) -> VecDeque<Token> {
                 token_type: TokenType::BinaryOperator,
             };
         } else if current_char == '"' {
+            let string_value: String = build_string(&mut src_code);
             token = Token {
-                value: build_word(&mut src_code, false),
+                value: string_value,
                 token_type: TokenType::String,
             }
         } else if current_char == '\'' {
             token = Token {
                 value: String::from(src_code.pop_front().unwrap()),
                 token_type: TokenType::Char,
+            };
+            if src_code.pop_front().unwrap() != '\'' {
+                panic!("More than one char not allowed!");
             }
 
         /*
@@ -245,7 +245,6 @@ pub fn tokenize(file_content: String) -> VecDeque<Token> {
             continue; // If not invalid character, jump to next loop
                       // TODO: Replace with error handling and error message
         }
-
         token_queue.push_back(token);
     }
 
@@ -297,5 +296,17 @@ fn build_word(src_code: &mut VecDeque<char>, looking_for_num: bool) -> String {
             src_code.pop_front();
         }
     }
+    string_val
+}
+
+/// Builds a string (a word or number) from a series of chars.
+fn build_string(src_code: &mut VecDeque<char>) -> String {
+    let mut string_val: String = String::new();
+
+    while *src_code.front().unwrap() != '"' {
+        string_val.push(src_code.pop_front().unwrap());
+    }
+    src_code.pop_front();
+
     string_val
 }
