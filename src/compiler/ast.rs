@@ -100,7 +100,7 @@ impl Node for Return {
     fn display(&self) {
         if let Some(return_val) = &self.return_value {
             if let VarOrValue::Variable(var) = return_val {
-                print!("Return - {}", var.identifier);
+                print!("Return - Variable: {}", var.identifier);
             } else if let VarOrValue::Value(_) = return_val {
                 print!("Return - Value");
             }

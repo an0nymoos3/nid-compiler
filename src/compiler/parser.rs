@@ -77,19 +77,24 @@ fn build_loop() {}
 /// Builds a return Node at current position in tokens.
 fn build_return(tokens: &mut VecDeque<Token>) -> Box<ast::Return> {
     let token = tokens.pop_front().unwrap();
+    let return_value: Option<VarOrValue>;
 
-    // Excuse this clusterfuck of a match statement. TODO: Improve readability.
-    let return_value: Option<VarOrValue> = match token.token_type {
-        TokenType::Number => Some(VarOrValue::Value(Value::Int(
-            token.value.parse::<i32>().unwrap(),
-        ))), // TODO: Add support for floats aswell
-        TokenType::Identifier => Some(VarOrValue::Variable(Variable {
+    if token.token_type == TokenType::Identifier {
+        return_value = Some(VarOrValue::Variable(Variable {
             identifier: token.value,
             value: None,
-        })),
-        TokenType::Eol => None,
-        _ => panic!("Invalid return value detected!"),
-    };
+        }));
+    } else if token.token_type == TokenType::Number {
+        return_value = Some(VarOrValue::Value(Value::Int(
+            token.value.parse::<i32>().unwrap(),
+        )));
+    }
+    // TODO: Add support in Lexer for strings and chars
+    else if token.token_type == TokenType::Eol {
+        return_value = None;
+    } else {
+        panic!("Invalid return token!")
+    }
 
     // Make sure user doesn't try to return anything else, and didn't forget about ';'
     if return_value.is_some() && tokens.pop_front().unwrap().token_type != TokenType::Eol {
