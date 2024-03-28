@@ -1,5 +1,4 @@
 #[allow(dead_code)] // TODO: Remove later
-#[derive(Debug)]
 pub enum Value {
     Int(i32),
     Float(f32),
@@ -9,7 +8,6 @@ pub enum Value {
 }
 
 #[allow(dead_code)] // TODO: Remove later
-#[derive(Debug)]
 pub enum ConditionalOperator {
     And,
     Or,
@@ -17,10 +15,9 @@ pub enum ConditionalOperator {
 }
 
 #[allow(dead_code)] // TODO: Remove later
-#[derive(Debug)]
 pub enum VarOrValue {
-    Variable,
-    Value,
+    Variable(Variable),
+    Value(Value),
 }
 
 #[derive(Debug)]
@@ -28,7 +25,9 @@ pub struct Ast<T: Node + ?Sized> {
     pub body: Vec<Box<T>>,
 }
 
-pub trait Node {}
+pub trait Node {
+    fn display(&self);
+}
 
 /*
 * Structs used as the Nodes in the AST
@@ -72,31 +71,61 @@ pub struct Variable {
 }
 
 /// Debug trait. TODO: Remove this
-pub struct Debug;
+pub struct DebugNode;
 
 /*
 * Impl the Node trait on all Nodes
 */
-impl Node for Block {}
-impl Node for Branch {}
-impl Node for Condition {}
-impl Node for Loop {}
-impl Node for Return {}
-impl Node for Variable {}
-impl Node for Debug {}
+impl Node for Block {
+    fn display(&self) {
+        print!("Code block");
+    }
+}
+impl Node for Branch {
+    fn display(&self) {
+        print!("Branch statement");
+    }
+}
+impl Node for Condition {
+    fn display(&self) {
+        print!("Condition");
+    }
+}
+impl Node for Loop {
+    fn display(&self) {
+        print!("Loop");
+    }
+}
+impl Node for Return {
+    fn display(&self) {
+        print!("Return");
+    }
+}
+impl Node for Variable {
+    fn display(&self) {
+        print!("Variable");
+    }
+}
+impl Node for DebugNode {
+    fn display(&self) {
+        print!("Debugging node!");
+    }
+}
 
 /// Debugging function. Prints all nodes in AST to terminal. TODO: Export to file instead of printing.
 pub fn export_ast<T: Node + ?Sized>(ast: &Ast<T>) {
     println!();
-    //traverse_ast_body(&ast.body, 0);
+    traverse_ast_body(ast.body.as_slice(), 0);
     println!("\n");
 }
 
 /// Recursive function to traverse the body of an AST
-fn traverse_ast_body(body: &[Box<dyn Node>], depth: i32) {
+fn traverse_ast_body<T: Node + ?Sized>(body: &[Box<T>], depth: i32) {
     print_branch(depth);
 
-    for node in body.iter() {}
+    for node in body.iter() {
+        node.display();
+    }
 }
 
 /// Pretty printing function for drawing an AST

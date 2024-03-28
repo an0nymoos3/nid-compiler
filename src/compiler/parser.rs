@@ -1,6 +1,6 @@
 use std::collections::VecDeque;
 
-use super::ast;
+use super::ast::{self, Value, VarOrValue, Variable};
 use super::lexer::{Token, TokenType};
 
 /// Builds an AST from a queue of tokens.
@@ -35,14 +35,14 @@ fn parse_body(tokens: &mut VecDeque<Token>) -> Vec<Box<dyn ast::Node>> {
                 body: parse_body(tokens),
             }),
             // A branch instruction
-            TokenType::Branch => Box::new(ast::Debug {}),
+            TokenType::Branch => Box::new(ast::DebugNode {}),
             // While loops
-            TokenType::Loop => Box::new(ast::Debug {}),
+            TokenType::Loop => Box::new(ast::DebugNode {}),
             // Return statement
-            TokenType::Return => Box::new(ast::Return { return_value: None }),
+            TokenType::Return => build_return(tokens),
 
             // Not really sure what to do with EOL rn...
-            TokenType::Eol => Box::new(ast::Debug {}),
+            TokenType::Eol => Box::new(ast::DebugNode {}),
 
             // Anything else turns into Debug rn
             _ => panic!(
@@ -75,4 +75,26 @@ fn build_branch() {}
 fn build_loop() {}
 
 /// Builds a return Node at current position in tokens.
-fn build_return() {}
+fn build_return(tokens: &mut VecDeque<Token>) -> Box<ast::Return> {
+    let token = tokens.pop_front().unwrap();
+
+    // Excuse this clusterfuck of a match statement. TODO: Improve readability.
+    let return_value: Option<VarOrValue> = match token.token_type {
+        TokenType::Number => Some(VarOrValue::Value(Value::Int(
+            token.value.parse::<i32>().unwrap(),
+        ))), // TODO: Add support for floats aswell
+        TokenType::Identifier => Some(VarOrValue::Variable(Variable {
+            identifier: token.value,
+            value: None,
+        })),
+        TokenType::Eol => None,
+        _ => panic!("Invalid return value detected!"),
+    };
+
+    // Make sure user doesn't try to return anything else, and didn't forget about ';'
+    if tokens.pop_front().unwrap().token_type != TokenType::Eol {
+        panic!("Missing ;")
+    }
+
+    Box::new(ast::Return { return_value })
+}
