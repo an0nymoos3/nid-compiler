@@ -155,7 +155,7 @@ pub fn tokenize(file_content: String) -> VecDeque<Token> {
         } else if current_char == '*' {
             if is_letter(*src_code.front().unwrap()) {
                 let mut token_value: String = String::from("*");
-                let var_name: String = build_word(&mut src_code, false);
+                let var_name: String = build_word(&mut src_code);
                 token_value.push_str(&var_name);
                 token = Token {
                     value: token_value,
@@ -174,7 +174,7 @@ pub fn tokenize(file_content: String) -> VecDeque<Token> {
         } else if current_char == '&' {
             src_code.pop_front();
             let mut token_value: String = String::from("&");
-            let var_name: String = build_word(&mut src_code, false);
+            let var_name: String = build_word(&mut src_code);
             token_value.push_str(&var_name);
             token = Token {
                 value: token_value,
@@ -209,7 +209,7 @@ pub fn tokenize(file_content: String) -> VecDeque<Token> {
          */
         } else if is_letter(current_char) {
             let mut token_value: String = String::from(current_char);
-            token_value.push_str(&build_word(&mut src_code, false));
+            token_value.push_str(&build_word(&mut src_code));
 
             if let Some(reserved_word) = is_reserved_keywords(&token_value) {
                 token = Token {
@@ -228,10 +228,18 @@ pub fn tokenize(file_content: String) -> VecDeque<Token> {
          */
         } else if is_num(current_char) {
             let mut token_value: String = String::from(current_char);
-            token_value.push_str(&build_word(&mut src_code, true));
+            token_value.push_str(&build_num(&mut src_code));
+            let mut token_type = TokenType::Integer;
+
+            for num in token_value.chars() {
+                if num == '.' {
+                    token_type = TokenType::Floating;
+                }
+            }
+
             token = Token {
                 value: token_value,
-                token_type: TokenType::Integer,
+                token_type,
             };
 
         /*
@@ -282,24 +290,33 @@ fn is_reserved_keywords(word: &str) -> Option<TokenType> {
 }
 
 /// Builds a string (a word or number) from a series of chars.
-fn build_word(src_code: &mut VecDeque<char>, looking_for_num: bool) -> String {
+fn build_word(src_code: &mut VecDeque<char>) -> String {
     let mut string_val: String = String::new();
 
-    if !looking_for_num {
-        while is_letter(*src_code.front().unwrap()) {
-            string_val.push(*src_code.front().unwrap());
-            src_code.pop_front();
-        }
-    } else {
-        while is_num(*src_code.front().unwrap()) {
-            string_val.push(*src_code.front().unwrap());
-            src_code.pop_front();
-        }
+    while is_letter(*src_code.front().unwrap()) {
+        string_val.push(*src_code.front().unwrap());
+        src_code.pop_front();
     }
+
     string_val
 }
 
-/// Builds a string (a word or number) from a series of chars.
+/// Builds a float value for the float TokenType.
+fn build_num(src_code: &mut VecDeque<char>) -> String {
+    let mut float_string: String = String::new();
+    let found_decimal_points: i8 = 0;
+
+    while is_num(*src_code.front().unwrap()) || *src_code.front().unwrap() == '.' {
+        if found_decimal_points >= 2 {
+            panic!("Too many decimal points found!");
+        }
+        float_string.push(src_code.pop_front().unwrap());
+    }
+
+    float_string
+}
+
+/// Builds a string value for the string TokenType.
 fn build_string(src_code: &mut VecDeque<char>) -> String {
     let mut string_val: String = String::new();
 
