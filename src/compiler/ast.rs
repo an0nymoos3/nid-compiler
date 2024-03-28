@@ -78,7 +78,7 @@ pub struct DebugNode;
 */
 impl Node for Block {
     fn display(&self) {
-        print!("Code block");
+        print!("Block");
     }
 }
 impl Node for Branch {
@@ -98,7 +98,15 @@ impl Node for Loop {
 }
 impl Node for Return {
     fn display(&self) {
-        print!("Return");
+        if let Some(return_val) = &self.return_value {
+            if let VarOrValue::Variable(var) = return_val {
+                print!("Return - {}", var.identifier);
+            } else if let VarOrValue::Value(_) = return_val {
+                print!("Return - Value");
+            }
+        } else {
+            print!("Return - None");
+        }
     }
 }
 impl Node for Variable {
