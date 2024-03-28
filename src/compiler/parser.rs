@@ -92,7 +92,7 @@ fn build_return(tokens: &mut VecDeque<Token>) -> Box<ast::Return> {
     };
 
     // Make sure user doesn't try to return anything else, and didn't forget about ';'
-    if tokens.pop_front().unwrap().token_type != TokenType::Eol {
+    if return_value.is_some() && tokens.pop_front().unwrap().token_type != TokenType::Eol {
         panic!("Missing ;")
     }
 
