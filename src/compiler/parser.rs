@@ -88,9 +88,17 @@ fn build_return(tokens: &mut VecDeque<Token>) -> Box<ast::Return> {
         return_value = Some(VarOrValue::Value(Value::Int(
             token.value.parse::<i32>().unwrap(),
         )));
-    }
-    // TODO: Add support in Lexer for strings and chars
-    else if token.token_type == TokenType::Eol {
+    } else if token.token_type == TokenType::Floating {
+        return_value = Some(VarOrValue::Value(Value::Float(
+            token.value.parse::<f32>().unwrap(),
+        )));
+    } else if token.token_type == TokenType::String {
+        return_value = Some(VarOrValue::Value(Value::String(token.value)))
+    } else if token.token_type == TokenType::Char {
+        return_value = Some(VarOrValue::Value(Value::Char(
+            token.value.parse::<char>().unwrap(),
+        )))
+    } else if token.token_type == TokenType::Eol {
         return_value = None;
     } else {
         panic!("Invalid return token!")
