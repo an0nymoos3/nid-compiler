@@ -1,6 +1,6 @@
 use std::collections::VecDeque;
 
-use super::ast::{self, Value, VarOrValue, Variable};
+use super::ast::{self, Value, ValueEnum, Variable};
 use super::lexer::{Token, TokenType};
 
 /// Builds an AST from a queue of tokens.
@@ -35,9 +35,9 @@ fn parse_body(tokens: &mut VecDeque<Token>) -> Vec<Box<dyn ast::Node>> {
                 body: parse_body(tokens),
             }),
             // A branch instruction
-            TokenType::Branch => Box::new(ast::DebugNode {}),
+            TokenType::Branch => build_branch(tokens),
             // While loops
-            TokenType::Loop => Box::new(ast::DebugNode {}),
+            TokenType::Loop => build_loop(tokens),
             // Return statement
             TokenType::Return => build_return(tokens),
 
@@ -69,35 +69,37 @@ fn prev_token() {}
 */
 
 /// Builds a branch Node at current position in tokens.
-fn build_branch() {}
+fn build_branch(tokens: &mut VecDeque<Token>) -> Box<ast::Branch> {}
 
 /// Build a loop Node at current position in tokens.
-fn build_loop() {}
+fn build_loop(tokens: &mut VecDeque<Token>) -> Box<ast::Loop> {}
 
 /// Builds a return Node at current position in tokens.
 fn build_return(tokens: &mut VecDeque<Token>) -> Box<ast::Return> {
     let token = tokens.pop_front().unwrap();
-    let return_value: Option<VarOrValue>;
+    let return_value: Option<Box<dyn ast::Node>>;
 
     if token.token_type == TokenType::Identifier {
-        return_value = Some(VarOrValue::Variable(Variable {
+        return_value = Some(Box::new(Variable {
             identifier: token.value,
             value: None,
         }));
     } else if token.token_type == TokenType::Integer {
-        return_value = Some(VarOrValue::Value(Value::Int(
-            token.value.parse::<i32>().unwrap(),
-        )));
+        return_value = Some(Box::new(Value {
+            value: ValueEnum::Int(token.value.parse::<i32>().unwrap()),
+        }));
     } else if token.token_type == TokenType::Floating {
-        return_value = Some(VarOrValue::Value(Value::Float(
-            token.value.parse::<f32>().unwrap(),
-        )));
+        return_value = Some(Box::new(Value {
+            value: ValueEnum::Float(token.value.parse::<f32>().unwrap()),
+        }));
     } else if token.token_type == TokenType::String {
-        return_value = Some(VarOrValue::Value(Value::String(token.value)))
+        return_value = Some(Box::new(Value {
+            value: ValueEnum::String(token.value),
+        }));
     } else if token.token_type == TokenType::Char {
-        return_value = Some(VarOrValue::Value(Value::Char(
-            token.value.parse::<char>().unwrap(),
-        )))
+        return_value = Some(Box::new(Value {
+            value: ValueEnum::Char(token.value.parse::<char>().unwrap()),
+        }));
     } else if token.token_type == TokenType::Eol {
         return_value = None;
     } else {
