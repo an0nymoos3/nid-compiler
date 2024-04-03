@@ -24,9 +24,9 @@ fn parse_body(tokens: &mut VecDeque<Token>) -> Vec<Box<dyn ast::Node>> {
         /*
          * End of file
          */
-        if token.token_type == TokenType::Eof {
-            panic!("End of file while parsing token!");
-        }
+        //if token.token_type == TokenType::Eof {
+        //    panic!("End of file while parsing token!");
+        //}
 
         // Create a new Node.
         let new_node: Box<dyn ast::Node> = match token.token_type {
@@ -58,52 +58,73 @@ fn parse_body(tokens: &mut VecDeque<Token>) -> Vec<Box<dyn ast::Node>> {
     code_body
 }
 
-/// Returns the token after current.
-fn next_token() {}
-
-/// Returns the token before current.
-fn prev_token() {}
-
 /*
 * Helper functions for building the different Node types.
 */
 
 /// Builds a branch Node at current position in tokens.
-fn build_branch(tokens: &mut VecDeque<Token>) -> Box<ast::Branch> {}
+fn build_branch(tokens: &mut VecDeque<Token>) -> Box<ast::Branch> {
+    if tokens.pop_front().unwrap().token_type != TokenType::OpenParen {
+        panic!("Invalid If-statement! No parenthesis!");
+    }
+
+    let condition = build_condition(tokens);
+
+    if tokens.pop_front().unwrap().token_type != TokenType::OpenScope {
+        panic!("Missing branch body!")
+    }
+
+    let true_body: ast::Block = ast::Block {
+        body: parse_body(tokens),
+    };
+
+    let false_body: Option<ast::Block>;
+    if tokens.front().unwrap().token_type == TokenType::Branch
+        && tokens.front().unwrap().value == "else"
+    {
+        tokens.pop_front().unwrap();
+        false_body = Some(ast::Block {
+            body: parse_body(tokens),
+        });
+    } else {
+        false_body = None;
+    }
+
+    Box::new(ast::Branch {
+        condition,
+        true_body,
+        false_body,
+    })
+}
 
 /// Build a loop Node at current position in tokens.
-fn build_loop(tokens: &mut VecDeque<Token>) -> Box<ast::Loop> {}
+fn build_loop(tokens: &mut VecDeque<Token>) -> Box<ast::Loop> {
+    if tokens.pop_front().unwrap().token_type != TokenType::OpenParen {
+        panic!("Invalid If-statement! No parenthesis!");
+    }
+
+    let condition = build_condition(tokens);
+
+    if tokens.pop_front().unwrap().token_type != TokenType::OpenScope {
+        panic!("Missing loop body!");
+    }
+
+    let body: ast::Block = ast::Block {
+        body: parse_body(tokens),
+    };
+
+    Box::new(ast::Loop { condition, body })
+}
 
 /// Builds a return Node at current position in tokens.
 fn build_return(tokens: &mut VecDeque<Token>) -> Box<ast::Return> {
     let token = tokens.pop_front().unwrap();
-    let return_value: Option<Box<dyn ast::Node>>;
 
-    if token.token_type == TokenType::Identifier {
-        return_value = Some(Box::new(Variable {
-            identifier: token.value,
-            value: None,
-        }));
-    } else if token.token_type == TokenType::Integer {
-        return_value = Some(Box::new(Value {
-            value: ValueEnum::Int(token.value.parse::<i32>().unwrap()),
-        }));
-    } else if token.token_type == TokenType::Floating {
-        return_value = Some(Box::new(Value {
-            value: ValueEnum::Float(token.value.parse::<f32>().unwrap()),
-        }));
-    } else if token.token_type == TokenType::String {
-        return_value = Some(Box::new(Value {
-            value: ValueEnum::String(token.value),
-        }));
-    } else if token.token_type == TokenType::Char {
-        return_value = Some(Box::new(Value {
-            value: ValueEnum::Char(token.value.parse::<char>().unwrap()),
-        }));
-    } else if token.token_type == TokenType::Eol {
-        return_value = None;
+    let return_value: Option<Box<dyn ast::Node>>;
+    if tokens.front().unwrap().token_type == TokenType::Eol {
+        return_value = None
     } else {
-        panic!("Invalid return token!")
+        return_value = Some(build_var_or_value(token));
     }
 
     // Make sure user doesn't try to return anything else, and didn't forget about ';'
@@ -112,4 +133,64 @@ fn build_return(tokens: &mut VecDeque<Token>) -> Box<ast::Return> {
     }
 
     Box::new(ast::Return { return_value })
+}
+
+/// Helper function for parsing if token is a variable or value
+fn build_var_or_value(token: Token) -> Box<dyn ast::Node> {
+    if token.token_type == TokenType::Identifier {
+        return Box::new(Variable {
+            identifier: token.value,
+            value: None,
+        });
+    };
+
+    // Else assume, Value
+    let val = match token.token_type {
+        TokenType::Integer => Value {
+            value: ValueEnum::Int(token.value.parse::<i32>().unwrap()),
+        },
+        TokenType::Floating => Value {
+            value: ValueEnum::Float(token.value.parse::<f32>().unwrap()),
+        },
+        TokenType::Char => Value {
+            value: ValueEnum::Char(token.value.parse::<char>().unwrap()),
+        },
+        TokenType::String => Value {
+            value: ValueEnum::String(token.value),
+        },
+        _ => panic!("Invalid TokenType!"),
+    };
+
+    Box::new(val)
+}
+
+/// Helper function used to build conditions for both Branches and Loops
+fn build_condition(tokens: &mut VecDeque<Token>) -> Box<ast::Condition> {
+    let left_op: Option<Box<dyn ast::Node>>;
+    if tokens.front().unwrap().token_type != TokenType::Comparison
+        && tokens.front().unwrap().token_type != TokenType::LogicOperator
+    {
+        left_op = Some(build_var_or_value(tokens.pop_front().unwrap()));
+    } else {
+        left_op = None;
+    }
+
+    let operator: ast::ConditionalOperator = match tokens.pop_front().unwrap().value.as_str() {
+        "&&" => ast::ConditionalOperator::And,
+        "||" => ast::ConditionalOperator::Or,
+        "!" => ast::ConditionalOperator::Not,
+        _ => panic!("Invalid operaor!"),
+    };
+
+    let right_op = build_var_or_value(tokens.pop_front().unwrap());
+
+    if tokens.front().unwrap().token_type != TokenType::CloseParen {
+        panic!("No closing paren!")
+    }
+
+    Box::new(ast::Condition {
+        operator,
+        left_operand: left_op,
+        right_operand: right_op,
+    })
 }

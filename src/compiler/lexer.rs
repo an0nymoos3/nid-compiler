@@ -278,6 +278,7 @@ fn is_reserved_keywords(word: &str) -> Option<TokenType> {
         ("string", TokenType::TypeDecleration),
         ("char", TokenType::TypeDecleration),
         ("if", TokenType::Branch),
+        ("else", TokenType::Branch),
         ("while", TokenType::Loop),
         ("return", TokenType::Return),
         ("asm", TokenType::Asm),

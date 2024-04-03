@@ -41,21 +41,21 @@ pub struct Block {
 
 /// Branches, (if-statements)
 pub struct Branch {
-    pub condition: Condition,
-    pub true_body: Block,  // If block
-    pub false_body: Block, // Else block
+    pub condition: Box<Condition>,
+    pub true_body: Block,          // If block
+    pub false_body: Option<Block>, // Else block
 }
 
 /// Condition, used by branches and loops
 pub struct Condition {
     pub operator: ConditionalOperator,
-    pub left_operand: Box<dyn Node>,  // Variable or value
-    pub right_operand: Box<dyn Node>, // Variable or value
+    pub left_operand: Option<Box<dyn Node>>, // Variable or value
+    pub right_operand: Box<dyn Node>,        // Variable or value
 }
 
 /// Loops, currently ony while is supported
 pub struct Loop {
-    pub condition: Condition,
+    pub condition: Box<Condition>,
     pub body: Block,
 }
 
