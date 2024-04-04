@@ -78,17 +78,16 @@ fn build_branch(tokens: &mut VecDeque<Token>) -> Box<ast::Branch> {
         body: parse_body(tokens),
     };
 
-    let false_body: Option<ast::Block>;
-    if tokens.front().unwrap().token_type == TokenType::Branch
+    let false_body: Option<ast::Block> = if tokens.front().unwrap().token_type == TokenType::Branch
         && tokens.front().unwrap().value == "else"
     {
         tokens.pop_front().unwrap();
-        false_body = Some(ast::Block {
+        Some(ast::Block {
             body: parse_body(tokens),
-        });
+        })
     } else {
-        false_body = None;
-    }
+        None
+    };
 
     Box::new(ast::Branch {
         condition,
@@ -165,14 +164,14 @@ fn build_var_or_value(token: Token) -> Box<dyn ast::Node> {
 
 /// Helper function used to build conditions for both Branches and Loops
 fn build_condition(tokens: &mut VecDeque<Token>) -> Box<ast::Condition> {
-    let left_op: Option<Box<dyn ast::Node>>;
-    if tokens.front().unwrap().token_type != TokenType::Comparison
+    let left_op: Option<Box<dyn ast::Node>> = if tokens.front().unwrap().token_type
+        != TokenType::Comparison
         && tokens.front().unwrap().token_type != TokenType::LogicOperator
     {
-        left_op = Some(build_var_or_value(tokens.pop_front().unwrap()));
+        Some(build_var_or_value(tokens.pop_front().unwrap()))
     } else {
-        left_op = None;
-    }
+        None
+    };
 
     let operator: ast::ConditionalOperator = match tokens.pop_front().unwrap().value.as_str() {
         "&&" => ast::ConditionalOperator::And,
