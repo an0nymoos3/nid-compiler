@@ -120,16 +120,15 @@ fn build_loop(tokens: &mut VecDeque<Token>) -> Box<ast::Loop> {
 fn build_return(tokens: &mut VecDeque<Token>) -> Box<ast::Return> {
     let token = tokens.pop_front().unwrap();
 
-    let return_value: Option<Box<dyn ast::Node>>;
-    if tokens.front().unwrap().token_type == TokenType::Eol {
-        return_value = None
+    let return_value: Option<Box<dyn ast::Node>> = if token.token_type == TokenType::Eol {
+        None
     } else {
-        return_value = Some(build_var_or_value(token));
-    }
+        Some(build_var_or_value(token))
+    };
 
     // Make sure user doesn't try to return anything else, and didn't forget about ';'
     if return_value.is_some() && tokens.pop_front().unwrap().token_type != TokenType::Eol {
-        panic!("Missing ;")
+        panic!("Missing ;");
     }
 
     Box::new(ast::Return { return_value })
