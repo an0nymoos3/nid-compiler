@@ -1,21 +1,20 @@
-# Nid-Compiler
+# NID-Compiler
 
-## Nid-Lang 
+## NID-Lang
 The new blazingly fast high-level programming language. Giving you the simplicity of writing C code with
-the performance of writing native assembly code. Work with you favourite data structures like, `int`, `struct`, `enum`,
-`pointer` and more!
+the performance of writing native assembly code.
 
 ## What is this project?
-This is a compiler/assembler written in Rust and C++ for our custom high-level language we call Nid-Lang.  
+This is a compiler/assembler written in Rust and C++ for our custom high-level language we call NID-Lang.  
 This is meant to be a tool to help us develop a game on our custom CPU architecture in a high-level languages instead
-of machine or assembly code.
+of machine or assembly code. Learn more about the languages under [docs/](https://github.com/an0nymoos3/nid-compiler/tree/assembler/docs)
 
 ## Can I run it?
 Yes! But...  
-You need to support our custom instructions that can be found (TODO: Link to instructionset).
+You need to support our custom instructions that can be found in [docs/](https://github.com/an0nymoos3/nid-compiler/tree/assembler/docs)
 
 ## How to build.
-Make sure you have Rust/Cargo installed.  
+Make sure you have Rust/Cargo installed, as well as the GCC compiler.  
 Downloading and compiling can be done in one simple command: 
 ```
 git clone https://github.com/an0nymoos3/nid-compiler.git && cd nid-compiler/ && make build
@@ -30,11 +29,16 @@ will automatically also call `assembler`.
 
 ## Usage:
 ```
-./nid-compiler my_file.nid
+./compiler my_file.nid
 ```
 To view more options, simply run: 
 ```
-./nid-compiler --help
+./compiler --help
+```
+
+To compile a manually written `.ass` file you can use the `assembler` found under `bin/`.
+```
+./assembler my_file.ass
 ```
 
 ## Features
@@ -46,21 +50,6 @@ To view more options, simply run:
 | Imports between files    | 🔴 Planned    |
 | std library              | 🔴 Planned    |
 
-## Syntax
-### Reserved keywords
-| Keyword | Meaning  |
-| ------- | -------- |
-| void    | No type.                      |
-| int     | 16 bit integer.               |
-| float   | 16 bit floating point.        |
-| string  | Char array type.              |
-| char    | Single character type.        |
-| if      | If-statments.                 |
-| else    | Else condition.               |
-| while   | Basic conditional while loop. |
-| return  | Return instruction.           |
-| asm     | Inline assembly code.         |
-
 ## Contributing
-Anyone dumb enough is free to contribute to this project. I would love to see Nid-Lang
+Anyone with a lot of free time on their hands is free to contribute to this project. I would love to see NID-Lang
 supported on more platforms.
