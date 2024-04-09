@@ -2,6 +2,10 @@
  * This is the "main" file. It handles the assembler logic.
  */
 
+#include "../utils/ass_utils.hpp"
+#include "assembler.hpp"
+#include "exporter.hpp"
+#include "lexer.hpp"
 #include <iostream>
 
 int main() {
