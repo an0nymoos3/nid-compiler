@@ -1,3 +1,7 @@
+/*
+ * This is the "main" file. It handles the assembler logic.
+ */
+
 #include <iostream>
 
 int main() {
