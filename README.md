@@ -2,11 +2,11 @@
 
 ## Nid-Lang 
 The new blazingly fast high-level programming language. Giving you the simplicity of writing C code with
-the performance of writing native assembly code. Work with you favourite data structures like, `int`, `structs`, `enums`,
-`pointers` and more!
+the performance of writing native assembly code. Work with you favourite data structures like, `int`, `struct`, `enum`,
+`pointer` and more!
 
 ## What is this project?
-This is a compiler written in Rust for our custom high-level language we call Nid-Lang.  
+This is a compiler/assembler written in Rust and C++ for our custom high-level language we call Nid-Lang.  
 This is meant to be a tool to help us develop a game on our custom CPU architecture in a high-level languages instead
 of machine or assembly code.
 
@@ -40,7 +40,7 @@ To view more options, simply run:
 | Feature                  | Status |
 | -------                  | ------ |
 | Working compiler         | 🟡 Developing |
-| Working assembler        | 🔴 Planned    |
+| Working assembler        | 🟡 Developing |
 | Heap allocations         | 🔴 Planned    |
 | Imports between files    | 🔴 Planned    |
 | std library              | 🔴 Planned    |
