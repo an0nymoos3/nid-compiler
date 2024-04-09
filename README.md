@@ -18,14 +18,15 @@ You need to support our custom instructions that can be found (TODO: Link to ins
 Make sure you have Rust/Cargo installed.  
 Downloading and compiling can be done in one simple command: 
 ```
-git clone https://github.com/an0nymoos3/nid-compiler.git && cd nid-compiler/ && cargo build --release
+git clone https://github.com/an0nymoos3/nid-compiler.git && cd nid-compiler/ && make build
 ```
 For future builds you simply run:
 ```
-cargo build --release
+make build
 ```
 
-The binary can then be found under `target/release/`, it's called `nid-compiler`.
+The binaries can then be found under `bin/`, called `compiler` and `assembler`. Running `compiler` 
+will automatically also call `assembler`.
 
 ## Usage:
 ```
