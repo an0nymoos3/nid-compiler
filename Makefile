@@ -4,7 +4,7 @@ ifndef VERBOSE
 endif
 
 TARGET_DIR = bin/
-CPP_OBJS = $(wildcard src/assembler/*.cpp) $(wildcard src/assembler/utils/*.cpp)
+CPP_OBJS = $(wildcard assembler/src/*.cpp) $(wildcard assembler/src/utils/*.cpp)
 
 # Builds in release mode
 all: compiler assembler
@@ -14,7 +14,7 @@ compiler:
 		mkdir $(TARGET_DIR); \
 	fi
 	echo "Building compiler..."
-	cargo build --release --quiet
+	cargo build --release --quiet --manifest-path compiler/Cargo.toml 
 	cp target/release/compiler $(TARGET_DIR)
 
 assembler: 
@@ -27,5 +27,5 @@ assembler:
 # Remove all build content
 clean:
 	echo "rm -rf target/ && rm -rf bin/"
-	rm -rf target/
+	rm -rf compiler/target/
 	rm -rf bin/
