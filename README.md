@@ -17,11 +17,11 @@ You need to support our custom instructions that can be found in [docs/](https:/
 Make sure you have Rust/Cargo installed, as well as the GCC compiler.  
 Downloading and compiling can be done in one simple command: 
 ```
-git clone https://github.com/an0nymoos3/nid-compiler.git && cd nid-compiler/ && make build
+git clone https://github.com/an0nymoos3/nid-compiler.git && cd nid-compiler/ && make
 ```
 For future builds you simply run:
 ```
-make build
+make
 ```
 
 The binaries can then be found under `bin/`, called `compiler` and `assembler`. Running `compiler` 
