@@ -14,10 +14,7 @@ pub fn generate_ast(tokens: &mut VecDeque<Token>) -> ast::Ast<dyn ast::Node> {
 fn parse_body(tokens: &mut VecDeque<Token>) -> Vec<Box<dyn ast::Node>> {
     let mut code_body: Vec<Box<dyn ast::Node>> = Vec::new();
 
-    while !tokens.is_empty()
-        && tokens.front().unwrap().token_type != TokenType::Eof
-        && tokens.front().unwrap().token_type != TokenType::CloseScope
-    {
+    while !tokens.is_empty() && tokens.front().unwrap().token_type != TokenType::Eof {
         let token: Token = tokens.pop_front().unwrap(); // Assume no error because of while loop
                                                         // above.
 
@@ -27,6 +24,9 @@ fn parse_body(tokens: &mut VecDeque<Token>) -> Vec<Box<dyn ast::Node>> {
             TokenType::OpenScope => Box::new(ast::Block {
                 body: parse_body(tokens),
             }),
+            TokenType::CloseScope => {
+                return code_body;
+            }
             // A branch instruction
             TokenType::Branch => build_branch(tokens),
             // While loops

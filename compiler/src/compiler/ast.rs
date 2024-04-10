@@ -170,7 +170,6 @@ fn traverse_ast_body(
     tree.begin_child(branch.to_string());
 
     for node in body.iter() {
-        println!("{node}");
         if node.is_block() {
             traverse_ast_body(tree, node.get_body(), &node.get_name(), depth + 1);
         } else {
