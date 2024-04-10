@@ -2,13 +2,12 @@
  * This is the "main" file. It handles the assembler logic.
  */
 
-#include "../utils/ass_utils.hpp"
 #include "assembler.hpp"
 #include "exporter.hpp"
 #include "lexer.hpp"
-#include <iostream>
+#include "utils/commandline.hpp"
 
-int main() {
-  std::cout << "Hello assembler" << std::endl;
+int main(int argc, char **argv) {
+  Args args = parse_args(argc, argv);
   return 0;
 }
