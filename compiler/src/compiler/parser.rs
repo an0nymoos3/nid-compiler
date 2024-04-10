@@ -21,13 +21,6 @@ fn parse_body(tokens: &mut VecDeque<Token>) -> Vec<Box<dyn ast::Node>> {
         let token: Token = tokens.pop_front().unwrap(); // Assume no error because of while loop
                                                         // above.
 
-        /*
-         * End of file
-         */
-        //if token.token_type == TokenType::Eof {
-        //    panic!("End of file while parsing token!");
-        //}
-
         // Create a new Node.
         let new_node: Box<dyn ast::Node> = match token.token_type {
             // Inner block, traversed via recursion

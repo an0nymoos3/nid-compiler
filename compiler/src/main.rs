@@ -4,7 +4,7 @@ mod utils;
 use std::time::{Duration, Instant};
 
 use crate::utils::command_line::print_help;
-use compiler::compiler_main::compile;
+use compiler::compile::compile;
 use utils::command_line::{build_args, Args};
 use utils::compile_times::{calc_total_time, time_now};
 
