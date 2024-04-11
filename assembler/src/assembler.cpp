@@ -2,6 +2,8 @@
  * This file is for assembling or converting from regular english to binary.
  */
 #include "assembler.hpp"
+#include <algorithm>
+#include <ios>
 #include <iostream>
 #include <sstream>
 #include <vector>
@@ -11,7 +13,10 @@ std::vector<AssembeledLine> assemble_lines(std::vector<Line> lines) {
 
   for (int i = 0; i < lines.size(); i++) {
     AssembeledLine line = assemble_line(lines[i]);
-    assembeled_lines.push_back(line);
+    if (line.line_content.size() != 0) {
+      line.line_number = i + 1;
+      assembeled_lines.push_back(line);
+    }
   }
 
   return assembeled_lines;
@@ -39,6 +44,9 @@ AssembeledLine assemble_line(Line line) {
 }
 
 std::string operation_to_binary(std::string value) {
+  // Convert the entire string to uppercase using std::transform()
+  std::transform(value.begin(), value.end(), value.begin(), ::toupper);
+
   if (value == "NOP") {
     return "000000";
   } else if (value == "LDI") {
@@ -55,6 +63,7 @@ std::string operation_to_binary(std::string value) {
     return "000110";
   }
 
+  std::cout << "Unknown operation used, parsed as NOP" << std::endl;
   return "000000";
 }
 

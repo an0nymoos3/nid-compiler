@@ -13,8 +13,6 @@ std::vector<Line> tokenize(std::vector<Line> &file_content) {
     std::vector<Token> token_queue;
     Line current_line = file_content[i];
     token_queue = tokenize_line(current_line.line_content);
-    // print_token(token_queue);
-    // std::cout << std::endl;
     current_line.line_tokens = token_queue;
     lines.push_back(current_line);
   }

@@ -53,9 +53,6 @@ std::vector<Line> parse_file(Args args) {
   // Extract the string from the stringstream
   std::string file_contents = buffer.str();
 
-  // Output the string
-  std::cout << "File Contents:\n" << file_contents << std::endl;
-
   // Split the string into lines
   std::vector<Line> lines;
   std::istringstream iss(file_contents);
