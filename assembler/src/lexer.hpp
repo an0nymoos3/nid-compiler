@@ -30,6 +30,12 @@ bool is_letter(char c);
 
 bool is_number(char c);
 
+bool is_register(std::string src_code, int start_pos);
+
+bool is_mode(std::string src_code, int start_pos);
+
+std::string decimal_to_binary(std::string decimal_string);
+
 std::string build_word(std::string src_code, int start_pos);
 
 std::string build_num(std::string src_code, int start_pos);

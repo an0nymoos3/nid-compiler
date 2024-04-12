@@ -3,7 +3,9 @@
  * into its smaller "tokens" or chars.
  */
 #include "lexer.hpp"
+#include <bitset>
 #include <iostream>
+#include <sstream>
 #include <vector>
 
 std::vector<Line> tokenize(std::vector<Line> &file_content) {
@@ -63,7 +65,8 @@ std::vector<Token> tokenize_line(std::string line_content) {
     /*
      * Checks for assembly operation
      */
-    else if (is_letter(current_char)) {
+    else if (is_letter(current_char) && !is_register(line_content, j) &&
+             !is_mode(line_content, j)) {
       std::string word = build_word(line_content, j);
       token = {word, Operation};
       j += word.size() - 1; // Skip past the rest of the built word
@@ -71,21 +74,50 @@ std::vector<Token> tokenize_line(std::string line_content) {
     }
 
     /*
-     * Checks what type the number represents
+     * Checks for adress mode
+     */
+    else if (is_mode(line_content, j)) {
+      j++;
+      std::string word = build_num(line_content, j);
+      j += word.size() - 1; // Skip past the rest of the built word
+      word = decimal_to_binary(word);
+      if (word.size() >= 1) {
+        word = word.substr(14, 2);
+      }
+      token = {word, Mode};
+      token_queue.push_back(token);
+    }
+
+    /*
+     * Checks for register index
+     */
+    else if (is_register(line_content, j)) {
+      j++;
+      std::string word = build_num(line_content, j);
+      j += word.size() - 1; // Skip past the rest of the built word
+      word = decimal_to_binary(word);
+      if (word.size() >= 1) {
+        word = word.substr(12, 4);
+      }
+      token = {word, Register};
+      token_queue.push_back(token);
+    }
+
+    /*
+     * Checks for constant
      */
     else if (is_number(current_char)) {
       std::string word = build_num(line_content, j);
       j += word.size() - 1; // Skip past the rest of the built word
-
-      if (word.size() == 2) {
-        token = {word, Mode};
-      } else if (word.size() == 4) {
-        token = {word, Register};
-      } else {
-        token = {word, Constant};
-      }
+      word = decimal_to_binary(word);
+      token = {word, Constant};
       token_queue.push_back(token);
-    } else {
+    }
+
+    /*
+     * Base case for either blank space and wrong inputs
+     */
+    else {
       if (current_char != ' ') {
         std::cout << "Unknown char!" << std::endl;
       }
@@ -102,21 +134,21 @@ std::vector<Token> check_token_line(std::vector<Token> token_line) {
 
   // Check if line is a typical "Operation, Mode, Register, Const" line
   if (token_line[0].token_type == Operation) {
-    if (token_line[2].token_type != Mode) {
+    if (token_line.size() <= 2 || token_line[2].token_type != Mode) {
       Token token = {",", Separator};
       token_line.insert(token_line.begin() + 1, token);
       Token token2 = {"00", Mode};
       token_line.insert(token_line.begin() + 2, token2);
     }
 
-    if (token_line[4].token_type != Register) {
+    if (token_line.size() <= 4 || token_line[4].token_type != Register) {
       Token token = {",", Separator};
       token_line.insert(token_line.begin() + 3, token);
       Token token2 = {"0000", Register};
       token_line.insert(token_line.begin() + 4, token2);
     }
 
-    if (token_line[6].token_type != Constant) {
+    if (token_line.size() <= 6 || token_line[6].token_type != Constant) {
       Token token = {",", Separator};
       token_line.insert(token_line.begin() + 5, token);
       Token token2 = {"0000000000000000", Constant};
@@ -130,6 +162,22 @@ std::vector<Token> check_token_line(std::vector<Token> token_line) {
 bool is_letter(char c) { return std::isalpha(c); }
 
 bool is_number(char c) { return std::isdigit(c); }
+
+bool is_register(std::string src_code, int start_pos) {
+  std::string word = "";
+  word += src_code[start_pos];
+  start_pos++;
+
+  return word == "r" && is_number(src_code[start_pos]);
+}
+
+bool is_mode(std::string src_code, int start_pos) {
+  std::string word = "";
+  word += src_code[start_pos];
+  start_pos++;
+
+  return word == "m" && is_number(src_code[start_pos]);
+}
 
 std::string build_word(std::string src_code, int start_pos) {
   std::string word = "";
@@ -155,6 +203,21 @@ std::string build_num(std::string src_code, int start_pos) {
   }
 
   return word;
+}
+
+std::string decimal_to_binary(std::string decimal_string) {
+  if (decimal_string.size() == 0) {
+    return "";
+  }
+
+  // Convert decimal string to an integer
+  int decimalNumber = std::stoi(decimal_string, nullptr, 10);
+
+  // sizeof(int) * 8 gives the number of bits in an integer
+  std::bitset<sizeof(int) * 4> bits(decimalNumber);
+  std::ostringstream oss;
+  oss << bits;
+  return oss.str();
 }
 
 void export_tokens(std::vector<Line> &lines) {
