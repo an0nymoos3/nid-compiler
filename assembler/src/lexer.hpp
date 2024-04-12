@@ -33,3 +33,5 @@ bool is_number(char c);
 std::string build_word(std::string src_code, int start_pos);
 
 std::string build_num(std::string src_code, int start_pos);
+
+std::vector<Token> check_token_line(std::vector<Token> token_line);

@@ -13,6 +13,7 @@ std::vector<Line> tokenize(std::vector<Line> &file_content) {
     std::vector<Token> token_queue;
     Line current_line = file_content[i];
     token_queue = tokenize_line(current_line.line_content);
+    token_queue = check_token_line(token_queue);
     current_line.line_tokens = token_queue;
     lines.push_back(current_line);
   }
@@ -92,6 +93,38 @@ std::vector<Token> tokenize_line(std::string line_content) {
   }
 
   return token_queue;
+}
+
+std::vector<Token> check_token_line(std::vector<Token> token_line) {
+  if (token_line.size() == 0) {
+    return token_line;
+  }
+
+  // Check if line is a typical "Operation, Mode, Register, Const" line
+  if (token_line[0].token_type == Operation) {
+    if (token_line[2].token_type != Mode) {
+      Token token = {",", Separator};
+      token_line.insert(token_line.begin() + 1, token);
+      Token token2 = {"00", Mode};
+      token_line.insert(token_line.begin() + 2, token2);
+    }
+
+    if (token_line[4].token_type != Register) {
+      Token token = {",", Separator};
+      token_line.insert(token_line.begin() + 3, token);
+      Token token2 = {"0000", Register};
+      token_line.insert(token_line.begin() + 4, token2);
+    }
+
+    if (token_line[6].token_type != Constant) {
+      Token token = {",", Separator};
+      token_line.insert(token_line.begin() + 5, token);
+      Token token2 = {"0000000000000000", Constant};
+      token_line.insert(token_line.begin() + 6, token2);
+    }
+  }
+
+  return token_line;
 }
 
 bool is_letter(char c) { return std::isalpha(c); }
