@@ -151,9 +151,10 @@ impl Node for DebugNode {
 
 /// Debugging function. Prints all nodes in AST to terminal. TODO: Export to file instead of printing.
 pub fn export_ast(ast: &Ast<dyn Node>) {
+    println!("AST:");
     // Build a tree using a TreeBuilder
-    let mut tree = ptree::TreeBuilder::new("main()".to_string());
-    traverse_ast_body(&mut tree, &ast.body, "program", 1);
+    let mut tree = ptree::TreeBuilder::new("program".to_string());
+    traverse_ast_body(&mut tree, &ast.body, "main()", 1);
     let pretty_tree = tree.build();
 
     // Print out the tree using default formatting

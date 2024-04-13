@@ -24,13 +24,21 @@ fn parse_body(tokens: &mut VecDeque<Token>) -> Vec<Box<dyn ast::Node>> {
             TokenType::OpenScope => Box::new(ast::Block {
                 body: parse_body(tokens),
             }),
+
+            // Exit function if closing scope
             TokenType::CloseScope => {
                 return code_body;
             }
+
             // A branch instruction
             TokenType::Branch => build_branch(tokens),
+
+            // Build variables.
+            TokenType::Identifier => build_var_or_value(token),
+
             // While loops
             TokenType::Loop => build_loop(tokens),
+
             // Return statement
             TokenType::Return => build_return(tokens),
 
