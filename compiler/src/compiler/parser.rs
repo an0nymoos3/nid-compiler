@@ -19,11 +19,11 @@ fn parse_body(tokens: &mut VecDeque<Token>) -> Vec<Box<dyn ast::Node>> {
                                                         // above.
 
         // Create a new Node.
-        let new_node: Box<dyn ast::Node> = match token.token_type {
+        let new_node: Option<Box<dyn ast::Node>> = match token.token_type {
             // Inner block, traversed via recursion
-            TokenType::OpenScope => Box::new(ast::Block {
+            TokenType::OpenScope => Some(Box::new(ast::Block {
                 body: parse_body(tokens),
-            }),
+            })),
 
             // Exit function if closing scope
             TokenType::CloseScope => {
@@ -36,14 +36,14 @@ fn parse_body(tokens: &mut VecDeque<Token>) -> Vec<Box<dyn ast::Node>> {
                 let assigned_to: Box<dyn ast::Node> =
                     build_var_or_value(tokens.pop_front().unwrap());
                 // Return the assignment struct
-                Box::new(ast::Assignment {
+                Some(Box::new(ast::Assignment {
                     var: assigned_var,
                     var_or_value: assigned_to,
-                })
+                }))
             }
 
             // A branch instruction
-            TokenType::Branch => build_branch(tokens),
+            TokenType::Branch => Some(build_branch(tokens)),
 
             // Build variables. or functions
             TokenType::Identifier => {
@@ -51,44 +51,44 @@ fn parse_body(tokens: &mut VecDeque<Token>) -> Vec<Box<dyn ast::Node>> {
                     // Return a funtcion
                     // TODO: Do something with the parameters in the while loop below.
                     while tokens.pop_front().unwrap().token_type != TokenType::CloseParen {}
-                    Box::new(ast::Function {
+                    Some(Box::new(ast::Function {
                         identifier: token.value,
-                    })
+                    }))
                 } else {
                     // Return a variable
-                    build_var_or_value(token)
+                    Some(build_var_or_value(token))
                 }
             }
 
             // While loops
-            TokenType::Loop => build_loop(tokens),
+            TokenType::Loop => Some(build_loop(tokens)),
 
             // Return statement
-            TokenType::Return => build_return(tokens),
+            TokenType::Return => Some(build_return(tokens)),
 
             // Parse type indicator
             TokenType::TypeIndicator => match token.value.as_str() {
-                "int" => Box::new(ast::Type {
+                "int" => Some(Box::new(ast::Type {
                     type_value: ast::ValueEnum::Int(0),
-                }),
-                "float" => Box::new(ast::Type {
+                })),
+                "float" => Some(Box::new(ast::Type {
                     type_value: ast::ValueEnum::Float(0.0),
-                }),
-                "string" => Box::new(ast::Type {
+                })),
+                "string" => Some(Box::new(ast::Type {
                     type_value: ast::ValueEnum::String("".to_string()),
-                }),
-                "char" => Box::new(ast::Type {
+                })),
+                "char" => Some(Box::new(ast::Type {
                     type_value: ast::ValueEnum::Char(' '),
-                }),
-                "void" => Box::new(ast::Type {
+                })),
+                "void" => Some(Box::new(ast::Type {
                     type_value: ast::ValueEnum::Void,
-                }),
+                })),
 
                 &_ => panic!("Unknown type supplied!"),
             },
 
             // Not really sure what to do with EOL rn...
-            TokenType::Eol => Box::new(ast::DebugNode {}),
+            TokenType::Eol => None,
 
             // Anything else turns into Debug rn
             _ => panic!(
@@ -98,7 +98,9 @@ fn parse_body(tokens: &mut VecDeque<Token>) -> Vec<Box<dyn ast::Node>> {
         };
 
         // Push to body of current scope.
-        code_body.push(new_node);
+        if let Some(node) = new_node {
+            code_body.push(node);
+        }
     }
 
     code_body

@@ -1,5 +1,6 @@
 use std::fmt::{self, Display};
 
+#[derive(Debug)]
 pub enum ValueEnum {
     Int(i32),
     Float(f32),
@@ -8,6 +9,7 @@ pub enum ValueEnum {
     Void,
 }
 
+#[derive(Debug)]
 pub enum ConditionalOperator {
     And,
     Or,
@@ -46,12 +48,19 @@ impl Ast<dyn Node> {
 
 pub trait Node {
     fn display(&self) -> String;
+
+    fn has_leaves(&self) -> bool;
+
+    fn traverse_leaves(&self, tree: &mut ptree::TreeBuilder);
+
     fn is_block(&self) -> bool {
         false
     }
+
     fn get_body(&self) -> &[Box<dyn Node>] {
         &[]
     }
+
     fn get_name(&self) -> String {
         String::new()
     }
@@ -131,6 +140,19 @@ impl Node for Assignment {
     fn display(&self) -> String {
         String::from("Assignment")
     }
+
+    fn has_leaves(&self) -> bool {
+        true
+    }
+
+    fn traverse_leaves(&self, tree: &mut ptree::TreeBuilder) {
+        tree.begin_child(self.display());
+
+        self.var.traverse_leaves(tree);
+        self.var_or_value.traverse_leaves(tree);
+
+        tree.end_child();
+    }
 }
 impl Node for Block {
     fn display(&self) -> String {
@@ -148,56 +170,169 @@ impl Node for Block {
     fn get_name(&self) -> String {
         String::from("Block")
     }
+
+    fn has_leaves(&self) -> bool {
+        true
+    }
+
+    fn traverse_leaves(&self, tree: &mut ptree::TreeBuilder) {
+        traverse_ast_body(tree, &self.body, &self.display())
+    }
 }
 impl Node for Branch {
     fn display(&self) -> String {
         String::from("Branch")
+    }
+
+    fn has_leaves(&self) -> bool {
+        true
+    }
+
+    fn traverse_leaves(&self, tree: &mut ptree::TreeBuilder) {
+        tree.begin_child(self.display());
+
+        self.condition.traverse_leaves(tree);
+        self.true_body.traverse_leaves(tree);
+        if let Some(body) = &self.false_body {
+            body.traverse_leaves(tree);
+        }
+
+        tree.end_child();
     }
 }
 impl Node for Condition {
     fn display(&self) -> String {
         String::from("Condition")
     }
+
+    fn has_leaves(&self) -> bool {
+        true
+    }
+
+    fn traverse_leaves(&self, tree: &mut ptree::TreeBuilder) {
+        tree.begin_child(self.display());
+
+        if let Some(left) = &self.left_operand {
+            left.traverse_leaves(tree);
+        }
+        tree.add_empty_child(format!("OP: {:?}", self.operator));
+        self.right_operand.traverse_leaves(tree);
+
+        tree.end_child();
+    }
 }
 impl Node for Function {
     fn display(&self) -> String {
         String::from("Function")
     }
+
     fn get_name(&self) -> String {
         self.identifier.clone()
+    }
+
+    fn has_leaves(&self) -> bool {
+        true
+    }
+
+    fn traverse_leaves(&self, tree: &mut ptree::TreeBuilder) {
+        tree.begin_child(self.display());
+
+        tree.add_empty_child(format!("Function: {}", self.identifier));
+
+        tree.end_child();
     }
 }
 impl Node for Loop {
     fn display(&self) -> String {
         String::from("Loop")
     }
+
+    fn has_leaves(&self) -> bool {
+        true
+    }
+
+    fn traverse_leaves(&self, tree: &mut ptree::TreeBuilder) {
+        tree.begin_child(self.display());
+
+        self.condition.traverse_leaves(tree);
+        self.body.traverse_leaves(tree);
+
+        tree.end_child();
+    }
 }
 impl Node for Return {
     fn display(&self) -> String {
+        "Return".to_string()
+    }
+
+    fn has_leaves(&self) -> bool {
+        true
+    }
+
+    fn traverse_leaves(&self, tree: &mut ptree::TreeBuilder) {
+        tree.begin_child(self.display());
+
         if let Some(return_val) = &self.return_value {
-            return format!("Return - {return_val}");
+            return_val.traverse_leaves(tree);
+        } else {
+            tree.add_empty_child("None".to_string());
         }
-        String::from("Return - None")
+
+        tree.end_child();
     }
 }
 impl Node for Type {
     fn display(&self) -> String {
         String::from("Type indicator")
     }
+
+    fn has_leaves(&self) -> bool {
+        true
+    }
+
+    fn traverse_leaves(&self, tree: &mut ptree::TreeBuilder) {
+        tree.begin_child(self.display());
+
+        tree.end_child();
+    }
 }
 impl Node for Variable {
     fn display(&self) -> String {
-        String::from("Variable")
+        format!("Variable: {}", self.identifier)
+    }
+
+    fn has_leaves(&self) -> bool {
+        true
+    }
+
+    fn traverse_leaves(&self, tree: &mut ptree::TreeBuilder) {
+        tree.add_empty_child(self.display());
     }
 }
 impl Node for Value {
     fn display(&self) -> String {
-        String::from("Value")
+        format!("Value: {:?}", self.value)
+    }
+
+    fn has_leaves(&self) -> bool {
+        true
+    }
+
+    fn traverse_leaves(&self, tree: &mut ptree::TreeBuilder) {
+        tree.add_empty_child(self.display());
     }
 }
 impl Node for DebugNode {
     fn display(&self) -> String {
         String::from("Debugging Node")
+    }
+
+    fn has_leaves(&self) -> bool {
+        true
+    }
+
+    fn traverse_leaves(&self, tree: &mut ptree::TreeBuilder) {
+        tree.add_empty_child("DEBUGGING NODE!".to_string());
     }
 }
 
@@ -211,7 +346,6 @@ pub fn export_ast(ast: &Ast<dyn Node>) {
         &mut tree,
         ast.body.get(ast.entry_point + 1).unwrap().get_body(),
         &ast.body.get(ast.entry_point).unwrap().get_name(),
-        1,
     );
     let pretty_tree = tree.build();
 
@@ -221,19 +355,14 @@ pub fn export_ast(ast: &Ast<dyn Node>) {
 
 /// Recursive function to traverse the body of an AST
 #[allow(clippy::only_used_in_recursion)] // Ingore the recursion parameter warning.
-fn traverse_ast_body(
-    tree: &mut ptree::TreeBuilder,
-    body: &[Box<dyn Node>],
-    branch: &str,
-    depth: i32,
-) {
+fn traverse_ast_body(tree: &mut ptree::TreeBuilder, body: &[Box<dyn Node>], branch: &str) {
     tree.begin_child(branch.to_string());
 
     for node in body.iter() {
         if node.is_block() {
-            traverse_ast_body(tree, node.get_body(), &node.get_name(), depth + 1);
-        } else {
-            tree.add_empty_child(node.display());
+            traverse_ast_body(tree, node.get_body(), &node.get_name());
+        } else if node.has_leaves() {
+            node.traverse_leaves(tree);
         }
     }
     tree.end_child();
