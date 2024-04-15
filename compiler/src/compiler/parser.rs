@@ -6,7 +6,7 @@ use super::lexer::{Token, TokenType};
 /// Builds an AST from a queue of tokens.
 pub fn generate_ast(tokens: &mut VecDeque<Token>) -> ast::Ast<dyn ast::Node> {
     let body: Vec<Box<dyn ast::Node>> = parse_body(tokens);
-    let ast: ast::Ast<dyn ast::Node> = ast::Ast { body };
+    let ast: ast::Ast<dyn ast::Node> = ast::Ast::new(body);
     ast
 }
 

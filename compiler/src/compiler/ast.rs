@@ -15,7 +15,33 @@ pub enum ConditionalOperator {
 }
 #[derive(Debug)]
 pub struct Ast<T: Node + ?Sized> {
+    pub entry_point: usize, // Entry point index
     pub body: Vec<Box<T>>,
+}
+
+impl Ast<dyn Node> {
+    /// Finds the entry point of a program (main())
+    pub fn new(body: Vec<Box<dyn Node>>) -> Self {
+        let mut index: usize = 0;
+        loop {
+            if index >= body.len() - 1 {
+                panic!("main() not found!");
+            }
+
+            // TODO: Remove the allow()
+            #[allow(clippy::borrowed_box)]
+            let node: &Box<dyn Node> = body.get(index).unwrap();
+            if node.get_name() == "main" && body.get(index + 1).unwrap().is_block() {
+                break; // Only break if it's the main decleration
+            }
+            index += 1;
+        }
+
+        Self {
+            body,
+            entry_point: index,
+        }
+    }
 }
 
 pub trait Node {
@@ -181,25 +207,10 @@ pub fn export_ast(ast: &Ast<dyn Node>) {
     // Build a tree using a TreeBuilder
     let mut tree = ptree::TreeBuilder::new("program".to_string());
 
-    let mut index: usize = 0;
-    loop {
-        if index >= ast.body.len() - 1 {
-            panic!("main() not found!");
-        }
-
-        // TODO: Remove the allow()
-        #[allow(clippy::borrowed_box)]
-        let node: &Box<dyn Node> = ast.body.get(index).unwrap();
-        if node.get_name() == "main" && ast.body.get(index + 1).unwrap().is_block() {
-            break; // Only break if it's the main decleration
-        }
-        index += 1;
-    }
-
     traverse_ast_body(
         &mut tree,
-        ast.body.get(index + 1).unwrap().get_body(),
-        &ast.body.get(index).unwrap().get_name(),
+        ast.body.get(ast.entry_point + 1).unwrap().get_body(),
+        &ast.body.get(ast.entry_point).unwrap().get_name(),
         1,
     );
     let pretty_tree = tree.build();
