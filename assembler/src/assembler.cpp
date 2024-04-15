@@ -13,6 +13,7 @@ std::vector<AssembeledLine> assemble_lines(std::vector<Line> lines) {
 
   for (int i = 0; i < lines.size(); i++) {
     AssembeledLine line = assemble_line(lines[i]);
+    line.error_code = lines[i].error_code;
     if (line.line_content.size() != 0) {
       line.line_number = i + 1;
       assembeled_lines.push_back(line);
@@ -33,17 +34,20 @@ AssembeledLine assemble_line(Line line) {
       ass_line = {ass_string, line.line_number};
       return ass_line;
     } else if (token.token_type == Operation) {
-      ass_string += operation_to_binary(token.value);
+      ass_string +=
+          operation_to_binary(token.value, line.line_number, line.error_code);
     } else if (token.token_type == Mode || token.token_type == Register ||
                token.token_type == Constant) {
       ass_string += token.value;
     }
   }
 
+  std::cout << "Warning: Line did not end with EOL character!" << std::endl;
   return ass_line;
 }
 
-std::string operation_to_binary(std::string value) {
+std::string operation_to_binary(std::string value, int line_number,
+                                int &error_code) {
   // Convert the entire string to uppercase using std::transform()
   std::transform(value.begin(), value.end(), value.begin(), ::toupper);
 
@@ -63,7 +67,11 @@ std::string operation_to_binary(std::string value) {
     return "000110";
   }
 
-  std::cout << "Unknown operation used, parsed as NOP" << std::endl;
+  std::cout << "Error 2: Unknown operation at line " << line_number
+            << "\nOperation " << value << " used, parsed as NOP" << std::endl
+            << std::endl;
+  error_code = 2;
+
   return "000000";
 }
 
@@ -91,6 +99,11 @@ void printAssembeledLine(std::vector<AssembeledLine> lines) {
   std::cout << "Printing lines as hex code: " << std::endl;
 
   for (int i = 0; i < lines.size(); i++) {
-    std::cout << "x\"" << lines[i].line_content << "\", " << std::endl;
+    if (lines[i].error_code == 0) {
+      std::cout << "x\"" << lines[i].line_content << "\", " << std::endl;
+    } else {
+      std::cout << "x\"" << lines[i].line_content
+                << "\", \t --Line error: " << lines[i].error_code << std::endl;
+    }
   }
 }

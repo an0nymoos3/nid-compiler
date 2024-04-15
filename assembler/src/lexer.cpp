@@ -14,8 +14,10 @@ std::vector<Line> tokenize(std::vector<Line> &file_content) {
   for (int i = 0; i < file_content.size(); i++) {
     std::vector<Token> token_queue;
     Line current_line = file_content[i];
-    token_queue = tokenize_line(current_line.line_content);
-    token_queue = check_token_line(token_queue);
+    token_queue =
+        tokenize_line(current_line.line_content, current_line.line_number,
+                      current_line.error_code);
+    token_queue = check_token_line(token_queue, current_line.line_number);
     current_line.line_tokens = token_queue;
     lines.push_back(current_line);
   }
@@ -23,9 +25,13 @@ std::vector<Line> tokenize(std::vector<Line> &file_content) {
   return lines;
 }
 
-std::vector<Token> tokenize_line(std::string line_content) {
+std::vector<Token> tokenize_line(std::string line_content, int line_number,
+                                 int &error_code) {
   std::vector<Token> token_queue;
   std::vector<char> src_code;
+  // Vector for tokens {Operation, Mode, Register} added to line
+  std::vector<bool> broken_structure = {false, false, false};
+  error_code = 0; // Code 0 means no error
 
   // Push all the chars to src_code
   for (char c : line_content) {
@@ -66,18 +72,20 @@ std::vector<Token> tokenize_line(std::string line_content) {
      * Checks for assembly operation
      */
     else if (is_letter(current_char) && !is_register(line_content, j) &&
-             !is_mode(line_content, j)) {
+             !is_mode(line_content, j) && !broken_structure[1] &&
+             !broken_structure[2] && build_word(line_content, j).size() > 1) {
       std::string word = build_word(line_content, j);
       token = {word, Operation};
       j += word.size() - 1; // Skip past the rest of the built word
       token_queue.push_back(token);
+      broken_structure[0] = true;
     }
 
     /*
      * Checks for adress mode
      */
-    else if (is_mode(line_content, j)) {
-      j++;
+    else if (is_mode(line_content, j) && !broken_structure[2] &&
+             ((int)line_content[++j] - 48) <= 3) {
       std::string word = build_num(line_content, j);
       j += word.size() - 1; // Skip past the rest of the built word
       word = decimal_to_binary(word);
@@ -86,13 +94,14 @@ std::vector<Token> tokenize_line(std::string line_content) {
       }
       token = {word, Mode};
       token_queue.push_back(token);
+      broken_structure[1] = true;
     }
 
     /*
      * Checks for register index
      */
-    else if (is_register(line_content, j)) {
-      j++;
+    else if (is_register(line_content, j) &&
+             std::stoi(build_num(line_content, ++j), nullptr, 10) <= 15) {
       std::string word = build_num(line_content, j);
       j += word.size() - 1; // Skip past the rest of the built word
       word = decimal_to_binary(word);
@@ -101,6 +110,7 @@ std::vector<Token> tokenize_line(std::string line_content) {
       }
       token = {word, Register};
       token_queue.push_back(token);
+      broken_structure[2] = true;
     }
 
     /*
@@ -119,7 +129,14 @@ std::vector<Token> tokenize_line(std::string line_content) {
      */
     else {
       if (current_char != ' ') {
-        std::cout << "Unknown char!" << std::endl;
+        std::cout << "Error 1: Unknown char at line " << line_number
+                  << "\nAround " << print_error_area(line_content, j)
+                  << std::endl
+                  << std::endl;
+        token = {"|n", EOL};
+        token_queue.push_back(token);
+        error_code = 1; // Code 1 means an unknown token was found
+        return token_queue;
       }
     }
   }
@@ -127,7 +144,8 @@ std::vector<Token> tokenize_line(std::string line_content) {
   return token_queue;
 }
 
-std::vector<Token> check_token_line(std::vector<Token> token_line) {
+std::vector<Token> check_token_line(std::vector<Token> token_line,
+                                    int line_number) {
   if (token_line.size() == 0) {
     return token_line;
   }
@@ -233,4 +251,22 @@ void print_token(std::vector<Token> &tokens) {
     std::cout << "Token (value, type): " << tokens[i].value << ", "
               << tokens[i].token_type << std::endl;
   }
+}
+
+std::string print_error_area(std::string line_content, int error_index) {
+  std::string error_area;
+
+  for (int i = error_index - 12; i <= error_index + 6; i++) {
+    if (i >= 0 && i < line_content.size()) {
+      if (i == error_index) {
+        error_area += " -> ";
+        error_area += line_content[i];
+        error_area += " <- ";
+      } else {
+        error_area += line_content[i];
+      }
+    }
+  }
+
+  return error_area;
 }
