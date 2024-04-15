@@ -3,6 +3,7 @@
  * into its smaller "tokens" or chars.
  */
 #include "lexer.hpp"
+#include <algorithm>
 #include <bitset>
 #include <iostream>
 #include <sstream>
@@ -32,6 +33,10 @@ std::vector<Token> tokenize_line(std::string line_content, int line_number,
   // Vector for tokens {Operation, Mode, Register} added to line
   std::vector<bool> broken_structure = {false, false, false};
   error_code = 0; // Code 0 means no error
+
+  // For Jmp* tokens
+  std::vector<std::string> jmp_ops = {"jmp", "brne"};
+  std::string prev_op = "nop";
 
   // Push all the chars to src_code
   for (char c : line_content) {
@@ -79,6 +84,7 @@ std::vector<Token> tokenize_line(std::string line_content, int line_number,
       j += word.size() - 1; // Skip past the rest of the built word
       token_queue.push_back(token);
       broken_structure[0] = true;
+      prev_op = word;
     }
 
     /*
@@ -121,6 +127,29 @@ std::vector<Token> tokenize_line(std::string line_content, int line_number,
       j += word.size() - 1; // Skip past the rest of the built word
       word = decimal_to_binary(word);
       token = {word, Constant};
+      token_queue.push_back(token);
+    }
+
+    /*
+     * Checks for jump OP
+     */
+    else if (current_char == '#' && std::find(jmp_ops.begin(), jmp_ops.end(),
+                                              prev_op) != jmp_ops.end()) {
+      j++;
+      std::string word = build_word(line_content, j);
+      token = {word, JmpOP};
+      j += word.size() - 1; // Skip past the rest of the built word
+      token_queue.push_back(token);
+    }
+
+    /*
+     * Checks for jump point
+     */
+    else if (current_char == '#') {
+      j++;
+      std::string word = build_word(line_content, j);
+      token = {word, JmpPoint};
+      j += word.size() - 1; // Skip past the rest of the built word
       token_queue.push_back(token);
     }
 

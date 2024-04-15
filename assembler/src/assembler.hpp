@@ -2,6 +2,7 @@
  * This file is for assembling or converting from regular english to binary.
  */
 #include "utils/commandline.hpp"
+#include <map>
 #include <string>
 #include <vector>
 
@@ -13,7 +14,7 @@ struct AssembeledLine {
 
 std::vector<AssembeledLine> assemble_lines(std::vector<Line> lines);
 
-AssembeledLine assemble_line(Line line);
+AssembeledLine assemble_line(Line line, std::map<std::string, int> jmp_map);
 
 void printAssembeledLine(std::vector<AssembeledLine> lines);
 

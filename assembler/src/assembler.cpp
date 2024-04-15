@@ -3,16 +3,30 @@
  */
 #include "assembler.hpp"
 #include <algorithm>
+#include <bitset>
 #include <ios>
 #include <iostream>
+#include <map>
 #include <sstream>
 #include <vector>
 
 std::vector<AssembeledLine> assemble_lines(std::vector<Line> lines) {
   std::vector<AssembeledLine> assembeled_lines;
+  std::map<std::string, int> jmp_map;
+
+  // Pre-calculate to which lines we will jmp to
+  for (int i = 0; i < lines.size(); i++) {
+    if (lines[i].line_tokens.size() != 1) {
+      for (int j = 0; j < lines[i].line_tokens.size(); j++) {
+        if (lines[i].line_tokens[j].token_type == JmpPoint) {
+          jmp_map[lines[i].line_tokens[j].value] = i + 1;
+        }
+      }
+    }
+  }
 
   for (int i = 0; i < lines.size(); i++) {
-    AssembeledLine line = assemble_line(lines[i]);
+    AssembeledLine line = assemble_line(lines[i], jmp_map);
     line.error_code = lines[i].error_code;
     if (line.line_content.size() != 0) {
       line.line_number = i + 1;
@@ -23,7 +37,7 @@ std::vector<AssembeledLine> assemble_lines(std::vector<Line> lines) {
   return assembeled_lines;
 }
 
-AssembeledLine assemble_line(Line line) {
+AssembeledLine assemble_line(Line line, std::map<std::string, int> jmp_map) {
   AssembeledLine ass_line;
   std::string ass_string;
 
@@ -39,6 +53,13 @@ AssembeledLine assemble_line(Line line) {
     } else if (token.token_type == Mode || token.token_type == Register ||
                token.token_type == Constant) {
       ass_string += token.value;
+    } else if (token.token_type == JmpOP) {
+      // Convert the decimal linenumber to binary string
+      std::bitset<sizeof(int) * 4> bits(jmp_map[token.value]);
+      std::ostringstream oss;
+      oss << bits;
+      std::string value = oss.str();
+      ass_string += value;
     }
   }
 

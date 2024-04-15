@@ -5,7 +5,17 @@
 #include <string>
 #include <vector>
 
-enum TokenType { Operation, Mode, Register, Constant, Comment, EOL, Separator };
+enum TokenType {
+  Operation,
+  Mode,
+  Register,
+  Constant,
+  Comment,
+  EOL,
+  Separator,
+  JmpOP,
+  JmpPoint
+};
 
 struct Token {
   std::string value;
