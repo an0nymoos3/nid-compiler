@@ -17,8 +17,8 @@ pub enum TokenType {
     ArrayAccessClose, // ]
     BinaryOperator,   // +, -, *, /
     Comparison,       // ==, <=, >=
-    LogicOperator,    // &&, ||
-    TypeDecleration,  // Used to declare variable type and function return
+    LogicOperator,    // !, &&, ||
+    TypeIndicator,    // Used to declare variable type and function return
     Loop,
     Branch,    // If conditions etc...
     Seperator, // for identifying seperations for things like parameters (,)
@@ -182,6 +182,24 @@ pub fn tokenize(file_content: String) -> VecDeque<Token> {
             }
 
         /*
+         * Check for logical NOT and OR operations
+         */
+        } else if current_char == '!' {
+            token = Token {
+                value: String::from(current_char),
+                token_type: TokenType::LogicOperator,
+            }
+        } else if current_char == '|' {
+            if src_code.pop_front().unwrap() != '|' {
+                panic!("Missing second | in logical OR operation!");
+            }
+
+            token = Token {
+                value: String::from("||"),
+                token_type: TokenType::LogicOperator,
+            }
+
+        /*
          * Lexes binary operations.
          */
         } else if current_char == '+' || current_char == '-' || current_char == '/' {
@@ -272,11 +290,11 @@ fn is_num(cur_char: char) -> bool {
 /// Returns if a detected word is reserved (eg. void, int, etc)
 fn is_reserved_keywords(word: &str) -> Option<TokenType> {
     let keyword_map: HashMap<&str, TokenType> = HashMap::from([
-        ("void", TokenType::TypeDecleration),
-        ("int", TokenType::TypeDecleration),
-        ("float", TokenType::TypeDecleration),
-        ("string", TokenType::TypeDecleration),
-        ("char", TokenType::TypeDecleration),
+        ("void", TokenType::TypeIndicator),
+        ("int", TokenType::TypeIndicator),
+        ("float", TokenType::TypeIndicator),
+        ("string", TokenType::TypeIndicator),
+        ("char", TokenType::TypeIndicator),
         ("if", TokenType::Branch),
         ("else", TokenType::Branch),
         ("while", TokenType::Loop),

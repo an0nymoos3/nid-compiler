@@ -30,17 +30,62 @@ fn parse_body(tokens: &mut VecDeque<Token>) -> Vec<Box<dyn ast::Node>> {
                 return code_body;
             }
 
+            // Assignemnets
+            TokenType::Assignment => {
+                let assigned_var: Box<dyn ast::Node> = code_body.pop().unwrap(); // Get last node added,
+                let assigned_to: Box<dyn ast::Node> =
+                    build_var_or_value(tokens.pop_front().unwrap());
+                // Return the assignment struct
+                Box::new(ast::Assignment {
+                    var: assigned_var,
+                    var_or_value: assigned_to,
+                })
+            }
+
             // A branch instruction
             TokenType::Branch => build_branch(tokens),
 
-            // Build variables.
-            TokenType::Identifier => build_var_or_value(token),
+            // Build variables. or functions
+            TokenType::Identifier => {
+                if is_function(tokens) {
+                    // Return a funtcion
+                    // TODO: Do something with the parameters in the while loop below.
+                    while tokens.pop_front().unwrap().token_type != TokenType::CloseParen {}
+                    Box::new(ast::Function {
+                        identifier: token.value,
+                    })
+                } else {
+                    // Return a variable
+                    build_var_or_value(token)
+                }
+            }
 
             // While loops
             TokenType::Loop => build_loop(tokens),
 
             // Return statement
             TokenType::Return => build_return(tokens),
+
+            // Parse type indicator
+            TokenType::TypeIndicator => match token.value.as_str() {
+                "int" => Box::new(ast::Type {
+                    type_value: ast::ValueEnum::Int(0),
+                }),
+                "float" => Box::new(ast::Type {
+                    type_value: ast::ValueEnum::Float(0.0),
+                }),
+                "string" => Box::new(ast::Type {
+                    type_value: ast::ValueEnum::String("".to_string()),
+                }),
+                "char" => Box::new(ast::Type {
+                    type_value: ast::ValueEnum::Char(' '),
+                }),
+                "void" => Box::new(ast::Type {
+                    type_value: ast::ValueEnum::Void,
+                }),
+
+                &_ => panic!("Unknown type supplied!"),
+            },
 
             // Not really sure what to do with EOL rn...
             TokenType::Eol => Box::new(ast::DebugNode {}),
@@ -136,10 +181,10 @@ fn build_return(tokens: &mut VecDeque<Token>) -> Box<ast::Return> {
 
 /// Helper function for parsing if token is a variable or value
 fn build_var_or_value(token: Token) -> Box<dyn ast::Node> {
+    // Check for identifier, indicating Variable
     if token.token_type == TokenType::Identifier {
         return Box::new(Variable {
             identifier: token.value,
-            value: None,
         });
     };
 
@@ -192,4 +237,9 @@ fn build_condition(tokens: &mut VecDeque<Token>) -> Box<ast::Condition> {
         left_operand: left_op,
         right_operand: right_op,
     })
+}
+
+/// Returns whether or not an identifier is for function.
+fn is_function(tokens: &mut VecDeque<Token>) -> bool {
+    tokens.front().unwrap().token_type == TokenType::OpenParen
 }

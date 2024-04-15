@@ -1,6 +1,5 @@
 use std::fmt::{self, Display};
 
-#[allow(dead_code)] // TODO: Remove later
 pub enum ValueEnum {
     Int(i32),
     Float(f32),
@@ -9,13 +8,11 @@ pub enum ValueEnum {
     Void,
 }
 
-#[allow(dead_code)] // TODO: Remove later
 pub enum ConditionalOperator {
     And,
     Or,
     Not,
 }
-
 #[derive(Debug)]
 pub struct Ast<T: Node + ?Sized> {
     pub body: Vec<Box<T>>,
@@ -45,6 +42,11 @@ impl Display for dyn Node {
 * Wherever Box<dyn Node> is used, any type of Node can be used.
 */
 
+pub struct Assignment {
+    pub var: Box<dyn Node>,          // Var being assigned
+    pub var_or_value: Box<dyn Node>, // Varibale or Value being assigned to var
+}
+
 /// Code block, essentially scopes ({...})
 pub struct Block {
     pub body: Vec<Box<dyn Node>>,
@@ -64,6 +66,10 @@ pub struct Condition {
     pub right_operand: Box<dyn Node>,        // Variable or value
 }
 
+pub struct Function {
+    pub identifier: String,
+}
+
 /// Loops, currently ony while is supported
 pub struct Loop {
     pub condition: Box<Condition>,
@@ -75,11 +81,13 @@ pub struct Return {
     pub return_value: Option<Box<dyn Node>>, // Variable, Value or None
 }
 
+pub struct Type {
+    pub type_value: ValueEnum,
+}
+
 /// Variable Node
 pub struct Variable {
-    pub identifier: String,
-    pub value: Option<Value>, // Option allows for uninitialized value. Up to compiler to later verify
-                              // that uninitialized variable isn't read.
+    pub identifier: String, // Identifier (name of variable)
 }
 
 /// Value Node
@@ -93,6 +101,11 @@ pub struct DebugNode;
 /*
 * Impl the Node trait on all Nodes
 */
+impl Node for Assignment {
+    fn display(&self) -> String {
+        String::from("Assignment")
+    }
+}
 impl Node for Block {
     fn display(&self) -> String {
         String::from("Block")
@@ -120,6 +133,14 @@ impl Node for Condition {
         String::from("Condition")
     }
 }
+impl Node for Function {
+    fn display(&self) -> String {
+        String::from("Function")
+    }
+    fn get_name(&self) -> String {
+        self.identifier.clone()
+    }
+}
 impl Node for Loop {
     fn display(&self) -> String {
         String::from("Loop")
@@ -131,6 +152,11 @@ impl Node for Return {
             return format!("Return - {return_val}");
         }
         String::from("Return - None")
+    }
+}
+impl Node for Type {
+    fn display(&self) -> String {
+        String::from("Type indicator")
     }
 }
 impl Node for Variable {
@@ -154,7 +180,28 @@ pub fn export_ast(ast: &Ast<dyn Node>) {
     println!("AST:");
     // Build a tree using a TreeBuilder
     let mut tree = ptree::TreeBuilder::new("program".to_string());
-    traverse_ast_body(&mut tree, &ast.body, "main()", 1);
+
+    let mut index: usize = 0;
+    loop {
+        if index >= ast.body.len() - 1 {
+            panic!("main() not found!");
+        }
+
+        // TODO: Remove the allow()
+        #[allow(clippy::borrowed_box)]
+        let node: &Box<dyn Node> = ast.body.get(index).unwrap();
+        if node.get_name() == "main" && ast.body.get(index + 1).unwrap().is_block() {
+            break; // Only break if it's the main decleration
+        }
+        index += 1;
+    }
+
+    traverse_ast_body(
+        &mut tree,
+        ast.body.get(index + 1).unwrap().get_body(),
+        &ast.body.get(index).unwrap().get_name(),
+        1,
+    );
     let pretty_tree = tree.build();
 
     // Print out the tree using default formatting
@@ -162,6 +209,7 @@ pub fn export_ast(ast: &Ast<dyn Node>) {
 }
 
 /// Recursive function to traverse the body of an AST
+#[allow(clippy::only_used_in_recursion)] // Ingore the recursion parameter warning.
 fn traverse_ast_body(
     tree: &mut ptree::TreeBuilder,
     body: &[Box<dyn Node>],
