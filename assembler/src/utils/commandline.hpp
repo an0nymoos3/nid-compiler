@@ -1,3 +1,4 @@
+#include "../lexer.hpp"
 #include <string>
 
 struct Args {
@@ -7,3 +8,5 @@ struct Args {
 };
 
 Args parse_args(int argc, char **argv);
+
+std::vector<Line> parse_file(Args args);
