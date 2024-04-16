@@ -35,7 +35,8 @@ std::vector<Token> tokenize_line(std::string line_content, int line_number,
   error_code = 0; // Code 0 means no error
 
   // For Jmp* tokens
-  std::vector<std::string> jmp_ops = {"jmp", "brne"};
+  std::vector<std::string> jmp_ops = {"jmp", "jsr", "ret", "beq", "bne",
+                                      "bpl", "bmi", "bge", "blt"};
   std::string prev_op = "nop";
 
   // Push all the chars to src_code
@@ -195,11 +196,13 @@ std::vector<Token> check_token_line(std::vector<Token> token_line,
       token_line.insert(token_line.begin() + 4, token2);
     }
 
-    if (token_line.size() <= 6 || token_line[6].token_type != Constant) {
-      Token token = {",", Separator};
-      token_line.insert(token_line.begin() + 5, token);
-      Token token2 = {"0000000000000000", Constant};
-      token_line.insert(token_line.begin() + 6, token2);
+    if (token_line.size() <= 5 || token_line[5].token_type != JmpOP) {
+      if (token_line.size() <= 6 || token_line[6].token_type != Constant) {
+        Token token = {",", Separator};
+        token_line.insert(token_line.begin() + 5, token);
+        Token token2 = {"0000000000000000", Constant};
+        token_line.insert(token_line.begin() + 6, token2);
+      }
     }
   }
 

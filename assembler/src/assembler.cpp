@@ -86,6 +86,46 @@ std::string operation_to_binary(std::string value, int line_number,
     return "000101";
   } else if (value == "ADD") {
     return "000110";
+  } else if (value == "ADDI") {
+    return "000111";
+  } else if (value == "SUB") {
+    return "001000";
+  } else if (value == "SUBI") {
+    return "001001";
+  } else if (value == "MUL") {
+    return "001010";
+  } else if (value == "MULI") {
+    return "001011";
+  } else if (value == "CMP") {
+    return "001100";
+  } else if (value == "CMPI") {
+    return "001101";
+  } else if (value == "AND") {
+    return "001110";
+  } else if (value == "ANDI") {
+    return "001111";
+  } else if (value == "OR") {
+    return "010000";
+  } else if (value == "ORI") {
+    return "010001";
+  } else if (value == "JMP") {
+    return "010010";
+  } else if (value == "JSR") {
+    return "010011";
+  } else if (value == "RET") {
+    return "010100";
+  } else if (value == "BEQ") {
+    return "010101";
+  } else if (value == "BNE") {
+    return "010110";
+  } else if (value == "BPL") {
+    return "010111";
+  } else if (value == "BMI") {
+    return "011000";
+  } else if (value == "BGE") {
+    return "011001";
+  } else if (value == "BLT") {
+    return "011010";
   }
 
   std::cout << "Error 2: Unknown operation at line " << line_number
