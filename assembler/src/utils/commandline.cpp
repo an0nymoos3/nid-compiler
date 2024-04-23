@@ -41,6 +41,7 @@ std::vector<Line> parse_file(Args args) {
 
   if (!file.is_open()) {
     std::cout << "Error opening the file." << std::endl;
+    exit(1);
   }
 
   // Read the file contents into a stringstream
