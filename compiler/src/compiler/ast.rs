@@ -15,6 +15,23 @@ pub enum ConditionalOperator {
     Or,
     Not,
 }
+
+/// Enum for easier identification of Node type
+#[derive(PartialEq, Eq)]
+pub enum AstType {
+    Assignment,
+    Block,
+    Branch,
+    Condition,
+    Function,
+    Loop,
+    Return,
+    Type,
+    Variable,
+    Value,
+    Debug,
+}
+
 #[derive(Debug)]
 pub struct Ast<T: Node + ?Sized> {
     pub entry_point: usize, // Entry point index
@@ -64,6 +81,8 @@ pub trait Node {
     fn get_name(&self) -> String {
         String::new()
     }
+
+    fn get_type(&self) -> AstType;
 }
 impl Display for dyn Node {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -141,6 +160,10 @@ impl Node for Assignment {
         String::from("Assignment")
     }
 
+    fn get_type(&self) -> AstType {
+        AstType::Assignment
+    }
+
     fn has_leaves(&self) -> bool {
         true
     }
@@ -157,6 +180,10 @@ impl Node for Assignment {
 impl Node for Block {
     fn display(&self) -> String {
         String::from("Block")
+    }
+
+    fn get_type(&self) -> AstType {
+        AstType::Block
     }
 
     fn is_block(&self) -> bool {
@@ -184,6 +211,10 @@ impl Node for Branch {
         String::from("Branch")
     }
 
+    fn get_type(&self) -> AstType {
+        AstType::Branch
+    }
+
     fn has_leaves(&self) -> bool {
         true
     }
@@ -203,6 +234,10 @@ impl Node for Branch {
 impl Node for Condition {
     fn display(&self) -> String {
         String::from("Condition")
+    }
+
+    fn get_type(&self) -> AstType {
+        AstType::Condition
     }
 
     fn has_leaves(&self) -> bool {
@@ -226,6 +261,10 @@ impl Node for Function {
         String::from("Function")
     }
 
+    fn get_type(&self) -> AstType {
+        AstType::Function
+    }
+
     fn get_name(&self) -> String {
         self.identifier.clone()
     }
@@ -247,6 +286,10 @@ impl Node for Loop {
         String::from("Loop")
     }
 
+    fn get_type(&self) -> AstType {
+        AstType::Loop
+    }
+
     fn has_leaves(&self) -> bool {
         true
     }
@@ -263,6 +306,10 @@ impl Node for Loop {
 impl Node for Return {
     fn display(&self) -> String {
         "Return".to_string()
+    }
+
+    fn get_type(&self) -> AstType {
+        AstType::Return
     }
 
     fn has_leaves(&self) -> bool {
@@ -286,6 +333,10 @@ impl Node for Type {
         String::from("Type indicator")
     }
 
+    fn get_type(&self) -> AstType {
+        AstType::Type
+    }
+
     fn has_leaves(&self) -> bool {
         true
     }
@@ -301,6 +352,10 @@ impl Node for Variable {
         format!("Variable: {}", self.identifier)
     }
 
+    fn get_type(&self) -> AstType {
+        AstType::Variable
+    }
+
     fn has_leaves(&self) -> bool {
         true
     }
@@ -314,6 +369,10 @@ impl Node for Value {
         format!("Value: {:?}", self.value)
     }
 
+    fn get_type(&self) -> AstType {
+        AstType::Value
+    }
+
     fn has_leaves(&self) -> bool {
         true
     }
@@ -325,6 +384,10 @@ impl Node for Value {
 impl Node for DebugNode {
     fn display(&self) -> String {
         String::from("Debugging Node")
+    }
+
+    fn get_type(&self) -> AstType {
+        AstType::Debug
     }
 
     fn has_leaves(&self) -> bool {
