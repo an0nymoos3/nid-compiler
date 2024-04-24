@@ -492,11 +492,20 @@ pub fn export_ast(ast: &Ast<dyn Node>) {
     // Build a tree using a TreeBuilder
     let mut tree = ptree::TreeBuilder::new("program".to_string());
 
-    traverse_ast_body(
-        &mut tree,
-        ast.body.get(ast.entry_point + 1).unwrap().get_body(),
-        &ast.body.get(ast.entry_point).unwrap().get_name(),
-    );
+    for i in 0..ast.body.len() {
+        if ast.body[i].get_type() == AstType::Function {
+            traverse_ast_body(
+                &mut tree,
+                ast.body[i + 1].get_body(),
+                &ast.body[i].get_name(),
+            )
+        }
+    }
+    //traverse_ast_body(
+    //    &mut tree,
+    //    ast.body.get(ast.entry_point + 1).unwrap().get_body(),
+    //    &ast.body.get(ast.entry_point).unwrap().get_name(),
+    //);
     let pretty_tree = tree.build();
 
     // Print out the tree using default formatting
