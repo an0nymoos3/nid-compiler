@@ -1,5 +1,7 @@
 use std::fmt::{self, Display};
 
+use super::lexer::Token;
+
 #[derive(Debug)]
 pub enum ValueEnum {
     Int(i32),
@@ -30,6 +32,7 @@ pub enum ConditionalOperator {
 /// Enum for easier identification of Node type
 #[derive(PartialEq, Eq)]
 pub enum AstType {
+    Asm,
     Assignment,
     BinaryExpression,
     Block,
@@ -108,6 +111,10 @@ impl Display for dyn Node {
 * Wherever Box<dyn Node> is used, any type of Node can be used.
 */
 
+pub struct Asm {
+    pub code: Vec<Token>,
+}
+
 pub struct Assignment {
     pub var: Box<dyn Node>,        // Var being assigned
     pub expression: Box<dyn Node>, // Varibale or Value being assigned to var
@@ -173,6 +180,36 @@ pub struct DebugNode;
 /*
 * Impl the Node trait on all Nodes
 */
+impl Node for Asm {
+    fn display(&self) -> String {
+        String::from("Asm")
+    }
+
+    fn get_type(&self) -> AstType {
+        AstType::Asm
+    }
+
+    fn has_leaves(&self) -> bool {
+        true
+    }
+
+    fn traverse_leaves(&self, tree: &mut ptree::TreeBuilder) {
+        tree.begin_child(self.display());
+
+        let mut branch: String = String::new();
+        for i in 0..self.code.len() {
+            if i < self.code.len() - 1 && !is_new_asm_instruction(&self.code[i + 1].value) {
+                branch.push_str(&self.code[i].value);
+            } else {
+                branch.push_str(&self.code[i].value);
+                tree.add_empty_child(branch.clone());
+                branch.clear();
+            }
+        }
+
+        tree.end_child();
+    }
+}
 impl Node for Assignment {
     fn display(&self) -> String {
         String::from("Assignment")
@@ -195,7 +232,6 @@ impl Node for Assignment {
         tree.end_child();
     }
 }
-
 impl Node for BinaryExpression {
     fn display(&self) -> String {
         String::from("BinaryExpression")
@@ -228,7 +264,6 @@ impl Node for BinaryExpression {
         tree.end_child();
     }
 }
-
 impl Node for Block {
     fn display(&self) -> String {
         String::from("Block")
@@ -481,4 +516,13 @@ fn traverse_ast_body(tree: &mut ptree::TreeBuilder, body: &[Box<dyn Node>], bran
         }
     }
     tree.end_child();
+}
+
+/// For prettier debug AST
+fn is_new_asm_instruction(instruciton: &str) -> bool {
+    let reserved_words: [&str; 25] = [
+        "nop", "ldi", "ld", "st", "psh", "pop", "add", "addi", "sub", "subi", "cmp", "cmpi", "and",
+        "andi", "or", "ori", "jmp", "jsr", "ret", "beq", "bne", "bpl", "bmi", "bge", "blt",
+    ];
+    reserved_words.contains(&instruciton)
 }
