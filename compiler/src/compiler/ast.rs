@@ -147,6 +147,7 @@ pub struct Condition {
 
 pub struct Function {
     pub identifier: String,
+    pub params: Vec<Box<dyn Node>>, // Accept nodes as params, such as values or variables etc
 }
 
 /// Loops, currently ony while is supported
@@ -365,6 +366,14 @@ impl Node for Function {
 
         tree.add_empty_child(format!("Function: {}", self.identifier));
 
+        let params_leaf = self
+            .params
+            .iter()
+            .map(|param| param.get_name())
+            .collect::<String>();
+
+        tree.add_empty_child(params_leaf);
+
         tree.end_child();
     }
 }
@@ -486,7 +495,7 @@ impl Node for DebugNode {
     }
 }
 
-/// Debugging function. Prints all nodes in AST to terminal. TODO: Export to file instead of printing.
+/// Debugging function. Prints all nodes in AST to terminal.
 pub fn export_ast(ast: &Ast<dyn Node>) {
     println!("AST:");
     // Build a tree using a TreeBuilder
@@ -501,11 +510,6 @@ pub fn export_ast(ast: &Ast<dyn Node>) {
             )
         }
     }
-    //traverse_ast_body(
-    //    &mut tree,
-    //    ast.body.get(ast.entry_point + 1).unwrap().get_body(),
-    //    &ast.body.get(ast.entry_point).unwrap().get_name(),
-    //);
     let pretty_tree = tree.build();
 
     // Print out the tree using default formatting
