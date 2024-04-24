@@ -33,12 +33,30 @@ fn parse_body(tokens: &mut VecDeque<Token>) -> Vec<Box<dyn ast::Node>> {
             // Assignemnets
             TokenType::Assignment => {
                 let assigned_var: Box<dyn ast::Node> = code_body.pop().unwrap(); // Get last node added,
-                let assigned_to: Box<dyn ast::Node> =
+                let assign_to_var: Box<dyn ast::Node> =
                     build_var_or_value(tokens.pop_front().unwrap());
+
+                let assigned_to: Box<dyn ast::Node>;
+
+                if tokens.front().unwrap().token_type == TokenType::BinaryOperator {
+                    let left = assign_to_var;
+                    let op = match tokens.pop_front().unwrap().value.as_str() {
+                        "+" => ast::BinaryOperator::Add,
+                        "-" => ast::BinaryOperator::Sub,
+                        "*" => ast::BinaryOperator::Mul,
+                        "/" => ast::BinaryOperator::Div,
+                        _ => panic!("Invalid token value!"),
+                    };
+                    let right = build_var_or_value(tokens.pop_front().unwrap());
+                    assigned_to = Box::new(ast::BinaryExpression { left, op, right })
+                } else {
+                    assigned_to = assign_to_var;
+                }
+
                 // Return the assignment struct
                 Some(Box::new(ast::Assignment {
                     var: assigned_var,
-                    var_or_value: assigned_to,
+                    expression: assigned_to,
                 }))
             }
 

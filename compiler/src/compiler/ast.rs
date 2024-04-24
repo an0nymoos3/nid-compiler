@@ -9,6 +9,13 @@ pub enum ValueEnum {
     Void,
 }
 
+pub enum BinaryOperator {
+    Add,
+    Sub,
+    Mul,
+    Div,
+}
+
 #[derive(Debug)]
 pub enum ConditionalOperator {
     Not,
@@ -24,6 +31,7 @@ pub enum ConditionalOperator {
 #[derive(PartialEq, Eq)]
 pub enum AstType {
     Assignment,
+    BinaryExpression,
     Block,
     Branch,
     Condition,
@@ -101,8 +109,14 @@ impl Display for dyn Node {
 */
 
 pub struct Assignment {
-    pub var: Box<dyn Node>,          // Var being assigned
-    pub var_or_value: Box<dyn Node>, // Varibale or Value being assigned to var
+    pub var: Box<dyn Node>,        // Var being assigned
+    pub expression: Box<dyn Node>, // Varibale or Value being assigned to var
+}
+
+pub struct BinaryExpression {
+    pub left: Box<dyn Node>,
+    pub op: BinaryOperator,
+    pub right: Box<dyn Node>,
 }
 
 /// Code block, essentially scopes ({...})
@@ -176,11 +190,45 @@ impl Node for Assignment {
         tree.begin_child(self.display());
 
         self.var.traverse_leaves(tree);
-        self.var_or_value.traverse_leaves(tree);
+        self.expression.traverse_leaves(tree);
 
         tree.end_child();
     }
 }
+
+impl Node for BinaryExpression {
+    fn display(&self) -> String {
+        String::from("BinaryExpression")
+    }
+
+    fn get_type(&self) -> AstType {
+        AstType::BinaryExpression
+    }
+
+    fn is_block(&self) -> bool {
+        false
+    }
+
+    fn has_leaves(&self) -> bool {
+        true
+    }
+
+    fn traverse_leaves(&self, tree: &mut ptree::TreeBuilder) {
+        tree.begin_child(self.display());
+        self.left.traverse_leaves(tree);
+
+        let op: &str = match self.op {
+            BinaryOperator::Add => "+",
+            BinaryOperator::Sub => "-",
+            BinaryOperator::Mul => "*",
+            BinaryOperator::Div => "/",
+        };
+        tree.add_empty_child(op.to_string());
+        self.right.traverse_leaves(tree);
+        tree.end_child();
+    }
+}
+
 impl Node for Block {
     fn display(&self) -> String {
         String::from("Block")
