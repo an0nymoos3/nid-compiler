@@ -1,5 +1,3 @@
-use ptree::output;
-
 use super::lexer::Token;
 use std::fmt::{self, Display, Write};
 
