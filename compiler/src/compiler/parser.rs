@@ -129,7 +129,8 @@ fn build_branch(tokens: &mut VecDeque<Token>) -> Box<ast::Branch> {
     let false_body: Option<ast::Block> = if tokens.front().unwrap().token_type == TokenType::Branch
         && tokens.front().unwrap().value == "else"
     {
-        tokens.pop_front().unwrap();
+        tokens.pop_front().unwrap(); // Remove "else"
+        tokens.pop_front().unwrap(); // Remove "{"
         Some(ast::Block {
             body: parse_body(tokens),
         })
@@ -222,15 +223,19 @@ fn build_condition(tokens: &mut VecDeque<Token>) -> Box<ast::Condition> {
     };
 
     let operator: ast::ConditionalOperator = match tokens.pop_front().unwrap().value.as_str() {
-        "&&" => ast::ConditionalOperator::And,
-        "||" => ast::ConditionalOperator::Or,
         "!" => ast::ConditionalOperator::Not,
+        "!=" => ast::ConditionalOperator::NotEq,
+        "==" => ast::ConditionalOperator::Eq,
+        ">" => ast::ConditionalOperator::GreatThan,
+        "<" => ast::ConditionalOperator::LessThan,
+        ">=" => ast::ConditionalOperator::GreatEq,
+        "<=" => ast::ConditionalOperator::LessEq,
         _ => panic!("Invalid operaor!"),
     };
 
     let right_op = build_var_or_value(tokens.pop_front().unwrap());
 
-    if tokens.front().unwrap().token_type != TokenType::CloseParen {
+    if tokens.pop_front().unwrap().token_type != TokenType::CloseParen {
         panic!("No closing paren!")
     }
 

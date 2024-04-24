@@ -182,13 +182,56 @@ pub fn tokenize(file_content: String) -> VecDeque<Token> {
             }
 
         /*
-         * Check for logical NOT and OR operations
+         * Check for not / not equal
          */
         } else if current_char == '!' {
+            let value: String;
+            if *src_code.front().unwrap() == '=' {
+                value = String::from("!=");
+                src_code.pop_front();
+            } else {
+                value = String::from("!");
+            }
             token = Token {
-                value: String::from(current_char),
+                value,
                 token_type: TokenType::LogicOperator,
             }
+
+        /*
+         * Check for greater / greater equal
+         */
+        } else if current_char == '>' {
+            let value: String;
+            if *src_code.front().unwrap() == '=' {
+                value = String::from(">=");
+                src_code.pop_front();
+            } else {
+                value = String::from(">");
+            }
+            token = Token {
+                value,
+                token_type: TokenType::LogicOperator,
+            }
+
+        /*
+         * Check for less / less equal
+         */
+        } else if current_char == '<' {
+            let value: String;
+            if *src_code.front().unwrap() == '=' {
+                value = String::from("<=");
+                src_code.pop_front();
+            } else {
+                value = String::from("<");
+            }
+            token = Token {
+                value,
+                token_type: TokenType::LogicOperator,
+            }
+
+        /*
+         * Check for OR
+         */
         } else if current_char == '|' {
             if src_code.pop_front().unwrap() != '|' {
                 panic!("Missing second | in logical OR operation!");

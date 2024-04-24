@@ -11,9 +11,13 @@ pub enum ValueEnum {
 
 #[derive(Debug)]
 pub enum ConditionalOperator {
-    And,
-    Or,
     Not,
+    NotEq,
+    Eq,
+    GreatThan,
+    LessThan,
+    GreatEq,
+    LessEq,
 }
 
 /// Enum for easier identification of Node type
