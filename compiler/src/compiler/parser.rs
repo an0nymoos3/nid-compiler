@@ -82,7 +82,12 @@ fn parse_body(tokens: &mut VecDeque<Token>) -> Vec<Box<dyn ast::Node>> {
                     // Return a funtcion
                     let mut params: Vec<Box<dyn ast::Node>> = Vec::new();
                     while tokens.front().unwrap().token_type != TokenType::CloseParen {
-                        let token = tokens.pop_front().unwrap();
+                        let mut token = tokens.pop_front().unwrap();
+
+                        if token.token_type == TokenType::Seperator {
+                            token = tokens.pop_front().unwrap();
+                        }
+
                         let param: Box<dyn ast::Node> = match token.token_type {
                             TokenType::Identifier => build_var_or_value(token),
                             TokenType::TypeIndicator => match token.value.as_str() {
@@ -104,10 +109,15 @@ fn parse_body(tokens: &mut VecDeque<Token>) -> Vec<Box<dyn ast::Node>> {
 
                                 &_ => panic!("Unknown type supplied!"),
                             },
+                            TokenType::Integer => build_var_or_value(token),
+                            TokenType::Floating => build_var_or_value(token),
+                            TokenType::String => build_var_or_value(token),
+                            TokenType::Char => build_var_or_value(token),
                             _ => panic!("Unexpected type: {:?}", token.token_type),
                         };
                         params.push(param);
                     }
+                    tokens.pop_front().unwrap();
                     Some(Box::new(ast::Function {
                         identifier: token.value,
                         params,
