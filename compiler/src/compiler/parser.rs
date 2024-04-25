@@ -256,6 +256,7 @@ fn build_var_or_value(token: Token) -> Box<dyn ast::Node> {
     if token.token_type == TokenType::Identifier {
         return Box::new(Variable {
             identifier: token.value,
+            var_type: None,
         });
     };
 

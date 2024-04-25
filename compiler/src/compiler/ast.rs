@@ -1,7 +1,7 @@
 use super::lexer::Token;
 use std::fmt::{self, Display, Write};
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum ValueEnum {
     Int(i32),
     Float(f32),
@@ -167,6 +167,7 @@ pub struct Type {
 /// Variable Node
 pub struct Variable {
     pub identifier: String, // Identifier (name of variable)
+    pub var_type: ValueEnum,
 }
 
 /// Value Node
