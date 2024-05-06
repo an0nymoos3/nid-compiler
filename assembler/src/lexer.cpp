@@ -35,8 +35,8 @@ std::vector<Token> tokenize_line(std::string line_content, int line_number,
   error_code = 0; // Code 0 means no error
 
   // For Jmp* tokens
-  std::vector<std::string> jmp_ops = {"jmp", "jsr", "ret", "beq", "bne",
-                                      "bpl", "bmi", "bge", "blt"};
+  std::vector<std::string> jmp_ops = {"jmp", "jsr", "ret", "beq", "bne", "bpl",
+                                      "bmi", "bge", "blt", "byk", "bnk"};
   std::string prev_op = "nop";
 
   // Push all the chars to src_code

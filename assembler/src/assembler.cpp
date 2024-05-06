@@ -134,6 +134,12 @@ std::string operation_to_binary(std::string value, int line_number,
     return "011101";
   } else if (value == "MVIIY") {
     return "011110";
+  } else if (value == "KBD") {
+    return "011111";
+  } else if (value == "BYK") {
+    return "100000";
+  } else if (value == "BNK") {
+    return "100001";
   }
 
   std::cout << "Error 2: Unknown operation at line " << line_number
