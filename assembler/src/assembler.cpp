@@ -148,6 +148,24 @@ std::string operation_to_binary(std::string value, int line_number,
     return "100000";
   } else if (value == "BNK") {
     return "100001";
+  } else if (value == "ADDIX") {
+    return "100010";
+  } else if (value == "ADDIY") {
+    return "100011";
+  } else if (value == "ADDIIX") {
+    return "100100";
+  } else if (value == "ADDIIY") {
+    return "100101";
+  } else if (value == "SUPI") {
+    return "100110";
+  } else if (value == "SDWI") {
+    return "100111";
+  } else if (value == "SUPII") {
+    return "101000";
+  } else if (value == "SDWII") {
+    return "101001";
+  } else if (value == "SFLIP") {
+    return "101010";
   }
 
   std::cout << "Error 2: Unknown operation at line " << line_number
