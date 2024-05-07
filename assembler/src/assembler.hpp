@@ -9,16 +9,17 @@
 struct AssembeledLine {
   std::string line_content;
   int line_number;
-  int error_code;
 };
 
-std::vector<AssembeledLine> assemble_lines(std::vector<Line> lines);
+std::vector<AssembeledLine> assemble_lines(std::vector<Line> lines,
+                                           bool &assembly_failed);
 
-AssembeledLine assemble_line(Line line, std::map<std::string, int> jmp_map);
+AssembeledLine assemble_line(Line line, std::map<std::string, int> jmp_map,
+                             bool &assembly_failed);
 
 void printAssembeledLine(std::vector<AssembeledLine> lines);
 
 std::string operation_to_binary(std::string value, int line_number,
-                                int &error_code);
+                                bool &assembly_failed);
 
 std::string binary_to_hex(std::string binary_string);
