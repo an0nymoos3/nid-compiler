@@ -14,12 +14,20 @@ std::vector<AssembeledLine> assemble_lines(std::vector<Line> lines) {
   std::vector<AssembeledLine> assembeled_lines;
   std::map<std::string, int> jmp_map;
 
+  int non_empty_lines = 0;
   // Pre-calculate to which lines we will jmp to
   for (int i = 0; i < lines.size(); i++) {
     if (lines[i].line_tokens.size() != 1) {
+      non_empty_lines++;
       for (int j = 0; j < lines[i].line_tokens.size(); j++) {
         if (lines[i].line_tokens[j].token_type == JmpPoint) {
-          jmp_map[lines[i].line_tokens[j].value] = i + 1;
+          // -1 to give correct line after fecthing assembly instruction
+          jmp_map[lines[i].line_tokens[j].value] = non_empty_lines - 1;
+
+          // Remove lines only containing JmpPoints
+          if (j == 0 && lines[i].line_tokens.size() <= 2) {
+            non_empty_lines--;
+          }
         }
       }
     }
