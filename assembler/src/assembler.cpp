@@ -45,8 +45,7 @@ AssembeledLine assemble_line(Line line, std::map<std::string, int> jmp_map,
 
   for (Token token : line.line_tokens) {
     if (token.token_type == EOL || token.token_type == Comment) {
-      ass_string += "\n";
-      ass_string = binary_to_hex(ass_string);
+      // ass_string = binary_to_hex(ass_string);
       ass_line = {ass_string, line.line_number};
       return ass_line;
     } else if (token.token_type == Operation) {

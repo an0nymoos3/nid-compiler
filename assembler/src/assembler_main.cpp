@@ -2,7 +2,6 @@
  * This is the "main" file. It handles the assembler logic.
  */
 
-#include "assembler.hpp"
 #include "exporter.hpp"
 #include <iostream>
 #include <vector>
@@ -26,6 +25,10 @@ int main(int argc, char **argv) {
   if (args.debug) {
     printAssembeledLine(assembeled_lines);
   }
+
+  write_to_file(assembeled_lines, args.outname); // Write binary program to file
+
+  std::cout << "Assembly complete! \nWritten to: " << args.outname << std::endl;
 
   return 0;
 }
