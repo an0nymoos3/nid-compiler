@@ -63,16 +63,17 @@ AssembeledLine assemble_line(Line line, std::map<std::string, int> jmp_map,
       ass_string += value;
     }
   }
-
   Error err = {line.line_number,
                "Warning: Line did not end with EOL character!",
                line.line_content};
   print_error(err);
+
   return ass_line;
 }
 
 std::string operation_to_binary(std::string value, int line_number,
                                 bool &assembly_failed) {
+
   // Convert the entire string to uppercase using std::transform()
   std::transform(value.begin(), value.end(), value.begin(), ::toupper);
 

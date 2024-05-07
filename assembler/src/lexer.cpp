@@ -194,7 +194,6 @@ std::vector<Token> check_token_line(std::vector<Token> token_line,
       Token token2 = {"0000", Register};
       token_line.insert(token_line.begin() + 4, token2);
     }
-
     if (token_line.size() <= 5 || token_line[5].token_type != JmpOP) {
       if (token_line.size() <= 6 || token_line[6].token_type != Constant) {
         Token token = {",", Separator};
