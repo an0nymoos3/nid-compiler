@@ -164,8 +164,10 @@ std::string operation_to_binary(std::string value, int line_number,
     return "101000";
   } else if (value == "SDWII") {
     return "101001";
-  } else if (value == "SFLIP") {
+  } else if (value == "LFLIP") {
     return "101010";
+  } else if (value == "RFLIP") {
+    return "101011";
   }
 
   std::cout << "Error 2: Unknown operation at line " << line_number
