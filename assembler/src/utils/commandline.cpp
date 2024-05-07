@@ -18,11 +18,12 @@ Args parse_args(int argc, char **argv) {
       args.filename = argv[i];
     }
 
-    if (argv[i] == "-d" || argv[i] == "--debug") {
+    if (strcmp(argv[i], "-d") == 0 || strcmp(argv[i], "--debug") == 0) {
       args.debug = true;
     }
 
-    if (argv[i] == "-t" || argv[i] == "--output-terminal") {
+    if (strcmp(argv[i], "-t") == 0 ||
+        strcmp(argv[i], "--output-terminal") == 0) {
       args.terminal_out = true;
     }
   }

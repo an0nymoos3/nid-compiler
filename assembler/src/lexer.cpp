@@ -158,8 +158,9 @@ std::vector<Token> tokenize_line(Line &line, bool &assembly_failed) {
      */
     else {
       if (current_char != ' ') {
-        Error err = {line.line_number, "Error: Unknown char on line!",
-                     line.line_content};
+        std::stringstream ss;
+        ss << "Error: Unknown char supplied: " << current_char;
+        Error err = {line.line_number, ss.str(), line.line_content};
         print_error(err);
         assembly_failed = true;
         token = {"|n", EOL};

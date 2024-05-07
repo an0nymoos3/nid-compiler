@@ -133,7 +133,12 @@ std::string operation_to_binary(std::string value, int line_number,
     return "011010";
   }
 
-  Error err = {line_number, "Error: Unknownn operation at line ", value};
+  Error err = {line_number,
+               "Error: Unkown assembly operation! For more info on what "
+               "operations are supported: "
+               "https://github.com/an0nymoos3/nid-compiler/blob/assembler/docs/"
+               "assembly.md",
+               value};
   print_error(err);
   assembly_failed = true;
 

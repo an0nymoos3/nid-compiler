@@ -12,7 +12,6 @@ int main(int argc, char **argv) {
   bool assembly_failed = false;
   std::vector<Line> lines = parse_file(args);
   lines = tokenize(lines, assembly_failed);
-  // export_tokens(lines); // For debugging
 
   std::vector<AssembeledLine> assembeled_lines =
       assemble_lines(lines, assembly_failed);
@@ -24,7 +23,9 @@ int main(int argc, char **argv) {
     return 1;
   }
 
-  printAssembeledLine(assembeled_lines);
+  if (args.debug) {
+    printAssembeledLine(assembeled_lines);
+  }
 
   return 0;
 }
