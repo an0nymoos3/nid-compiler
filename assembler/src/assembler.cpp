@@ -166,7 +166,7 @@ std::string binary_to_hex(std::string binary_string) {
 }
 
 void printAssembeledLine(std::vector<AssembeledLine> lines) {
-  std::cout << "Printing lines as hex code: " << std::endl;
+  std::cout << "Resulting binary code: " << std::endl;
 
   for (int i = 0; i < lines.size(); i++) {
     std::cout << lines[i].line_content << std::endl;
