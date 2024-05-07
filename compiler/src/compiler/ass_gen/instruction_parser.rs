@@ -14,25 +14,29 @@ pub fn parse_assignment(
 
     if let Some(o_var) = other_var {
         // Var assigned to var
-        if let Some(var_type) = type_specifier {
-            if var.var_type != var_type {
-                // Warn the user!
-                println!(
-                    "Warning: Type of {} does not match {}",
-                    var.get_name(),
-                    o_var.get_name()
-                )
+        if let Some(type_spec) = &type_specifier {
+            if let Some(var_type) = &var.var_type {
+                if var_type != type_spec {
+                    // Warn the user!
+                    println!(
+                        "Warning: Type of {} does not match {}",
+                        var.get_name(),
+                        o_var.get_name()
+                    )
+                }
             }
         }
     } else if let Some(val) = value {
-        // Value assigned to var
-        if val.value != var.var_type {
-            // Warn the user!
-            println!(
-                "Warning: Type of {} does not match {}",
-                var.get_name(),
-                val.get_name()
-            )
+        if let Some(var_type) = &var.var_type {
+            // Value assigned to var
+            if &val.value != var_type {
+                // Warn the user!
+                println!(
+                    "Warning: Type of {} does not match {}! You should only do this if you know what you are doing.",
+                    var.get_name(),
+                    val.get_name()
+                )
+            }
         }
     }
 

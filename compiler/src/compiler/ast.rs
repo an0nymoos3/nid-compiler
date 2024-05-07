@@ -167,7 +167,7 @@ pub struct Type {
 /// Variable Node
 pub struct Variable {
     pub identifier: String, // Identifier (name of variable)
-    pub var_type: ValueEnum,
+    pub var_type: Option<ValueEnum>,
 }
 
 /// Value Node

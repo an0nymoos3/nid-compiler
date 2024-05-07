@@ -10,6 +10,10 @@
 *
 * Since these functions will be used by the compiler some sanity checks aren't performed since they
 * are assumed to not be able to happen.
+*
+* Some assumptions that are also made:
+* If only one register, addr or cosnt is used, it will use the first one. Therefore there are only
+* checks for the first of these whenever you check for a field.
 */
 
 use super::memory_manager::{pop_from_stack, push_to_stack, read_from_dm};
@@ -26,10 +30,10 @@ pub fn add(
     if const1.is_some() && const2.is_some() {
         return vec![format!("ldi, r0, {}", const1.unwrap() + const2.unwrap())];
     }
-    if const1.is_some() || const2.is_some() {
-        return add_or_sub("addi", reg1, reg2, addr1, addr2, const1, const2);
+    if const1.is_some() {
+        return perform_op("addi", reg1, reg2, addr1, addr2, const1);
     }
-    add_or_sub("add", reg1, reg2, addr1, addr2, const1, const2)
+    perform_op("add", reg1, reg2, addr1, addr2, const1)
 }
 
 /// Performs subtractions on 2 operands. Only expects 2 parameters to be Some
@@ -42,12 +46,12 @@ pub fn sub(
     const2: Option<i16>,
 ) -> Vec<String> {
     if const1.is_some() && const2.is_some() {
-        return vec![format!("ldi, r0, {}", const1.unwrap() + const2.unwrap())];
+        return vec![format!("ldi, r0, {}", const1.unwrap() - const2.unwrap())];
     }
-    if const1.is_some() || const2.is_some() {
-        return add_or_sub("subi", reg1, reg2, addr1, addr2, const1, const2);
+    if const1.is_some() {
+        return perform_op("subi", reg1, reg2, addr1, addr2, const1);
     }
-    add_or_sub("sub", reg1, reg2, addr1, addr2, const1, const2)
+    perform_op("sub", reg1, reg2, addr1, addr2, const1)
 }
 
 /// Performs multiplication on 2 operands. Only expects 2 parameters to be Some
@@ -59,7 +63,16 @@ pub fn multiplication(
     const1: Option<i16>,
     const2: Option<i16>,
 ) -> Vec<String> {
-    Vec::new()
+    if const1.is_some() && const2.is_some() {
+        return vec![format!("ldi, r0, {}", const1.unwrap() * const2.unwrap())];
+    }
+    if let Some(val) = const1 {
+        if val == 2 {
+            return vec![lsl(reg1.unwrap())];
+        }
+        return perform_op("muli", reg1, reg2, addr1, addr2, const1);
+    }
+    perform_op("mul", reg1, reg2, addr1, addr2, const1)
 }
 
 /// Performs division on 2 operands. Only expects 2 parameters to be Some
@@ -71,7 +84,16 @@ pub fn division(
     const1: Option<i16>,
     const2: Option<i16>,
 ) -> Vec<String> {
-    Vec::new()
+    if const1.is_some() && const2.is_some() {
+        return vec![format!("ldi, r0, {}", const1.unwrap() / const2.unwrap())];
+    }
+    if let Some(val) = const1 {
+        if val == 2 {
+            return vec![lsr(reg1.unwrap())];
+        }
+        return perform_op("divi", reg1, reg2, addr1, addr2, const1);
+    }
+    perform_op("div", reg1, reg2, addr1, addr2, const1)
 }
 
 /// Logical shift left
@@ -85,22 +107,20 @@ pub fn lsr(register: i8) -> String {
 }
 
 /// Hepler function to avoid code duplication
-fn add_or_sub(
+fn perform_op(
     op: &str,
     reg1: Option<i8>,
     reg2: Option<i8>,
     addr1: Option<i16>,
     addr2: Option<i16>,
     const1: Option<i16>,
-    const2: Option<i16>,
 ) -> Vec<String> {
     let mut instructions: Vec<String> = Vec::new();
-    let mut work_reg: String = String::from("r0"); // Default working register
+    let mut work_reg: String = String::from(""); // Default working register
     let mut const_or_addr: Option<i16> = None;
     let mut stack_pushed: bool = false; // To know if stack needs to be popped after arithmetic
                                         // operation.
 
-    // If reg1 is specified, change work_reg
     if let Some(reg) = reg1 {
         work_reg = reg.to_string();
     }
@@ -116,20 +136,28 @@ fn add_or_sub(
         // If no register was set, use addr1 as first term
         if let Some(addr) = addr1 {
             instructions.push(read_from_dm(0, addr));
+            work_reg = String::from("r0"); // Set register to work on.
 
             if let Some(addr) = addr2 {
                 const_or_addr = Some(addr);
             }
         }
+    } else if reg2.is_none() {
+        const_or_addr = addr1; // Set to addr1, if addr1 is none it will be replaced with the const
+                               // in the end of this function
     }
 
-    // Add constants to instructions
+    // Add constants to instructions, if addresses werent added
+    if const_or_addr.is_none() && const1.is_some() {
+        const_or_addr = const1;
+    }
+
+    // Just sanity checks that compiler generated a correct instruction.
+    if work_reg.is_empty() {
+        panic!("No register set to work on!");
+    }
     if const_or_addr.is_none() {
-        if const1.is_some() {
-            const_or_addr = const1;
-        } else if const2.is_some() {
-            const_or_addr = const2;
-        }
+        panic!("Second operand not set!"); // Panic if invalid instruction
     }
 
     instructions.push(format!("{op}, {work_reg}, {}", const_or_addr.unwrap()));
@@ -139,17 +167,4 @@ fn add_or_sub(
     }
 
     instructions
-}
-
-/// Helper function for performing multiplication and division, and avoids code duplication
-fn mul_or_div(
-    op: &str,
-    reg1: Option<i8>,
-    reg2: Option<i8>,
-    addr1: Option<i16>,
-    addr2: Option<i16>,
-    const1: Option<i16>,
-    const2: Option<i16>,
-) -> Vec<String> {
-    Vec::new()
 }
