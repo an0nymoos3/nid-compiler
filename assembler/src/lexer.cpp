@@ -31,14 +31,15 @@ std::vector<Token> tokenize_line(Line &line, bool &assembly_failed) {
   std::vector<char> src_code;
   // Vector for tokens {Operation, Mode, Register} added to line
   std::vector<bool> broken_structure = {false, false, false};
+  error_code = 0; // Code 0 means no error
 
   // For Jmp* tokens
-  std::vector<std::string> jmp_ops = {"jmp", "jsr", "ret", "beq", "bne",
-                                      "bpl", "bmi", "bge", "blt"};
+  std::vector<std::string> jmp_ops = {"jmp", "jsr", "ret", "beq", "bne", "bpl",
+                                      "bmi", "bge", "blt", "byk", "bnk"};
   std::string prev_op = "nop";
 
   // Push all the chars to src_code
-  for (char c : line.line_content) {
+  for (char c : line_content) {
     src_code.push_back(c);
   }
 
@@ -75,11 +76,10 @@ std::vector<Token> tokenize_line(Line &line, bool &assembly_failed) {
     /*
      * Checks for assembly operation
      */
-    else if (is_letter(current_char) && !is_register(line.line_content, j) &&
-             !is_mode(line.line_content, j) && !broken_structure[1] &&
-             !broken_structure[2] &&
-             build_word(line.line_content, j).size() > 1) {
-      std::string word = build_word(line.line_content, j);
+    else if (is_letter(current_char) && !is_register(line_content, j) &&
+             !is_mode(line_content, j) && !broken_structure[1] &&
+             !broken_structure[2] && build_word(line_content, j).size() > 1) {
+      std::string word = build_word(line_content, j);
       token = {word, Operation};
       j += word.size() - 1; // Skip past the rest of the built word
       token_queue.push_back(token);
@@ -90,9 +90,9 @@ std::vector<Token> tokenize_line(Line &line, bool &assembly_failed) {
     /*
      * Checks for adress mode
      */
-    else if (is_mode(line.line_content, j) && !broken_structure[2] &&
-             ((int)line.line_content[++j] - 48) <= 3) {
-      std::string word = build_num(line.line_content, j);
+    else if (is_mode(line_content, j) && !broken_structure[2] &&
+             ((int)line_content[++j] - 48) <= 3) {
+      std::string word = build_num(line_content, j);
       j += word.size() - 1; // Skip past the rest of the built word
       word = decimal_to_binary(word);
       if (word.size() >= 1) {
@@ -106,9 +106,9 @@ std::vector<Token> tokenize_line(Line &line, bool &assembly_failed) {
     /*
      * Checks for register index
      */
-    else if (is_register(line.line_content, j) &&
-             std::stoi(build_num(line.line_content, ++j), nullptr, 10) <= 15) {
-      std::string word = build_num(line.line_content, j);
+    else if (is_register(line_content, j) &&
+             std::stoi(build_num(line_content, ++j), nullptr, 10) <= 15) {
+      std::string word = build_num(line_content, j);
       j += word.size() - 1; // Skip past the rest of the built word
       word = decimal_to_binary(word);
       if (word.size() >= 1) {
@@ -123,7 +123,7 @@ std::vector<Token> tokenize_line(Line &line, bool &assembly_failed) {
      * Checks for constant
      */
     else if (is_number(current_char)) {
-      std::string word = build_num(line.line_content, j);
+      std::string word = build_num(line_content, j);
       j += word.size() - 1; // Skip past the rest of the built word
       word = decimal_to_binary(word);
       token = {word, Constant};
@@ -136,7 +136,7 @@ std::vector<Token> tokenize_line(Line &line, bool &assembly_failed) {
     else if (current_char == '#' && std::find(jmp_ops.begin(), jmp_ops.end(),
                                               prev_op) != jmp_ops.end()) {
       j++;
-      std::string word = build_word(line.line_content, j);
+      std::string word = build_word(line_content, j);
       token = {word, JmpOP};
       j += word.size() - 1; // Skip past the rest of the built word
       token_queue.push_back(token);
@@ -147,7 +147,7 @@ std::vector<Token> tokenize_line(Line &line, bool &assembly_failed) {
      */
     else if (current_char == '#') {
       j++;
-      std::string word = build_word(line.line_content, j);
+      std::string word = build_word(line_content, j);
       token = {word, JmpPoint};
       j += word.size() - 1; // Skip past the rest of the built word
       token_queue.push_back(token);
@@ -165,7 +165,6 @@ std::vector<Token> tokenize_line(Line &line, bool &assembly_failed) {
         assembly_failed = true;
         token = {"|n", EOL};
         token_queue.push_back(token);
-        return token_queue;
       }
     }
   }
@@ -194,6 +193,7 @@ std::vector<Token> check_token_line(std::vector<Token> token_line,
       Token token2 = {"0000", Register};
       token_line.insert(token_line.begin() + 4, token2);
     }
+
     if (token_line.size() <= 5 || token_line[5].token_type != JmpOP) {
       if (token_line.size() <= 6 || token_line[6].token_type != Constant) {
         Token token = {",", Separator};
