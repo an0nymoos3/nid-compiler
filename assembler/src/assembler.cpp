@@ -168,6 +168,8 @@ std::string operation_to_binary(std::string value, int line_number,
     return "101010";
   } else if (value == "RFLIP") {
     return "101011";
+  } else if (value == "WAIT") {
+    return "101100";
   }
 
   std::cout << "Error 2: Unknown operation at line " << line_number
