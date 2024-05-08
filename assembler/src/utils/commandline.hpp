@@ -3,8 +3,8 @@
 
 struct Args {
   bool debug;
-  bool terminal_out;
-  std::string filename;
+  std::string filename; // Input filename
+  std::string outname;  // Output filename
 };
 
 Args parse_args(int argc, char **argv);

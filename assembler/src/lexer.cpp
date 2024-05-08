@@ -3,21 +3,21 @@
  * into its smaller "tokens" or chars.
  */
 #include "lexer.hpp"
+#include "utils/errors.hpp"
 #include <algorithm>
 #include <bitset>
 #include <iostream>
 #include <sstream>
 #include <vector>
 
-std::vector<Line> tokenize(std::vector<Line> &file_content) {
+std::vector<Line> tokenize(std::vector<Line> &file_content,
+                           bool &assembly_failed) {
   std::vector<Line> lines;
 
   for (int i = 0; i < file_content.size(); i++) {
     std::vector<Token> token_queue;
     Line current_line = file_content[i];
-    token_queue =
-        tokenize_line(current_line.line_content, current_line.line_number,
-                      current_line.error_code);
+    token_queue = tokenize_line(current_line, assembly_failed);
     token_queue = check_token_line(token_queue, current_line.line_number);
     current_line.line_tokens = token_queue;
     lines.push_back(current_line);
@@ -26,8 +26,7 @@ std::vector<Line> tokenize(std::vector<Line> &file_content) {
   return lines;
 }
 
-std::vector<Token> tokenize_line(std::string line_content, int line_number,
-                                 int &error_code) {
+std::vector<Token> tokenize_line(Line &line, bool &assembly_failed) {
   std::vector<Token> token_queue;
   std::vector<char> src_code;
   // Vector for tokens {Operation, Mode, Register} added to line
@@ -159,14 +158,13 @@ std::vector<Token> tokenize_line(std::string line_content, int line_number,
      */
     else {
       if (current_char != ' ') {
-        std::cout << "Error 1: Unknown char at line " << line_number
-                  << "\nAround " << print_error_area(line_content, j)
-                  << std::endl
-                  << std::endl;
+        std::stringstream ss;
+        ss << "Error: Unknown char supplied: " << current_char;
+        Error err = {line.line_number, ss.str(), line.line_content};
+        print_error(err);
+        assembly_failed = true;
         token = {"|n", EOL};
         token_queue.push_back(token);
-        error_code = 1; // Code 1 means an unknown token was found
-        return token_queue;
       }
     }
   }

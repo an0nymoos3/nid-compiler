@@ -26,13 +26,13 @@ struct Line {
   std::vector<Token> line_tokens;
   std::string line_content;
   int line_number;
-  int error_code;
+  std::string error_msg;
 };
 
-std::vector<Line> tokenize(std::vector<Line> &file_content);
+std::vector<Line> tokenize(std::vector<Line> &file_content,
+                           bool &assembly_failed);
 
-std::vector<Token> tokenize_line(std::string line_content, int line_number,
-                                 int &error_code);
+std::vector<Token> tokenize_line(Line &line, bool &assembly_failed);
 
 void export_tokens(std::vector<Line> &lines);
 
