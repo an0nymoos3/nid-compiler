@@ -7,7 +7,7 @@ use crate::{
     utils::command_line::Args,
 };
 
-use super::ast::export_ast;
+use super::{ass_gen::program_generator::generate_ass, ast::export_ast};
 
 /// The main compile function. Takes care of the overall logic of compilation while handing out the
 /// details to helper functions.
@@ -25,6 +25,15 @@ pub fn compile(args: &Args) -> String {
 
     if args.debug {
         export_ast(&ast);
+    }
+
+    let ass_program: Vec<String> = generate_ass(&ast);
+
+    if args.debug {
+        println!("Generated ASS code:");
+        for (line, inst) in ass_program.iter().enumerate() {
+            println!("{} | {}", line + 1, inst);
+        }
     }
 
     output_name
