@@ -39,6 +39,7 @@ fn parse_body(tokens: &mut VecDeque<Token>) -> Vec<Box<dyn ast::Node>> {
                 while tokens.front().unwrap().token_type != TokenType::CloseScope {
                     asm.code.push(tokens.pop_front().unwrap());
                 }
+                asm.generate_proper_asm();
                 tokens.pop_front().unwrap();
                 Some(Box::new(asm))
             }

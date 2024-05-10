@@ -27,6 +27,6 @@ fn main() {
     let output_file: String = compile(&args);
     let exec_time: Duration = calc_total_time(&start);
 
-    println!("Assembly file: {}", output_file);
+    println!("Assembly written to: {}", output_file);
     println!("Total compilation time: {:?}", exec_time);
 }

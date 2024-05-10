@@ -31,7 +31,7 @@ pub enum TokenType {
     Eof,       // Represents the end of the code (EOF all caps appears to be a reserved
                // word of some kind)
 }
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 #[allow(dead_code)] // TODO: Remove once fields are being read
 pub struct Token {
     pub value: String,

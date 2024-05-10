@@ -1,4 +1,5 @@
 use super::lexer::Token;
+use std::any::Any;
 use std::fmt::{self, Display, Write};
 
 #[derive(Debug, PartialEq)]
@@ -29,7 +30,7 @@ pub enum ConditionalOperator {
 }
 
 /// Enum for easier identification of Node type
-#[derive(PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum AstType {
     Asm,
     Assignment,
@@ -78,6 +79,7 @@ impl Ast<dyn Node> {
 }
 
 pub trait Node {
+    fn as_any(&self) -> &dyn Any; // Method needed for downcasting
     fn display(&self) -> String;
 
     fn has_leaves(&self) -> bool;
@@ -181,7 +183,38 @@ pub struct DebugNode;
 /*
 * Impl the Node trait on all Nodes
 */
+impl Asm {
+    /// Merges Tokens that are the same line of assembly into one line/Token rather than multiple
+    pub fn generate_proper_asm(&mut self) {
+        let mut new_code: Vec<Token> = Vec::new();
+        let mut asm_line: String = String::new();
+        let mut i: usize = 0;
+
+        while i < self.code.len() {
+            if is_new_asm_instruction(&self.code[i].value) {
+                asm_line.push_str(&self.code[i].value);
+
+                i += 1;
+                while i < self.code.len() && !is_new_asm_instruction(&self.code[i].value) {
+                    asm_line.push_str(&self.code[i].value);
+                    i += 1;
+                }
+                i -= 1; // Decrement once loop exited
+
+                self.code[i].value = asm_line.clone(); // Change the tokens value
+                new_code.push(self.code[i].clone()); // Add token to the new assembly code
+                asm_line.clear(); // Clear the string for next line of assembly
+            }
+            i += 1;
+        }
+        self.code = new_code;
+    }
+}
 impl Node for Asm {
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
+
     fn display(&self) -> String {
         String::from("Asm")
     }
@@ -197,21 +230,18 @@ impl Node for Asm {
     fn traverse_leaves(&self, tree: &mut ptree::TreeBuilder) {
         tree.begin_child(self.display());
 
-        let mut branch: String = String::new();
-        for i in 0..self.code.len() {
-            if i < self.code.len() - 1 && !is_new_asm_instruction(&self.code[i + 1].value) {
-                branch.push_str(&self.code[i].value);
-            } else {
-                branch.push_str(&self.code[i].value);
-                tree.add_empty_child(branch.clone());
-                branch.clear();
-            }
+        for inst in self.code.iter() {
+            tree.add_empty_child(inst.value.to_string());
         }
 
         tree.end_child();
     }
 }
 impl Node for Assignment {
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
+
     fn display(&self) -> String {
         String::from("Assignment")
     }
@@ -234,6 +264,10 @@ impl Node for Assignment {
     }
 }
 impl Node for BinaryExpression {
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
+
     fn display(&self) -> String {
         String::from("BinaryExpression")
     }
@@ -266,6 +300,10 @@ impl Node for BinaryExpression {
     }
 }
 impl Node for Block {
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
+
     fn display(&self) -> String {
         String::from("Block")
     }
@@ -295,6 +333,10 @@ impl Node for Block {
     }
 }
 impl Node for Branch {
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
+
     fn display(&self) -> String {
         String::from("Branch")
     }
@@ -320,6 +362,10 @@ impl Node for Branch {
     }
 }
 impl Node for Condition {
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
+
     fn display(&self) -> String {
         String::from("Condition")
     }
@@ -361,6 +407,10 @@ impl Function {
     }
 }
 impl Node for Function {
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
+
     fn display(&self) -> String {
         format!("{}({})", self.get_name(), self.display_params())
     }
@@ -383,6 +433,10 @@ impl Node for Function {
     }
 }
 impl Node for Loop {
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
+
     fn display(&self) -> String {
         String::from("Loop")
     }
@@ -405,6 +459,10 @@ impl Node for Loop {
     }
 }
 impl Node for Return {
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
+
     fn display(&self) -> String {
         "Return".to_string()
     }
@@ -430,6 +488,10 @@ impl Node for Return {
     }
 }
 impl Node for Type {
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
+
     fn display(&self) -> String {
         format!("Type: {:?}", self.type_value)
     }
@@ -449,6 +511,10 @@ impl Node for Type {
     }
 }
 impl Node for Variable {
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
+
     fn display(&self) -> String {
         format!("Variable: {}", self.identifier)
     }
@@ -466,6 +532,10 @@ impl Node for Variable {
     }
 }
 impl Node for Value {
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
+
     fn display(&self) -> String {
         format!("Value: {:?}", self.value)
     }
@@ -483,6 +553,10 @@ impl Node for Value {
     }
 }
 impl Node for DebugNode {
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
+
     fn display(&self) -> String {
         String::from("Debugging Node")
     }
@@ -537,9 +611,11 @@ fn traverse_ast_body(tree: &mut ptree::TreeBuilder, body: &[Box<dyn Node>], bran
 
 /// For prettier debug AST
 fn is_new_asm_instruction(instruciton: &str) -> bool {
-    let reserved_words: [&str; 25] = [
+    let reserved_words: [&str; 40] = [
         "nop", "ldi", "ld", "st", "psh", "pop", "add", "addi", "sub", "subi", "cmp", "cmpi", "and",
-        "andi", "or", "ori", "jmp", "jsr", "ret", "beq", "bne", "bpl", "bmi", "bge", "blt",
+        "andi", "or", "ori", "jmp", "jsr", "ret", "beq", "bne", "bpl", "bmi", "bge", "blt", "mvix",
+        "mviy", "kbd", "byk", "bnk", "addix", "addiy", "addiix", "addiiy", "supi", "sdwi", "supii",
+        "sdwii", "lflip", "rflip",
     ];
     reserved_words.contains(&instruciton)
 }
