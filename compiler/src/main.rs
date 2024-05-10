@@ -26,7 +26,10 @@ fn main() {
     }
 
     let output_file: String = compile(&args);
-    let _ = Command::new("bin/assembler").arg(&output_file);
+    let _ = Command::new("bin/assembler")
+        .arg(&output_file)
+        .output()
+        .unwrap();
 
     let exec_time: Duration = calc_total_time(&start);
     println!("Assembly written to: {}", output_file);
