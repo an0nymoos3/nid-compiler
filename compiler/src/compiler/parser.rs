@@ -7,21 +7,27 @@ use std::hash::{Hash, Hasher};
 /// Builds an AST from a queue of tokens.
 pub fn generate_ast(tokens: &mut VecDeque<Token>) -> ast::Ast<dyn ast::Node> {
     let body: Vec<Box<dyn ast::Node>> = parse_body(tokens);
-    let ast: ast::Ast<dyn ast::Node> = ast::Ast::new(body);
+    let mut ast: ast::Ast<dyn ast::Node> = ast::Ast::new(body);
+    hash_variables(&mut ast.body, "root");
     ast
 }
 
 /// Traverses AST and hashes variables based on their location
-pub fn hash_variables(ast: &mut ast::Ast<dyn ast::Node>) {
-    let path: String = String::from("root");
-    /*
-    for node in  {
-        if let Some(var) = node.as_any().downcast_mut::<ast::Variable>() {
-            let new_ident = variable_hasher(&var.identifier, &path).to_string();
-            var.identifier = new_ident;
+pub fn hash_variables(ast: &mut [Box<dyn Node>], path: &str) {
+    for node in ast.iter_mut() {
+        println!("{:?}", node.get_type());
+
+        if let Some(var) = node.as_any_mut().downcast_mut::<ast::Variable>() {
+            var.identifier = variable_hasher(&var.identifier, path).to_string();
+        } else if let Some(assign) = node.as_any_mut().downcast_mut::<ast::Assignment>() {
+            if let Some(var) = (*assign.var).as_any_mut().downcast_mut::<ast::Variable>() {
+                var.identifier = variable_hasher(&var.identifier, path).to_string();
+            }
+        } else if let Some(block) = node.as_any_mut().downcast_mut::<ast::Block>() {
+            let new_path: String = format!("{}newdepth", path);
+            hash_variables(block.body.as_mut_slice(), &new_path);
         }
     }
-    */
 }
 
 fn hash_body(body: &[Box<dyn ast::Node>], path: &str) {}

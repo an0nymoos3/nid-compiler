@@ -19,19 +19,22 @@ fn main() {
     }
 
     println!("Compiling...");
-    let start: Instant = time_now();
+    let mut start: Instant = time_now();
 
     if args.debug {
         println!("Running in debug (verbose) mode!");
     }
 
     let output_file: String = compile(&args);
+    let mut exec_time: Duration = calc_total_time(&start);
+    println!("Total compilation time: {:?}", exec_time);
+    println!("Assembly written to: {}", output_file);
+
+    start = time_now();
     let _ = Command::new("bin/assembler")
         .arg(&output_file)
         .output()
         .unwrap();
-
-    let exec_time: Duration = calc_total_time(&start);
-    println!("Assembly written to: {}", output_file);
-    println!("Total compilation time: {:?}", exec_time);
+    exec_time = calc_total_time(&start);
+    println!("Total assembly time: {:?}", exec_time);
 }

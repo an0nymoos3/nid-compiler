@@ -80,6 +80,7 @@ impl Ast<dyn Node> {
 
 pub trait Node {
     fn as_any(&self) -> &dyn Any; // Method needed for downcasting
+    fn as_any_mut(&mut self) -> &mut dyn Any;
     fn display(&self) -> String;
 
     fn has_leaves(&self) -> bool;
@@ -217,6 +218,10 @@ impl Node for Asm {
         self
     }
 
+    fn as_any_mut(&mut self) -> &mut dyn Any {
+        self
+    }
+
     fn display(&self) -> String {
         String::from("Asm")
     }
@@ -241,6 +246,10 @@ impl Node for Asm {
 }
 impl Node for Assignment {
     fn as_any(&self) -> &dyn Any {
+        self
+    }
+
+    fn as_any_mut(&mut self) -> &mut dyn Any {
         self
     }
 
@@ -270,6 +279,10 @@ impl Node for Assignment {
 }
 impl Node for BinaryExpression {
     fn as_any(&self) -> &dyn Any {
+        self
+    }
+
+    fn as_any_mut(&mut self) -> &mut dyn Any {
         self
     }
 
@@ -309,6 +322,10 @@ impl Node for Block {
         self
     }
 
+    fn as_any_mut(&mut self) -> &mut dyn Any {
+        self
+    }
+
     fn display(&self) -> String {
         String::from("Block")
     }
@@ -342,6 +359,10 @@ impl Node for Branch {
         self
     }
 
+    fn as_any_mut(&mut self) -> &mut dyn Any {
+        self
+    }
+
     fn display(&self) -> String {
         String::from("Branch")
     }
@@ -368,6 +389,10 @@ impl Node for Branch {
 }
 impl Node for Condition {
     fn as_any(&self) -> &dyn Any {
+        self
+    }
+
+    fn as_any_mut(&mut self) -> &mut dyn Any {
         self
     }
 
@@ -416,6 +441,10 @@ impl Node for Function {
         self
     }
 
+    fn as_any_mut(&mut self) -> &mut dyn Any {
+        self
+    }
+
     fn display(&self) -> String {
         format!("{}({})", self.get_name(), self.display_params())
     }
@@ -442,6 +471,10 @@ impl Node for Loop {
         self
     }
 
+    fn as_any_mut(&mut self) -> &mut dyn Any {
+        self
+    }
+
     fn display(&self) -> String {
         String::from("Loop")
     }
@@ -465,6 +498,10 @@ impl Node for Loop {
 }
 impl Node for Return {
     fn as_any(&self) -> &dyn Any {
+        self
+    }
+
+    fn as_any_mut(&mut self) -> &mut dyn Any {
         self
     }
 
@@ -497,6 +534,10 @@ impl Node for Type {
         self
     }
 
+    fn as_any_mut(&mut self) -> &mut dyn Any {
+        self
+    }
+
     fn display(&self) -> String {
         format!("Type: {:?}", self.type_value)
     }
@@ -517,6 +558,10 @@ impl Node for Type {
 }
 impl Node for Variable {
     fn as_any(&self) -> &dyn Any {
+        self
+    }
+
+    fn as_any_mut(&mut self) -> &mut dyn Any {
         self
     }
 
@@ -549,6 +594,10 @@ impl Node for Value {
         self
     }
 
+    fn as_any_mut(&mut self) -> &mut dyn Any {
+        self
+    }
+
     fn display(&self) -> String {
         format!("Value: {:?}", self.value)
     }
@@ -567,6 +616,10 @@ impl Node for Value {
 }
 impl Node for DebugNode {
     fn as_any(&self) -> &dyn Any {
+        self
+    }
+
+    fn as_any_mut(&mut self) -> &mut dyn Any {
         self
     }
 
