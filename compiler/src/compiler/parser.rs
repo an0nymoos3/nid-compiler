@@ -1,7 +1,8 @@
-use std::collections::VecDeque;
-
-use super::ast::{self, Value, ValueEnum, Variable};
+use super::ast::{self, Node, Value, ValueEnum, Variable};
 use super::lexer::{Token, TokenType};
+use std::collections::hash_map::DefaultHasher;
+use std::collections::VecDeque;
+use std::hash::{Hash, Hasher};
 
 /// Builds an AST from a queue of tokens.
 pub fn generate_ast(tokens: &mut VecDeque<Token>) -> ast::Ast<dyn ast::Node> {
@@ -9,6 +10,21 @@ pub fn generate_ast(tokens: &mut VecDeque<Token>) -> ast::Ast<dyn ast::Node> {
     let ast: ast::Ast<dyn ast::Node> = ast::Ast::new(body);
     ast
 }
+
+/// Traverses AST and hashes variables based on their location
+pub fn hash_variables(ast: &mut ast::Ast<dyn ast::Node>) {
+    let path: String = String::from("root");
+    /*
+    for node in  {
+        if let Some(var) = node.as_any().downcast_mut::<ast::Variable>() {
+            let new_ident = variable_hasher(&var.identifier, &path).to_string();
+            var.identifier = new_ident;
+        }
+    }
+    */
+}
+
+fn hash_body(body: &[Box<dyn ast::Node>], path: &str) {}
 
 /// Function for being able to recursively parsing the body code.
 fn parse_body(tokens: &mut VecDeque<Token>) -> Vec<Box<dyn ast::Node>> {
@@ -47,6 +63,19 @@ fn parse_body(tokens: &mut VecDeque<Token>) -> Vec<Box<dyn ast::Node>> {
             // Assignemnets
             TokenType::Assignment => {
                 let assigned_var: Box<dyn ast::Node> = code_body.pop().unwrap(); // Get last node added,
+
+                // Look for type decleration
+                let type_dec: Option<Box<dyn ast::Node>>;
+                if !code_body.is_empty() {
+                    if code_body[code_body.len() - 1].get_type() == ast::AstType::Type {
+                        type_dec = Some(code_body.pop().expect("Could not pop code_body!"));
+                    } else {
+                        type_dec = None;
+                    }
+                } else {
+                    type_dec = None;
+                }
+
                 let assign_to_var: Box<dyn ast::Node> =
                     build_var_or_value(tokens.pop_front().unwrap());
 
@@ -68,6 +97,7 @@ fn parse_body(tokens: &mut VecDeque<Token>) -> Vec<Box<dyn ast::Node>> {
 
                 // Return the assignment struct
                 Some(Box::new(ast::Assignment {
+                    type_dec,
                     var: assigned_var,
                     expression: assigned_to,
                 }))
@@ -264,7 +294,7 @@ fn build_var_or_value(token: Token) -> Box<dyn ast::Node> {
     // Else assume, Value
     let val = match token.token_type {
         TokenType::Integer => Value {
-            value: ValueEnum::Int(token.value.parse::<i32>().unwrap()),
+            value: ValueEnum::Int(token.value.parse::<i16>().unwrap()),
         },
         TokenType::Floating => Value {
             value: ValueEnum::Float(token.value.parse::<f32>().unwrap()),
@@ -319,4 +349,12 @@ fn build_condition(tokens: &mut VecDeque<Token>) -> Box<ast::Condition> {
 /// Returns whether or not an identifier is for function.
 fn is_function(tokens: &mut VecDeque<Token>) -> bool {
     tokens.front().unwrap().token_type == TokenType::OpenParen
+}
+
+/// Hashes variables in the AST so that each variable gets a unique hash
+fn variable_hasher(var_name: &str, branch_path: &str) -> u32 {
+    let mut hasher = DefaultHasher::new();
+    var_name.hash(&mut hasher);
+    branch_path.hash(&mut hasher);
+    hasher.finish() as u32
 }

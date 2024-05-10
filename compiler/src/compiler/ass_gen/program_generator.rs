@@ -5,7 +5,6 @@
 
 use super::instruction_parser::parse_assignment;
 use crate::compiler::ast;
-use std::process::exit;
 
 /// Converts AST to ASS code, which is represented as a vector of strings (each string being an ASS
 /// instruction)
@@ -20,6 +19,17 @@ pub fn generate_ass(program_body: &[Box<dyn ast::Node>], entry_point: usize) -> 
                     // block
                     for asm_line in &asm_inst.code {
                         ass_prog.push(asm_line.value.clone()); // Push the line of code to program.
+                    }
+                } else {
+                    panic!("Downcasting from {:?} to Asm failed!", inst.get_type());
+                }
+            }
+            ast::AstType::Assignment => {
+                if let Some(assign_inst) = inst.as_any().downcast_ref::<ast::Assignment>() {
+                    // Check if asm
+                    // block
+                    for asm_line in parse_assignment(assign_inst) {
+                        ass_prog.push(asm_line); // Push the line of code to program.
                     }
                 } else {
                     panic!("Downcasting from {:?} to Asm failed!", inst.get_type());

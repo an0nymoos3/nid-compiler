@@ -20,10 +20,10 @@ use super::memory_manager::{pop_from_stack, push_to_stack, read_from_dm};
 
 /// Performs addition on 2 operands. Only expects 2 parameters to be Some
 pub fn add(
-    reg1: Option<i8>,
-    reg2: Option<i8>,
-    addr1: Option<i16>,
-    addr2: Option<i16>,
+    reg1: Option<u8>,
+    reg2: Option<u8>,
+    addr1: Option<u16>,
+    addr2: Option<u16>,
     const1: Option<i16>,
     const2: Option<i16>,
 ) -> Vec<String> {
@@ -38,10 +38,10 @@ pub fn add(
 
 /// Performs subtractions on 2 operands. Only expects 2 parameters to be Some
 pub fn sub(
-    reg1: Option<i8>,
-    reg2: Option<i8>,
-    addr1: Option<i16>,
-    addr2: Option<i16>,
+    reg1: Option<u8>,
+    reg2: Option<u8>,
+    addr1: Option<u16>,
+    addr2: Option<u16>,
     const1: Option<i16>,
     const2: Option<i16>,
 ) -> Vec<String> {
@@ -56,10 +56,10 @@ pub fn sub(
 
 /// Performs multiplication on 2 operands. Only expects 2 parameters to be Some
 pub fn multiplication(
-    reg1: Option<i8>,
-    reg2: Option<i8>,
-    addr1: Option<i16>,
-    addr2: Option<i16>,
+    reg1: Option<u8>,
+    reg2: Option<u8>,
+    addr1: Option<u16>,
+    addr2: Option<u16>,
     const1: Option<i16>,
     const2: Option<i16>,
 ) -> Vec<String> {
@@ -77,10 +77,10 @@ pub fn multiplication(
 
 /// Performs division on 2 operands. Only expects 2 parameters to be Some
 pub fn division(
-    reg1: Option<i8>,
-    reg2: Option<i8>,
-    addr1: Option<i16>,
-    addr2: Option<i16>,
+    reg1: Option<u8>,
+    reg2: Option<u8>,
+    addr1: Option<u16>,
+    addr2: Option<u16>,
     const1: Option<i16>,
     const2: Option<i16>,
 ) -> Vec<String> {
@@ -97,27 +97,28 @@ pub fn division(
 }
 
 /// Logical shift left
-pub fn lsl(register: i8) -> String {
+pub fn lsl(register: u8) -> String {
     format!("lsl, r{register}")
 }
 
 /// Logical shift right
-pub fn lsr(register: i8) -> String {
+pub fn lsr(register: u8) -> String {
     format!("lsr, r{register}")
 }
 
 /// Hepler function to avoid code duplication
 fn perform_op(
     op: &str,
-    reg1: Option<i8>,
-    reg2: Option<i8>,
-    addr1: Option<i16>,
-    addr2: Option<i16>,
+    reg1: Option<u8>,
+    reg2: Option<u8>,
+    addr1: Option<u16>,
+    addr2: Option<u16>,
     const1: Option<i16>,
 ) -> Vec<String> {
     let mut instructions: Vec<String> = Vec::new();
     let mut work_reg: String = String::from(""); // Default working register
-    let mut const_or_addr: Option<i16> = None;
+    let mut const_val: Option<i16> = None;
+    let mut asm_addr: Option<u16> = None;
     let mut stack_pushed: bool = false; // To know if stack needs to be popped after arithmetic
                                         // operation.
 
@@ -139,28 +140,32 @@ fn perform_op(
             work_reg = String::from("r0"); // Set register to work on.
 
             if let Some(addr) = addr2 {
-                const_or_addr = Some(addr);
+                asm_addr = Some(addr);
             }
         }
     } else if reg2.is_none() {
-        const_or_addr = addr1; // Set to addr1, if addr1 is none it will be replaced with the const
-                               // in the end of this function
+        asm_addr = addr1; // Set to addr1, if addr1 is none it will be replaced with the const
+                          // in the end of this function
     }
 
     // Add constants to instructions, if addresses werent added
-    if const_or_addr.is_none() && const1.is_some() {
-        const_or_addr = const1;
+    if asm_addr.is_none() && const1.is_some() {
+        const_val = const1;
     }
 
     // Just sanity checks that compiler generated a correct instruction.
     if work_reg.is_empty() {
         panic!("No register set to work on!");
     }
-    if const_or_addr.is_none() {
+    if asm_addr.is_none() && const_val.is_none() {
         panic!("Second operand not set!"); // Panic if invalid instruction
     }
 
-    instructions.push(format!("{op}, {work_reg}, {}", const_or_addr.unwrap()));
+    if let Some(addr) = asm_addr {
+        instructions.push(format!("{op}, {work_reg}, {}", addr));
+    } else {
+        instructions.push(format!("{op}, {work_reg}, {}", const_val.unwrap()));
+    }
 
     if stack_pushed {
         unsafe { instructions.push(pop_from_stack(2)) } // Just pop to helper register for now.

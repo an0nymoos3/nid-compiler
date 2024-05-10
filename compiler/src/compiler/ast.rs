@@ -4,7 +4,7 @@ use std::fmt::{self, Display, Write};
 
 #[derive(Debug, PartialEq)]
 pub enum ValueEnum {
-    Int(i32),
+    Int(i16),
     Float(f32),
     String(String),
     Char(char),
@@ -117,7 +117,9 @@ pub struct Asm {
 }
 
 pub struct Assignment {
-    pub var: Box<dyn Node>,        // Var being assigned
+    pub type_dec: Option<Box<dyn Node>>, // Optional type specifier, used for new variables
+    pub var: Box<dyn Node>,              // Var being assigned TODO: Replace with Variable instead
+    // of dyn node
     pub expression: Box<dyn Node>, // Varibale or Value being assigned to var
 }
 
@@ -257,6 +259,9 @@ impl Node for Assignment {
     fn traverse_leaves(&self, tree: &mut ptree::TreeBuilder) {
         tree.begin_child(self.display());
 
+        if let Some(dec) = &self.type_dec {
+            dec.traverse_leaves(tree);
+        }
         self.var.traverse_leaves(tree);
         self.expression.traverse_leaves(tree);
 
@@ -529,6 +534,14 @@ impl Node for Variable {
 
     fn traverse_leaves(&self, tree: &mut ptree::TreeBuilder) {
         tree.add_empty_child(self.display());
+    }
+}
+impl Value {
+    pub fn value_as_i16(&self) -> i16 {
+        match self.value {
+            ValueEnum::Int(val) => val,
+            _ => panic!("Types other than 16-bit integer not currently supported!"),
+        }
     }
 }
 impl Node for Value {
