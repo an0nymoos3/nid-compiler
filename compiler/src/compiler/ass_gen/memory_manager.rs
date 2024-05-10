@@ -48,6 +48,11 @@ pub unsafe fn get_stack_ptr() -> u16 {
     STACK_PTR
 }
 
+/// Decrements the stack ptr to symbolize stack being popped.
+pub unsafe fn decrement_stack_ptr() {
+    STACK_PTR -= 1;
+}
+
 /// Push new variable to memory map
 pub unsafe fn push_to_mem_map(var_id: u32, address: u16) {
     MEMORY_MAP
@@ -57,12 +62,15 @@ pub unsafe fn push_to_mem_map(var_id: u32, address: u16) {
 }
 
 /// Read the memory address of a variable
-pub unsafe fn read_from_mem_map(var_id: u32) -> u16 {
-    *MEMORY_MAP
+pub unsafe fn read_from_mem_map(var_id: u32) -> Option<u16> {
+    if let Some(addr) = MEMORY_MAP
         .lock()
         .expect("Failed to lock on MEMORY_MAP")
         .get(&var_id)
-        .expect("Variable not found in MEMORY_MAP")
+    {
+        return Some(*addr);
+    }
+    None
 }
 
 /// Remove variable from memory map

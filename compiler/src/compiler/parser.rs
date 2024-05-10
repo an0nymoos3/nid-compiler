@@ -15,14 +15,37 @@ pub fn generate_ast(tokens: &mut VecDeque<Token>) -> ast::Ast<dyn ast::Node> {
 /// Traverses AST and hashes variables based on their location
 pub fn hash_variables(ast: &mut [Box<dyn Node>], path: &str) {
     for node in ast.iter_mut() {
-        println!("{:?}", node.get_type());
-
+        // Hash variables
         if let Some(var) = node.as_any_mut().downcast_mut::<ast::Variable>() {
             var.identifier = variable_hasher(&var.identifier, path).to_string();
+
+        // Hash variables in assignments
         } else if let Some(assign) = node.as_any_mut().downcast_mut::<ast::Assignment>() {
             if let Some(var) = (*assign.var).as_any_mut().downcast_mut::<ast::Variable>() {
                 var.identifier = variable_hasher(&var.identifier, path).to_string();
             }
+            if let Some(other_var) = assign
+                .expression
+                .as_any_mut()
+                .downcast_mut::<ast::Variable>()
+            {
+                other_var.identifier = variable_hasher(&other_var.identifier, path).to_string();
+            }
+            if let Some(bin_exp) = assign
+                .expression
+                .as_any_mut()
+                .downcast_mut::<ast::BinaryExpression>()
+            {
+                if let Some(var) = bin_exp.right.as_any_mut().downcast_mut::<ast::Variable>() {
+                    var.identifier = variable_hasher(&var.identifier, path).to_string();
+                }
+
+                if let Some(var) = bin_exp.left.as_any_mut().downcast_mut::<ast::Variable>() {
+                    var.identifier = variable_hasher(&var.identifier, path).to_string();
+                }
+            }
+
+        // Hash variables in code blocks
         } else if let Some(block) = node.as_any_mut().downcast_mut::<ast::Block>() {
             let new_path: String = format!("{}newdepth", path);
             hash_variables(block.body.as_mut_slice(), &new_path);
