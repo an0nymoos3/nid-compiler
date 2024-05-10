@@ -10,26 +10,35 @@
 Args parse_args(int argc, char **argv) {
   Args args;
   args.debug = false;
-  args.terminal_out = false;
 
   for (int i = 1; i < argc; i++) {
 
+    // Find input file
     if (std::strstr(argv[i], ".ass") != NULL) {
       args.filename = argv[i];
     }
 
-    if (argv[i] == "-d" || argv[i] == "--debug") {
-      args.debug = true;
+    // Find optional output name
+    if (strcmp(argv[i], "-o") == 0 || strcmp(argv[i], "--output") == 0) {
+      args.outname =
+          argv[i +
+               1]; // Assume that user sends the outname after the output flag
     }
 
-    if (argv[i] == "-t" || argv[i] == "--output-terminal") {
-      args.terminal_out = true;
+    // Check for debug flag
+    if (strcmp(argv[i], "-d") == 0 || strcmp(argv[i], "--debug") == 0) {
+      args.debug = true;
     }
   }
 
   if (args.filename.empty()) {
     std::cout << "No .ass file provided!" << std::endl;
     exit(1);
+  }
+
+  if (args.outname.empty()) {
+    args.outname = args.filename;
+    args.outname.replace(args.outname.end() - 4, args.outname.end(), ".out");
   }
 
   return args;
@@ -41,6 +50,7 @@ std::vector<Line> parse_file(Args args) {
 
   if (!file.is_open()) {
     std::cout << "Error opening the file." << std::endl;
+    exit(1);
   }
 
   // Read the file contents into a stringstream
