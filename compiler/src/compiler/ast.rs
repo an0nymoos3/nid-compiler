@@ -11,6 +11,7 @@ pub enum ValueEnum {
     Void,
 }
 
+#[derive(Debug)]
 pub enum BinaryOperator {
     Add,
     Sub,

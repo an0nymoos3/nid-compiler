@@ -1,7 +1,8 @@
 /*
 * Handles general conversion from high-level (NID) to assembly (ASS) languge.
 */
-use crate::compiler::ast;
+use super::arithmetic;
+use crate::compiler::ast::{self, Node};
 
 use super::memory_manager::{
     get_stack_ptr, heap_alloc, load_const, push_to_mem_map, push_to_stack, read_from_dm,
@@ -44,6 +45,11 @@ pub fn parse_assignment(assign: &ast::Assignment) -> Vec<String> {
             .as_any()
             .downcast_ref::<ast::BinaryExpression>()
         {
+            instructions = binary_expression_parser(bin_exp);
+            let write_addr =
+                unsafe { read_from_mem_map(assigned_var.identifier.parse::<u32>().unwrap()) }
+                    .expect("Trying to write to uninitialized variable!");
+            instructions.push(heap_alloc(0, write_addr));
         } else {
             panic!("Trying to assign variable to something that is niether a value, variable or binary expression!");
         }
@@ -52,4 +58,33 @@ pub fn parse_assignment(assign: &ast::Assignment) -> Vec<String> {
     }
 
     instructions
+}
+
+/// Helper function for parsing binary expressions
+fn binary_expression_parser(bin_exp: &ast::BinaryExpression) -> Vec<String> {
+    if let Some(l_const) = bin_exp.left.as_any().downcast_ref::<ast::Value>() {
+        if let Some(r_const) = bin_exp.right.as_any().downcast_ref::<ast::Value>() {
+            let l_const_param = Some(l_const.value_as_i16());
+            let r_const_param = Some(r_const.value_as_i16());
+
+            match bin_exp.op {
+                ast::BinaryOperator::Add => {
+                    arithmetic::add(None, None, None, None, l_const_param, r_const_param)
+                }
+                ast::BinaryOperator::Sub => {
+                    arithmetic::sub(None, None, None, None, l_const_param, r_const_param)
+                }
+                ast::BinaryOperator::Mul => {
+                    arithmetic::mul(None, None, None, None, l_const_param, r_const_param)
+                }
+                ast::BinaryOperator::Div => {
+                    arithmetic::div(None, None, None, None, l_const_param, r_const_param)
+                }
+            }
+        } else {
+            panic!("Missing right operand!");
+        }
+    } else {
+        panic!("Missing let operand!");
+    }
 }

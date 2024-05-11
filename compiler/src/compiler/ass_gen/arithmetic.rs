@@ -55,7 +55,7 @@ pub fn sub(
 }
 
 /// Performs multiplication on 2 operands. Only expects 2 parameters to be Some
-pub fn multiplication(
+pub fn mul(
     reg1: Option<u8>,
     reg2: Option<u8>,
     addr1: Option<u16>,
@@ -76,7 +76,7 @@ pub fn multiplication(
 }
 
 /// Performs division on 2 operands. Only expects 2 parameters to be Some
-pub fn division(
+pub fn div(
     reg1: Option<u8>,
     reg2: Option<u8>,
     addr1: Option<u16>,
