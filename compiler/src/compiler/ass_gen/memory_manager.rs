@@ -13,9 +13,22 @@ lazy_static! {
 // Acts as a stack pointer to allow the compiler to use the more optimized st and ld instructions,
 // rather than psh or pop
 static mut STACK_PTR: u16 = 0;
+static MAX_ADDR: u16 = 513;
+
+// Address range that is allocated at compile time by the user that is not allowed to be touched by
+// the compiler. Useful if something in asm {} requires memory to not be overwritten by the
+// compuiler.
+static mut PREALLOC_START: u16 = MAX_ADDR;
+static mut PREALLOC_END: u16 = MAX_ADDR;
 
 /// Push variable to the next available position in the "DM stack"
 pub unsafe fn push_to_stack(register: u8) -> String {
+    if PREALLOC_START <= STACK_PTR && STACK_PTR <= PREALLOC_END {
+        panic!("Trying to allocated memory inside user defined range!")
+    }
+    if STACK_PTR >= MAX_ADDR {
+        panic!("Trying to allocated outside of MAX_ADDR!")
+    }
     let ass_output: String = format!("st, r{register}, {STACK_PTR}");
     STACK_PTR += 1;
     ass_output
@@ -30,6 +43,15 @@ pub unsafe fn pop_from_stack(register: u8) -> String {
 
 /// Store data from regisster to addr in DM
 pub fn write_to_dm(register: u8, addr: u16) -> String {
+    unsafe {
+        if PREALLOC_START <= addr && addr <= PREALLOC_END {
+            panic!("Trying to allocated memory inside user defined range!")
+        }
+    }
+    if addr >= MAX_ADDR {
+        panic!("Trying to allocated outside of MAX_ADDR!")
+    }
+
     format!("st, r{register}, {addr}")
 }
 
@@ -44,17 +66,22 @@ pub fn load_const(register: u8, const_val: i16) -> String {
 }
 
 /// Returns current memory address of stack pointer
-pub unsafe fn get_stack_ptr() -> u16 {
-    STACK_PTR
+pub fn get_stack_ptr() -> u16 {
+    unsafe { STACK_PTR }
 }
 
 /// Decrements the stack ptr to symbolize stack being popped.
-pub unsafe fn decrement_stack_ptr() {
-    STACK_PTR -= 1;
+pub fn decrement_stack_ptr() {
+    unsafe {
+        STACK_PTR -= 1;
+    }
 }
 
 /// Push new variable to memory map
 pub unsafe fn push_to_mem_map(var_id: u32, address: u16) {
+    if address >= MAX_ADDR {
+        panic!("Trying to allocated outside of MAX_ADDR!")
+    }
     MEMORY_MAP
         .lock()
         .expect("Failed to lock on MEMORY_MAP")
@@ -62,7 +89,7 @@ pub unsafe fn push_to_mem_map(var_id: u32, address: u16) {
 }
 
 /// Read the memory address of a variable
-pub unsafe fn read_from_mem_map(var_id: u32) -> Option<u16> {
+pub fn read_from_mem_map(var_id: u32) -> Option<u16> {
     if let Some(addr) = MEMORY_MAP
         .lock()
         .expect("Failed to lock on MEMORY_MAP")
@@ -74,9 +101,29 @@ pub unsafe fn read_from_mem_map(var_id: u32) -> Option<u16> {
 }
 
 /// Remove variable from memory map
-pub unsafe fn remove_from_mem_map(var_id: u32) {
+pub fn remove_from_mem_map(var_id: u32) {
     MEMORY_MAP
         .lock()
         .expect("Failed to lock on MEMORY_MAP")
         .remove(&var_id);
+}
+
+/// Pre-allocate memory space that is not allowed to be touched by the compiler
+pub fn remove_mem_from_compiler(start: Option<u16>, end: Option<u16>) {
+    if let Some(start_addr) = start {
+        let mut end_addr = MAX_ADDR;
+
+        if let Some(addr) = end {
+            end_addr = addr;
+        }
+
+        if start_addr > end_addr {
+            panic!("Invalid memory range set with PREALLOC macro!")
+        }
+
+        unsafe {
+            PREALLOC_START = start_addr;
+            PREALLOC_END = end_addr;
+        }
+    }
 }

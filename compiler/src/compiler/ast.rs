@@ -30,6 +30,12 @@ pub enum ConditionalOperator {
     LessEq,
 }
 
+#[derive(Debug, PartialEq)]
+pub enum MacroType {
+    PreAllocStart,
+    PreAllocEnd,
+}
+
 /// Enum for easier identification of Node type
 #[derive(Debug, PartialEq, Eq)]
 pub enum AstType {
@@ -45,6 +51,7 @@ pub enum AstType {
     Type,
     Variable,
     Value,
+    Macro,
     Debug,
 }
 
@@ -159,6 +166,12 @@ pub struct Function {
 pub struct Loop {
     pub condition: Box<Condition>,
     pub body: Block,
+}
+
+/// Macros, used for special stuff like telling the compiler what memory it cannot touch
+pub struct Macro {
+    pub macro_type: MacroType,
+    pub macro_value: u16,
 }
 
 /// Return statement, can either contain a return value or not.
@@ -493,6 +506,36 @@ impl Node for Loop {
 
         self.condition.traverse_leaves(tree);
         self.body.traverse_leaves(tree);
+
+        tree.end_child();
+    }
+}
+impl Node for Macro {
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
+
+    fn as_any_mut(&mut self) -> &mut dyn Any {
+        self
+    }
+
+    fn display(&self) -> String {
+        String::from("Macro")
+    }
+
+    fn get_type(&self) -> AstType {
+        AstType::Macro
+    }
+
+    fn has_leaves(&self) -> bool {
+        true
+    }
+
+    fn traverse_leaves(&self, tree: &mut ptree::TreeBuilder) {
+        tree.begin_child(self.display());
+
+        tree.add_empty_child(format!("Type: {:?}", self.macro_type));
+        tree.add_empty_child(format!("Value: {:?}", self.macro_value));
 
         tree.end_child();
     }

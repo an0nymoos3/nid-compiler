@@ -3,7 +3,10 @@
 * instructions in order.
 */
 
-use super::{instruction_parser::parse_assignment, memory_manager::decrement_stack_ptr};
+use super::{
+    instruction_parser::parse_assignment,
+    memory_manager::{decrement_stack_ptr, remove_mem_from_compiler},
+};
 use crate::compiler::ast;
 
 /// Converts AST to ASS code, which is represented as a vector of strings (each string being an ASS
@@ -11,6 +14,24 @@ use crate::compiler::ast;
 pub fn generate_ass(program_body: &[Box<dyn ast::Node>], entry_point: usize) -> Vec<String> {
     let mut ass_prog: Vec<String> = Vec::new();
     let mut var_count: i32 = 0;
+
+    let mut preallocstart: Option<u16> = None;
+    let mut preallocend: Option<u16> = None;
+    //
+    // First look for certain global things in the code. Currently only looks for macros
+    for inst in program_body {
+        // Look for macros
+        if let Some(nid_macro) = inst.as_any().downcast_ref::<ast::Macro>() {
+            if nid_macro.macro_type == ast::MacroType::PreAllocStart {
+                preallocstart = Some(nid_macro.macro_value);
+            } else if nid_macro.macro_type == ast::MacroType::PreAllocEnd {
+                preallocend = Some(nid_macro.macro_value);
+            }
+        }
+    }
+
+    // Tell compiler to not touch certain memory addresses
+    remove_mem_from_compiler(preallocstart, preallocend);
 
     for inst in program_body[entry_point + 1].get_body().iter() {
         match inst.get_type() {
@@ -48,9 +69,7 @@ pub fn generate_ass(program_body: &[Box<dyn ast::Node>], entry_point: usize) -> 
     }
 
     for _ in 0..var_count {
-        unsafe {
-            decrement_stack_ptr();
-        }
+        decrement_stack_ptr();
     }
 
     ass_prog

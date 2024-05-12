@@ -28,8 +28,9 @@ pub enum TokenType {
     Return,    // Return statement
     Asm,       // Allows for inline assembly code
     Eol,       // End of line, basically ; representing end of line.
-    Eof,       // Represents the end of the code (EOF all caps appears to be a reserved
-               // word of some kind)
+    Eof, // Represents the end of the code (EOF all caps appears to be a reserved word of some kind)
+    Macro, // Basic macro functionality, such as allocating memory that the compiler is not allowed
+         // to touch
 }
 #[derive(Debug, Clone)]
 #[allow(dead_code)] // TODO: Remove once fields are being read
@@ -266,8 +267,19 @@ pub fn tokenize(file_content: String) -> VecDeque<Token> {
             }
 
         /*
-         * Finds words, such as reserved keywords, function names, variable names, etc.
+         * Find nid-lang macros
          */
+        } else if current_char == '#' {
+            let macro_value: String = build_word(&mut src_code);
+
+            token = Token {
+                value: macro_value,
+                token_type: TokenType::Macro,
+            };
+
+            /*
+             * Finds words, such as reserved keywords, function names, variable names, etc.
+             */
         } else if is_letter(current_char) {
             let mut token_value: String = String::from(current_char);
             token_value.push_str(&build_word(&mut src_code));

@@ -53,8 +53,6 @@ pub fn hash_variables(ast: &mut [Box<dyn Node>], path: &str) {
     }
 }
 
-fn hash_body(body: &[Box<dyn ast::Node>], path: &str) {}
-
 /// Function for being able to recursively parsing the body code.
 fn parse_body(tokens: &mut VecDeque<Token>) -> Vec<Box<dyn ast::Node>> {
     let mut code_body: Vec<Box<dyn ast::Node>> = Vec::new();
@@ -190,6 +188,8 @@ fn parse_body(tokens: &mut VecDeque<Token>) -> Vec<Box<dyn ast::Node>> {
 
             // While loops
             TokenType::Loop => Some(build_loop(tokens)),
+
+            TokenType::Macro => Some(build_macro(&token, tokens)),
 
             // Return statement
             TokenType::Return => Some(build_return(tokens)),
@@ -375,6 +375,27 @@ fn build_condition(tokens: &mut VecDeque<Token>) -> Box<ast::Condition> {
     })
 }
 
+/// Performs some checks and returns a Macro type if a valid existed.
+fn build_macro(token: &Token, tokens: &mut VecDeque<Token>) -> Box<ast::Macro> {
+    if let Some(macro_type) = get_macro_type(&token.value) {
+        if tokens.front().unwrap().token_type == TokenType::Assignment {
+            tokens.pop_front().unwrap();
+            if let Some(value) = tokens.pop_front() {
+                return Box::new(ast::Macro {
+                    macro_type,
+                    macro_value: value
+                        .value
+                        .parse::<u16>()
+                        .expect("Expected u16 as value for macro!"),
+                });
+            }
+        } else {
+            panic!("Expected assingment after macro decleration!")
+        }
+    }
+    panic!("Invalid macro found!")
+}
+
 /// Returns whether or not an identifier is for function.
 fn is_function(tokens: &mut VecDeque<Token>) -> bool {
     tokens.front().unwrap().token_type == TokenType::OpenParen
@@ -386,4 +407,13 @@ fn variable_hasher(var_name: &str, branch_path: &str) -> u32 {
     var_name.hash(&mut hasher);
     branch_path.hash(&mut hasher);
     hasher.finish() as u32
+}
+
+/// Returns the valid macro type of Token or None if invalid
+fn get_macro_type(m_type: &str) -> Option<ast::MacroType> {
+    match m_type {
+        "PREALLOCSTART" => Some(ast::MacroType::PreAllocStart),
+        "PREALLOCEND" => Some(ast::MacroType::PreAllocEnd),
+        _ => None,
+    }
 }
