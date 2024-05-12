@@ -55,6 +55,20 @@ pub fn parse_assignment(assign: &ast::Assignment) -> Vec<String> {
     instructions
 }
 
+/// Parses if-statements
+pub fn parse_branch_statement(branch: &ast::Branch) -> Vec<String> {
+    let mut instructions: Vec<String> = Vec::new();
+
+    instructions
+}
+
+/// Parses while loops
+pub fn parse_loop_statement(loop_state: &ast::Loop) -> Vec<String> {
+    let mut instructions: Vec<String> = Vec::new();
+
+    instructions
+}
+
 /// Helper function for parsing binary expressions
 fn binary_expression_parser(bin_exp: &ast::BinaryExpression) -> Vec<String> {
     let reg1: Option<u8> = None;
@@ -96,4 +110,13 @@ fn binary_expression_parser(bin_exp: &ast::BinaryExpression) -> Vec<String> {
         ast::BinaryOperator::Mul => arithmetic::mul(reg1, reg2, addr1, addr2, const1, const2),
         ast::BinaryOperator::Div => arithmetic::div(reg1, reg2, addr1, addr2, const1, const2),
     }
+}
+
+/// Helper function to parse the condition of if statements and loops
+fn condition_parser(condition: &ast::Condition) -> Vec<String> {
+    let mut instructions: Vec<String> = Vec::new();
+
+    if let Some(left_op) = &condition.left {}
+
+    instructions
 }

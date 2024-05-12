@@ -33,7 +33,7 @@ pub fn generate_ass(program_body: &[Box<dyn ast::Node>], entry_point: usize) -> 
     // Tell compiler to not touch certain memory addresses
     remove_mem_from_compiler(preallocstart, preallocend);
 
-    for inst in program_body[entry_point + 1].get_body().iter() {
+    for inst in program_body[entry_point].get_body().iter() {
         match inst.get_type() {
             ast::AstType::Asm => {
                 if let Some(asm_inst) = inst.as_any().downcast_ref::<ast::Asm>() {

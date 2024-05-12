@@ -66,14 +66,14 @@ impl Ast<dyn Node> {
     pub fn new(body: Vec<Box<dyn Node>>) -> Self {
         let mut index: usize = 0;
         loop {
-            if index >= body.len() - 1 {
+            if index >= body.len() {
                 panic!("main() not found!");
             }
 
             // TODO: Remove the allow()
             #[allow(clippy::borrowed_box)]
             let node: &Box<dyn Node> = body.get(index).unwrap();
-            if node.get_name() == "main" && body.get(index + 1).unwrap().is_block() {
+            if node.get_name() == "main" {
                 break; // Only break if it's the main decleration
             }
             index += 1;
@@ -153,13 +153,14 @@ pub struct Branch {
 /// Condition, used by branches and loops
 pub struct Condition {
     pub operator: ConditionalOperator,
-    pub left_operand: Option<Box<dyn Node>>, // Variable or value
-    pub right_operand: Box<dyn Node>,        // Variable or value
+    pub left: Option<Box<dyn Node>>, // Variable or value
+    pub right: Box<dyn Node>,        // Variable or value
 }
 
 pub struct Function {
     pub identifier: String,
     pub params: Vec<Box<dyn Node>>, // Accept nodes as params, such as values or variables etc
+    pub body: Block,
 }
 
 /// Loops, currently ony while is supported
@@ -425,11 +426,11 @@ impl Node for Condition {
     fn traverse_leaves(&self, tree: &mut ptree::TreeBuilder) {
         tree.begin_child(self.display());
 
-        if let Some(left) = &self.left_operand {
+        if let Some(left) = &self.left {
             left.traverse_leaves(tree);
         }
         tree.add_empty_child(format!("OP: {:?}", self.operator));
-        self.right_operand.traverse_leaves(tree);
+        self.right.traverse_leaves(tree);
 
         tree.end_child();
     }
@@ -469,6 +470,10 @@ impl Node for Function {
 
     fn get_name(&self) -> String {
         self.identifier.clone()
+    }
+
+    fn get_body(&self) -> &[Box<dyn Node>] {
+        &self.body.body
     }
 
     fn has_leaves(&self) -> bool {
@@ -692,11 +697,7 @@ pub fn export_ast(ast: &Ast<dyn Node>) {
 
     for i in 0..ast.body.len() {
         if ast.body[i].get_type() == AstType::Function {
-            traverse_ast_body(
-                &mut tree,
-                ast.body[i + 1].get_body(),
-                &ast.body[i].display(),
-            )
+            traverse_ast_body(&mut tree, ast.body[i].get_body(), &ast.body[i].display())
         }
     }
     let pretty_tree = tree.build();
@@ -710,6 +711,9 @@ fn traverse_ast_body(tree: &mut ptree::TreeBuilder, body: &[Box<dyn Node>], bran
     tree.begin_child(branch.to_string());
 
     for node in body.iter() {
+        if let Some(func) = node.as_any().downcast_ref::<Function>() {
+            traverse_ast_body(tree, func.get_body(), &node.get_name());
+        }
         if node.is_block() {
             traverse_ast_body(tree, node.get_body(), &node.get_name());
         } else if node.has_leaves() {

@@ -18,8 +18,14 @@ pub fn hash_variables(ast: &mut [Box<dyn Node>], path: &str) {
         // Hash variables
         if let Some(var) = node.as_any_mut().downcast_mut::<ast::Variable>() {
             var.identifier = variable_hasher(&var.identifier, path).to_string();
+        }
+        // Hash another functions variables with different seed
+        else if let Some(func) = node.as_any_mut().downcast_mut::<ast::Function>() {
+            let new_path: String = format!("{}{}", path, func.get_name());
 
-        // Hash variables in assignments
+            hash_variables(&mut func.body.body, &new_path);
+
+            // Hash variables in assignments
         } else if let Some(assign) = node.as_any_mut().downcast_mut::<ast::Assignment>() {
             if let Some(var) = (*assign.var).as_any_mut().downcast_mut::<ast::Variable>() {
                 var.identifier = variable_hasher(&var.identifier, path).to_string();
@@ -47,13 +53,59 @@ pub fn hash_variables(ast: &mut [Box<dyn Node>], path: &str) {
 
         // Hash variables in code blocks
         } else if let Some(block) = node.as_any_mut().downcast_mut::<ast::Block>() {
-            let new_path: String = format!("{}newdepth", path);
-            hash_variables(block.body.as_mut_slice(), &new_path);
+            hash_variables(block.body.as_mut_slice(), path);
+
+        // Hash inside if-statements
+        } else if let Some(branch) = node.as_any_mut().downcast_mut::<ast::Branch>() {
+            if let Some(left) = &mut branch.condition.left {
+                if let Some(l_var) = left.as_any_mut().downcast_mut::<ast::Variable>() {
+                    l_var.identifier = variable_hasher(&l_var.identifier, path).to_string();
+                }
+            }
+            if let Some(r_var) = branch
+                .condition
+                .right
+                .as_any_mut()
+                .downcast_mut::<ast::Variable>()
+            {
+                r_var.identifier = variable_hasher(&r_var.identifier, path).to_string();
+            }
+
+            hash_variables(branch.true_body.body.as_mut_slice(), path);
+
+            if let Some(false_body) = &mut branch.false_body {
+                hash_variables(false_body.body.as_mut_slice(), path);
+            }
+
+        // Hash inside if-statements
+        } else if let Some(nid_loop) = node.as_any_mut().downcast_mut::<ast::Loop>() {
+            if let Some(left) = &mut nid_loop.condition.left {
+                if let Some(l_var) = left.as_any_mut().downcast_mut::<ast::Variable>() {
+                    l_var.identifier = variable_hasher(&l_var.identifier, path).to_string();
+                }
+            }
+            if let Some(r_var) = nid_loop
+                .condition
+                .right
+                .as_any_mut()
+                .downcast_mut::<ast::Variable>()
+            {
+                r_var.identifier = variable_hasher(&r_var.identifier, path).to_string();
+            }
+
+            hash_variables(nid_loop.body.body.as_mut_slice(), path);
+        } else if let Some(nid_return) = node.as_any_mut().downcast_mut::<ast::Return>() {
+            if let Some(return_val) = &mut nid_return.return_value {
+                if let Some(var) = return_val.as_any_mut().downcast_mut::<ast::Variable>() {
+                    var.identifier = variable_hasher(&var.identifier, path).to_string();
+                }
+            }
         }
     }
 }
 
-/// Function for being able to recursively parsing the body code.
+/// Function for being able to recursively parsing the
+/// body code.
 fn parse_body(tokens: &mut VecDeque<Token>) -> Vec<Box<dyn ast::Node>> {
     let mut code_body: Vec<Box<dyn ast::Node>> = Vec::new();
 
@@ -136,50 +188,7 @@ fn parse_body(tokens: &mut VecDeque<Token>) -> Vec<Box<dyn ast::Node>> {
             // Build variables. or functions
             TokenType::Identifier => {
                 if is_function(tokens) {
-                    tokens.pop_front().unwrap();
-                    // Return a funtcion
-                    let mut params: Vec<Box<dyn ast::Node>> = Vec::new();
-                    while tokens.front().unwrap().token_type != TokenType::CloseParen {
-                        let mut token = tokens.pop_front().unwrap();
-
-                        if token.token_type == TokenType::Seperator {
-                            token = tokens.pop_front().unwrap();
-                        }
-
-                        let param: Box<dyn ast::Node> = match token.token_type {
-                            TokenType::Identifier => build_var_or_value(token),
-                            TokenType::TypeIndicator => match token.value.as_str() {
-                                "int" => Box::new(ast::Type {
-                                    type_value: ast::ValueEnum::Int(0),
-                                }),
-                                "float" => Box::new(ast::Type {
-                                    type_value: ast::ValueEnum::Float(0.0),
-                                }),
-                                "string" => Box::new(ast::Type {
-                                    type_value: ast::ValueEnum::String("".to_string()),
-                                }),
-                                "char" => Box::new(ast::Type {
-                                    type_value: ast::ValueEnum::Char(' '),
-                                }),
-                                "void" => Box::new(ast::Type {
-                                    type_value: ast::ValueEnum::Void,
-                                }),
-
-                                &_ => panic!("Unknown type supplied!"),
-                            },
-                            TokenType::Integer => build_var_or_value(token),
-                            TokenType::Floating => build_var_or_value(token),
-                            TokenType::String => build_var_or_value(token),
-                            TokenType::Char => build_var_or_value(token),
-                            _ => panic!("Unexpected type: {:?}", token.token_type),
-                        };
-                        params.push(param);
-                    }
-                    tokens.pop_front().unwrap();
-                    Some(Box::new(ast::Function {
-                        identifier: token.value,
-                        params,
-                    }))
+                    Some(build_function(&token, tokens))
                 } else {
                     // Return a variable
                     Some(build_var_or_value(token))
@@ -270,6 +279,64 @@ fn build_branch(tokens: &mut VecDeque<Token>) -> Box<ast::Branch> {
         condition,
         true_body,
         false_body,
+    })
+}
+
+/// Builds a Function Node at current position in tokens.
+fn build_function(token: &Token, tokens: &mut VecDeque<Token>) -> Box<ast::Function> {
+    tokens.pop_front().unwrap();
+
+    // Build parameters of function
+    let mut params: Vec<Box<dyn ast::Node>> = Vec::new();
+    while tokens.front().unwrap().token_type != TokenType::CloseParen {
+        let mut token = tokens.pop_front().unwrap();
+
+        if token.token_type == TokenType::Seperator {
+            token = tokens.pop_front().unwrap();
+        }
+
+        let param: Box<dyn ast::Node> = match token.token_type {
+            TokenType::Identifier => build_var_or_value(token),
+            TokenType::TypeIndicator => match token.value.as_str() {
+                "int" => Box::new(ast::Type {
+                    type_value: ast::ValueEnum::Int(0),
+                }),
+                "float" => Box::new(ast::Type {
+                    type_value: ast::ValueEnum::Float(0.0),
+                }),
+                "string" => Box::new(ast::Type {
+                    type_value: ast::ValueEnum::String("".to_string()),
+                }),
+                "char" => Box::new(ast::Type {
+                    type_value: ast::ValueEnum::Char(' '),
+                }),
+                "void" => Box::new(ast::Type {
+                    type_value: ast::ValueEnum::Void,
+                }),
+
+                &_ => panic!("Unknown type supplied!"),
+            },
+            TokenType::Integer => build_var_or_value(token),
+            TokenType::Floating => build_var_or_value(token),
+            TokenType::String => build_var_or_value(token),
+            TokenType::Char => build_var_or_value(token),
+            _ => panic!("Unexpected type: {:?}", token.token_type),
+        };
+        params.push(param);
+    }
+
+    // Get body of function
+    tokens.pop_front().unwrap(); // Remove )
+    tokens.pop_front().unwrap(); // Remove {
+    let body = ast::Block {
+        body: parse_body(tokens),
+    };
+
+    // Return function node
+    Box::new(ast::Function {
+        identifier: token.value.clone(),
+        params,
+        body,
     })
 }
 
@@ -370,8 +437,8 @@ fn build_condition(tokens: &mut VecDeque<Token>) -> Box<ast::Condition> {
 
     Box::new(ast::Condition {
         operator,
-        left_operand: left_op,
-        right_operand: right_op,
+        left: left_op,
+        right: right_op,
     })
 }
 
