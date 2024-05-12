@@ -29,7 +29,7 @@ pub unsafe fn pop_from_stack(register: u8) -> String {
 }
 
 /// Store data from regisster to addr in DM
-pub fn heap_alloc(register: u8, addr: u16) -> String {
+pub fn write_to_dm(register: u8, addr: u16) -> String {
     format!("st, r{register}, {addr}")
 }
 

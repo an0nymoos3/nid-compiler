@@ -5,8 +5,8 @@ use super::arithmetic;
 use crate::compiler::ast::{self, Node};
 
 use super::memory_manager::{
-    get_stack_ptr, heap_alloc, load_const, push_to_mem_map, push_to_stack, read_from_dm,
-    read_from_mem_map,
+    get_stack_ptr, load_const, push_to_mem_map, push_to_stack, read_from_dm, read_from_mem_map,
+    write_to_dm,
 };
 
 /// Converts assignment in nid-lang to an equivalent instruction in ASS.
@@ -20,7 +20,7 @@ pub fn parse_assignment(assign: &ast::Assignment) -> Vec<String> {
             if let Some(addr) =
                 unsafe { read_from_mem_map(assigned_var.identifier.parse::<u32>().unwrap()) }
             {
-                instructions.push(heap_alloc(4, addr));
+                instructions.push(write_to_dm(4, addr));
             } else {
                 unsafe {
                     instructions.push(push_to_stack(4));
@@ -38,7 +38,7 @@ pub fn parse_assignment(assign: &ast::Assignment) -> Vec<String> {
                 let write_addr =
                     unsafe { read_from_mem_map(assigned_var.identifier.parse::<u32>().unwrap()) }
                         .expect("Trying to write to uninitialized variable!");
-                instructions.push(heap_alloc(4, write_addr));
+                instructions.push(write_to_dm(4, write_addr));
             }
         } else if let Some(bin_exp) = assign
             .expression
@@ -49,7 +49,7 @@ pub fn parse_assignment(assign: &ast::Assignment) -> Vec<String> {
             let write_addr =
                 unsafe { read_from_mem_map(assigned_var.identifier.parse::<u32>().unwrap()) }
                     .expect("Trying to write to uninitialized variable!");
-            instructions.push(heap_alloc(0, write_addr));
+            instructions.push(write_to_dm(0, write_addr));
         } else {
             panic!("Trying to assign variable to something that is niether a value, variable or binary expression!");
         }
@@ -62,29 +62,19 @@ pub fn parse_assignment(assign: &ast::Assignment) -> Vec<String> {
 
 /// Helper function for parsing binary expressions
 fn binary_expression_parser(bin_exp: &ast::BinaryExpression) -> Vec<String> {
-    if let Some(l_const) = bin_exp.left.as_any().downcast_ref::<ast::Value>() {
-        if let Some(r_const) = bin_exp.right.as_any().downcast_ref::<ast::Value>() {
-            let l_const_param = Some(l_const.value_as_i16());
-            let r_const_param = Some(r_const.value_as_i16());
+    let reg1: Option<u8> = None;
+    let reg2: Option<u8> = None;
 
-            match bin_exp.op {
-                ast::BinaryOperator::Add => {
-                    arithmetic::add(None, None, None, None, l_const_param, r_const_param)
-                }
-                ast::BinaryOperator::Sub => {
-                    arithmetic::sub(None, None, None, None, l_const_param, r_const_param)
-                }
-                ast::BinaryOperator::Mul => {
-                    arithmetic::mul(None, None, None, None, l_const_param, r_const_param)
-                }
-                ast::BinaryOperator::Div => {
-                    arithmetic::div(None, None, None, None, l_const_param, r_const_param)
-                }
-            }
-        } else {
-            panic!("Missing right operand!");
-        }
-    } else {
-        panic!("Missing let operand!");
+    let addr1: Option<u16> = None;
+    let addr2: Option<u16> = None;
+
+    let const1: Option<i16> = None;
+    let const2: Option<i16> = None;
+
+    match bin_exp.op {
+        ast::BinaryOperator::Add => arithmetic::add(reg1, reg2, addr1, addr2, const1, const2),
+        ast::BinaryOperator::Sub => arithmetic::sub(reg1, reg2, addr1, addr2, const1, const2),
+        ast::BinaryOperator::Mul => arithmetic::mul(reg1, reg2, addr1, addr2, const1, const2),
+        ast::BinaryOperator::Div => arithmetic::div(reg1, reg2, addr1, addr2, const1, const2),
     }
 }
