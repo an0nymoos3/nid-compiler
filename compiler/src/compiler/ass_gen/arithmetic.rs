@@ -128,7 +128,7 @@ fn perform_op(
 
     // If second register is used, it has to be pushed to the stack
     if let Some(reg) = reg2 {
-        unsafe { instructions.push(push_to_stack(reg)) }
+        instructions.push(push_to_stack(reg));
         stack_pushed = true;
     }
 
@@ -168,7 +168,7 @@ fn perform_op(
     }
 
     if stack_pushed {
-        unsafe { instructions.push(pop_from_stack(2)) } // Just pop to helper register for now.
+        instructions.push(pop_from_stack(2)) // Just pop to helper register for now.
     }
 
     instructions

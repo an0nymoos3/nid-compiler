@@ -22,23 +22,40 @@ static mut PREALLOC_START: u16 = MAX_ADDR;
 static mut PREALLOC_END: u16 = MAX_ADDR;
 
 /// Push variable to the next available position in the "DM stack"
-pub unsafe fn push_to_stack(register: u8) -> String {
-    if PREALLOC_START <= STACK_PTR && STACK_PTR <= PREALLOC_END {
-        panic!("Trying to allocated memory inside user defined range!")
+pub fn push_to_stack(register: u8) -> String {
+    unsafe {
+        if PREALLOC_START <= STACK_PTR && STACK_PTR <= PREALLOC_END {
+            panic!("Trying to allocated memory inside user defined range!")
+        }
+        if STACK_PTR >= MAX_ADDR {
+            panic!("Trying to allocated outside of MAX_ADDR!")
+        }
+        let ass_output: String = format!("st, r{register}, {STACK_PTR}");
+        STACK_PTR += 1;
+
+        // Jump over preallocated range if one is set
+        if PREALLOC_START <= STACK_PTR && STACK_PTR <= PREALLOC_END && PREALLOC_END < MAX_ADDR {
+            STACK_PTR = PREALLOC_END + 1;
+        }
+
+        ass_output
     }
-    if STACK_PTR >= MAX_ADDR {
-        panic!("Trying to allocated outside of MAX_ADDR!")
-    }
-    let ass_output: String = format!("st, r{register}, {STACK_PTR}");
-    STACK_PTR += 1;
-    ass_output
 }
 
 /// Pop variable from the last position in the "DM stack"
-pub unsafe fn pop_from_stack(register: u8) -> String {
-    let ass_output: String = format!("ld, r{register}, {STACK_PTR}");
-    STACK_PTR -= 1;
-    ass_output
+pub fn pop_from_stack(register: u8) -> String {
+    unsafe {
+        let ass_output: String = format!("ld, r{register}, {STACK_PTR}");
+
+        STACK_PTR -= 1;
+
+        // Jump over preallocated range if one is set
+        if PREALLOC_START <= STACK_PTR && STACK_PTR <= PREALLOC_END && PREALLOC_START > 0 {
+            STACK_PTR = PREALLOC_START - 1;
+        }
+
+        ass_output
+    }
 }
 
 /// Store data from regisster to addr in DM
@@ -80,8 +97,13 @@ pub fn decrement_stack_ptr() {
 /// Push new variable to memory map
 pub unsafe fn push_to_mem_map(var_id: u32, address: u16) {
     if address >= MAX_ADDR {
-        panic!("Trying to allocated outside of MAX_ADDR!")
+        panic!("Trying to allocate outside of MAX_ADDR!")
     }
+
+    if PREALLOC_START <= address && address <= PREALLOC_END {
+        panic!("Trying to allocate memory inside of PREALLOC range!")
+    }
+
     MEMORY_MAP
         .lock()
         .expect("Failed to lock on MEMORY_MAP")
