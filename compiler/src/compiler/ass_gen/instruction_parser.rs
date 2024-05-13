@@ -4,6 +4,7 @@
 use super::{
     arithmetic,
     memory_manager::{already_in_reg, get_reg, use_reg},
+    program_generator::generate_body_ass,
 };
 use crate::compiler::ast::{self, Node};
 
@@ -76,22 +77,28 @@ pub fn parse_assignment(assign: &ast::Assignment) -> Vec<String> {
 
 /// Parses if-statements
 pub fn parse_branch_statement(branch: &ast::Branch) -> Vec<String> {
-    let mut instructions: Vec<String> = Vec::new();
-    let body_len: i32 = 0;
-
     // Add condition instructions to branch instructions
-    instructions = condition_parser(&branch.condition, body_len);
+    let mut instructions: Vec<String> = condition_parser(&branch.condition);
+    let true_ass = generate_body_ass(branch.true_body.get_body());
+
+    for inst in true_ass {
+        instructions.push(inst);
+    }
+
+    if let Some(false_body) = &branch.false_body {
+        let false_ass = generate_body_ass(false_body.get_body());
+        for inst in false_ass {
+            instructions.push(inst);
+        }
+    }
 
     instructions
 }
 
 /// Parses while loops
 pub fn parse_loop_statement(nid_loop: &ast::Loop) -> Vec<String> {
-    let mut instructions: Vec<String> = Vec::new();
-    let body_len: i32 = 0;
-
     // Add condition instructions to branch instructions
-    instructions = condition_parser(&nid_loop.condition, body_len);
+    let mut instructions: Vec<String> = condition_parser(&nid_loop.condition);
 
     instructions
 }
@@ -148,7 +155,7 @@ fn binary_expression_parser(bin_exp: &ast::BinaryExpression) -> Vec<String> {
 /// Helper function to parse the condition of if statements and loops.
 /// Note: Handling ! (not) as a special case. Load 0 for comparison and run cmp, check if result is
 /// 0
-fn condition_parser(condition: &ast::Condition, body_len: i32) -> Vec<String> {
+fn condition_parser(condition: &ast::Condition) -> Vec<String> {
     let mut instructions: Vec<String> = Vec::new();
 
     let mut reg1: Option<u8> = None;
@@ -225,7 +232,7 @@ fn condition_parser(condition: &ast::Condition, body_len: i32) -> Vec<String> {
     }
 
     // Push jump instruction
-    instructions.push(format!("{op}, {body_len}"));
+    instructions.push(format!("{op}, smthn"));
 
     instructions
 }

@@ -12,8 +12,6 @@ use crate::compiler::ast;
 /// Converts AST to ASS code, which is represented as a vector of strings (each string being an ASS
 /// instruction)
 pub fn generate_ass(program_body: &[Box<dyn ast::Node>], entry_point: usize) -> Vec<String> {
-    let mut ass_prog: Vec<String> = Vec::new();
-
     let mut preallocstart: Option<u16> = None;
     let mut preallocend: Option<u16> = None;
     //
@@ -32,7 +30,14 @@ pub fn generate_ass(program_body: &[Box<dyn ast::Node>], entry_point: usize) -> 
     // Tell compiler to not touch certain memory addresses
     remove_mem_from_compiler(preallocstart, preallocend);
 
-    for inst in program_body[entry_point].get_body().iter() {
+    generate_body_ass(program_body[entry_point].get_body())
+}
+
+/// Parses a body of NID AST nodes. Helper function as it can be used for recursive parsing.
+pub fn generate_body_ass(program_body: &[Box<dyn ast::Node>]) -> Vec<String> {
+    let mut ass_prog: Vec<String> = Vec::new();
+
+    for inst in program_body.iter() {
         match inst.get_type() {
             ast::AstType::Asm => {
                 if let Some(asm_inst) = inst.as_any().downcast_ref::<ast::Asm>() {
