@@ -58,7 +58,7 @@ AssembeledLine assemble_line(Line line, std::map<std::string, int> jmp_map,
       return ass_line;
     } else if (token.token_type == Operation) {
       ass_string +=
-          operation_to_binary(token.value, line.line_number, assembly_failed);
+      operation_to_binary(token.value, line.line_number, assembly_failed);
     } else if (token.token_type == Mode || token.token_type == Register ||
                token.token_type == Constant) {
       ass_string += token.value;
