@@ -11,7 +11,8 @@
 #include <sstream>
 #include <vector>
 
-std::vector<AssembeledLine> assemble_lines(std::vector<Line> lines) {
+std::vector<AssembeledLine> assemble_lines(std::vector<Line> lines,
+                                           bool &assembly_failed) {
   std::vector<AssembeledLine> assembeled_lines;
   std::map<std::string, int> jmp_map;
 
