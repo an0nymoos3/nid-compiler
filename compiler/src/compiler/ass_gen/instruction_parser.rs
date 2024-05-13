@@ -1,7 +1,7 @@
 /*
 * Handles general conversion from high-level (NID) to assembly (ASS) languge.
 */
-use super::arithmetic;
+use super::{arithmetic, memory_manager::get_reg};
 use crate::compiler::ast;
 
 use super::memory_manager::{
@@ -59,12 +59,18 @@ pub fn parse_assignment(assign: &ast::Assignment) -> Vec<String> {
 pub fn parse_branch_statement(branch: &ast::Branch) -> Vec<String> {
     let mut instructions: Vec<String> = Vec::new();
 
+    // Add condition instructions to branch instructions
+    instructions = condition_parser(&branch.condition);
+
     instructions
 }
 
 /// Parses while loops
-pub fn parse_loop_statement(loop_state: &ast::Loop) -> Vec<String> {
+pub fn parse_loop_statement(nid_loop: &ast::Loop) -> Vec<String> {
     let mut instructions: Vec<String> = Vec::new();
+
+    // Add condition instructions to branch instructions
+    instructions = condition_parser(&nid_loop.condition);
 
     instructions
 }
@@ -112,11 +118,58 @@ fn binary_expression_parser(bin_exp: &ast::BinaryExpression) -> Vec<String> {
     }
 }
 
-/// Helper function to parse the condition of if statements and loops
+/// Helper function to parse the condition of if statements and loops.
+/// Note: Handling ! (not) as a special case. Load 0 for comparison and run cmp, check if result is
+/// 0
 fn condition_parser(condition: &ast::Condition) -> Vec<String> {
     let mut instructions: Vec<String> = Vec::new();
 
-    if let Some(left_op) = &condition.left {}
+    let reg1: Option<u8> = None;
+    let reg2: Option<u8> = None;
 
+    let mut addr1: Option<u16> = None;
+    let mut addr2: Option<u16> = None;
+
+    let mut const1: Option<i16> = None;
+    let mut const2: Option<i16> = None;
+
+    let op: String = match condition.operator {
+        ast::ConditionalOperator::Not => String::from("beq"), // The logic is to think of not in reverse. So you jmp if the variable is eq to 0.
+        ast::ConditionalOperator::NotEq => String::from("bne"),
+        ast::ConditionalOperator::Eq => String::from("beq"),
+        ast::ConditionalOperator::LessThan => String::from("bmi"),
+        ast::ConditionalOperator::LessEq => String::from("blt"),
+        ast::ConditionalOperator::GreatThan => String::from("bpl"),
+        ast::ConditionalOperator::GreatEq => String::from("bge"),
+    };
+
+    if let Some(left_op) = &condition.left {
+        if let Some(l_const) = left_op.as_any().downcast_ref::<ast::Value>() {
+            if let Some(r_const) = condition.right.as_any().downcast_ref::<ast::Value>() {
+                // Evaluate the constant expression and decide if code should loop forever or not
+                // produce any assembly.
+            }
+        } else if let Some(l_var) = left_op.as_any().downcast_ref::<ast::Variable>() {
+            addr1 = read_from_mem_map(l_var.identifier.parse::<u32>().unwrap());
+
+            if addr1.is_none() {
+                panic!("Didn't find addr of variable in mem_map!")
+            }
+
+            if let Some(r_const) = condition.right.as_any().downcast_ref::<ast::Value>() {
+            } else if let Some(r_var) = condition.right.as_any().downcast_ref::<ast::Variable>() {
+            }
+        }
+    } else {
+        // Probably just a not instruction
+        if let Some(r_val) = condition.right.as_any().downcast_ref::<ast::Value>() {
+            const1 = Some(0);
+            const2 = Some(r_val.value_as_i16());
+        }
+    }
+
+    for inst in arithmetic::cmp(reg1, reg2, addr1, addr2, const1, const2) {
+        instructions.push(inst);
+    }
     instructions
 }

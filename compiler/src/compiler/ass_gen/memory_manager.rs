@@ -8,6 +8,7 @@ use std::sync::Mutex;
 
 lazy_static! {
     static ref MEMORY_MAP: Mutex<HashMap<u32, u16>> = Mutex::new(HashMap::new());
+    static ref REG_MAP: Mutex<HashMap<u32, u8>> = Mutex::new(HashMap::new()); // TODO: Come up with a way to optimize register usage
 }
 
 // Acts as a stack pointer to allow the compiler to use the more optimized st and ld instructions,
@@ -148,4 +149,9 @@ pub fn remove_mem_from_compiler(start: Option<u16>, end: Option<u16>) {
             PREALLOC_END = end_addr;
         }
     }
+}
+
+/// Gets the optimal register to use.
+pub fn get_reg(var_id: Option<u32>) -> u8 {
+    0
 }

@@ -96,6 +96,23 @@ pub fn div(
     perform_op("div", reg1, reg2, addr1, addr2, const1)
 }
 
+/// Performs comparison on 2 operands. Basically a subtraction below the hood, but does not return
+/// anything. Only affects the flags set by ALU. Only expects 2 parameters to be Some
+pub fn cmp(
+    reg1: Option<u8>,
+    reg2: Option<u8>,
+    addr1: Option<u16>,
+    addr2: Option<u16>,
+    const1: Option<i16>,
+    const2: Option<i16>,
+) -> Vec<String> {
+    if const1.is_some() && const2.is_some() {
+        panic!("Compiler error! Two constants should not have entered the cmp() function!")
+    } else {
+        perform_op("cmp", reg1, reg2, addr1, addr2, const1)
+    }
+}
+
 /// Logical shift left
 pub fn lsl(register: u8) -> String {
     format!("lsl, r{register}")
