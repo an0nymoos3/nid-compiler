@@ -31,7 +31,6 @@ std::vector<Token> tokenize_line(Line &line, bool &assembly_failed) {
   std::vector<char> src_code;
   // Vector for tokens {Operation, Mode, Register} added to line
   std::vector<bool> broken_structure = {false, false, false};
-  error_code = 0; // Code 0 means no error
 
   // For Jmp* tokens
   std::vector<std::string> jmp_ops = {"jmp", "jsr", "ret", "beq", "bne", "bpl",
@@ -78,7 +77,8 @@ std::vector<Token> tokenize_line(Line &line, bool &assembly_failed) {
      */
     else if (is_letter(current_char) && !is_register(line.line_content, j) &&
              !is_mode(line.line_content, j) && !broken_structure[1] &&
-             !broken_structure[2] && build_word(line.line_content, j).size() > 1) {
+             !broken_structure[2] &&
+             build_word(line.line_content, j).size() > 1) {
       std::string word = build_word(line.line_content, j);
       token = {word, Operation};
       j += word.size() - 1; // Skip past the rest of the built word
