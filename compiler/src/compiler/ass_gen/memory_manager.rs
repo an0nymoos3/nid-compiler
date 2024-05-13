@@ -3,12 +3,20 @@
 */
 
 use lazy_static::lazy_static;
-use std::collections::HashMap;
+use std::collections::VecDeque;
 use std::sync::Mutex;
 
+/// Struct representing an item in memory, most likely variable.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct MemoryItem {
+    pub var_id: u32,
+    pub reg: Option<u8>,
+    pub addr: u16,
+}
+
 lazy_static! {
-    static ref MEMORY_MAP: Mutex<HashMap<u32, u16>> = Mutex::new(HashMap::new());
-    static ref REG_MAP: Mutex<HashMap<u32, u8>> = Mutex::new(HashMap::new()); // TODO: Come up with a way to optimize register usage
+    static ref MEMORY_MAP: Mutex<Vec<MemoryItem>> = Mutex::new(Vec::new());
+    static ref REG_MAP: Mutex<VecDeque<MemoryItem>> = Mutex::new(VecDeque::new());
 }
 
 // Acts as a stack pointer to allow the compiler to use the more optimized st and ld instructions,
@@ -96,39 +104,54 @@ pub fn decrement_stack_ptr() {
 }
 
 /// Push new variable to memory map
-pub unsafe fn push_to_mem_map(var_id: u32, address: u16) {
+pub fn push_to_mem_map(var_id: u32, address: u16) {
     if address >= MAX_ADDR {
         panic!("Trying to allocate outside of MAX_ADDR!")
     }
 
-    if PREALLOC_START <= address && address <= PREALLOC_END {
-        panic!("Trying to allocate memory inside of PREALLOC range!")
+    unsafe {
+        if PREALLOC_START <= address && address <= PREALLOC_END {
+            panic!("Trying to allocate memory inside of PREALLOC range!")
+        }
     }
 
     MEMORY_MAP
         .lock()
         .expect("Failed to lock on MEMORY_MAP")
-        .insert(var_id, address);
+        .push(MemoryItem {
+            var_id,
+            reg: None,
+            addr: address,
+        })
 }
 
 /// Read the memory address of a variable
 pub fn read_from_mem_map(var_id: u32) -> Option<u16> {
-    if let Some(addr) = MEMORY_MAP
+    for item in MEMORY_MAP
         .lock()
         .expect("Failed to lock on MEMORY_MAP")
-        .get(&var_id)
+        .iter()
     {
-        return Some(*addr);
+        if item.var_id == var_id {
+            return Some(item.addr);
+        }
     }
     None
 }
 
 /// Remove variable from memory map
 pub fn remove_from_mem_map(var_id: u32) {
-    MEMORY_MAP
-        .lock()
-        .expect("Failed to lock on MEMORY_MAP")
-        .remove(&var_id);
+    let mut mem_map = MEMORY_MAP.lock().expect("Failed to lock on MEMORY_MAP");
+
+    let mut rm_index: usize = usize::MAX;
+    for (index, item) in mem_map.iter().enumerate() {
+        if item.var_id == var_id {
+            rm_index = index;
+        }
+    }
+    if rm_index != usize::MAX {
+        mem_map.remove(rm_index);
+    }
 }
 
 /// Pre-allocate memory space that is not allowed to be touched by the compiler
@@ -151,7 +174,76 @@ pub fn remove_mem_from_compiler(start: Option<u16>, end: Option<u16>) {
     }
 }
 
+/// Registers a usage of a register in the REG_MAP
+pub fn use_reg(item: &MemoryItem) {
+    let mut reg_map = REG_MAP.lock().expect("Failed to lock on REG_MAP!");
+
+    // Make sure compiler uses a register when adding it to reg_map
+    if item.reg.is_none() {
+        panic!("Trying to use new item item in REG_MAP without a set reg field!")
+    }
+
+    // Check if item exists in map already
+    let mut map_index: usize = usize::MAX;
+    for (index, iter_item) in reg_map.iter().enumerate() {
+        if item == iter_item {
+            map_index = index;
+        }
+    }
+    if map_index != usize::MAX {
+        reg_map.remove(map_index);
+    }
+
+    reg_map.push_back(item.clone());
+}
+
 /// Gets the optimal register to use.
 pub fn get_reg(var_id: Option<u32>) -> u8 {
-    0
+    let mut reg_map = REG_MAP.lock().expect("Failed to lock on REG_MAP!");
+
+    // Return the currently used register of the variable, if one exists
+    if let Some(var) = var_id {
+        for item in reg_map.iter() {
+            if item.var_id == var {
+                return item.reg.unwrap();
+            }
+        }
+    }
+
+    // Else pop the least recently used item and return it's register
+    if reg_map.len() == 8 {
+        return reg_map
+            .pop_front()
+            .expect("Failed to perform pop_front() on REG_MAP!")
+            .reg
+            .unwrap(); // use_reg() requires that a register is set on each item added to REG_MAP
+    }
+    reg_map.len() as u8 // Return the next available position, which should be the current
+                        // length of the reg_map
+}
+
+/// Returns the variable stored at the specified address
+pub fn get_var_id_from_addr(addr: u16) -> Option<u32> {
+    let mem_map = MEMORY_MAP.lock().expect("Failed to lock MEMORY_MAP!");
+
+    for item in mem_map.iter() {
+        if item.addr == addr {
+            return Some(item.var_id);
+        }
+    }
+
+    None
+}
+
+/// Returns the register if a variable is already loaded, else None
+pub fn already_in_reg(var_id: u32) -> Option<u8> {
+    let reg_map = REG_MAP.lock().expect("Failed to lock REG_MAP!");
+
+    for item in reg_map.iter() {
+        if item.var_id == var_id {
+            return item.reg;
+        }
+    }
+
+    None
 }

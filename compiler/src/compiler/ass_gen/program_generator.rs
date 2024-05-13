@@ -4,8 +4,8 @@
 */
 
 use super::{
-    instruction_parser::parse_assignment,
-    memory_manager::{decrement_stack_ptr, remove_mem_from_compiler},
+    instruction_parser::{parse_assignment, parse_branch_statement},
+    memory_manager::remove_mem_from_compiler,
 };
 use crate::compiler::ast;
 
@@ -13,7 +13,6 @@ use crate::compiler::ast;
 /// instruction)
 pub fn generate_ass(program_body: &[Box<dyn ast::Node>], entry_point: usize) -> Vec<String> {
     let mut ass_prog: Vec<String> = Vec::new();
-    let mut var_count: i32 = 0;
 
     let mut preallocstart: Option<u16> = None;
     let mut preallocend: Option<u16> = None;
@@ -50,12 +49,23 @@ pub fn generate_ass(program_body: &[Box<dyn ast::Node>], entry_point: usize) -> 
                 if let Some(assign_inst) = inst.as_any().downcast_ref::<ast::Assignment>() {
                     // Check if asm
                     // block
-                    for asm_line in parse_assignment(assign_inst) {
-                        ass_prog.push(asm_line); // Push the line of code to program.
+                    for ass_line in parse_assignment(assign_inst) {
+                        ass_prog.push(ass_line); // Push the line of code to program.
                     }
-                    var_count += 1;
                 } else {
-                    panic!("Downcasting from {:?} to Asm failed!", inst.get_type());
+                    panic!(
+                        "Downcasting from {:?} to Assignment failed!",
+                        inst.get_type()
+                    );
+                }
+            }
+            ast::AstType::Branch => {
+                if let Some(branch_inst) = inst.as_any().downcast_ref::<ast::Branch>() {
+                    for ass_line in parse_branch_statement(branch_inst) {
+                        ass_prog.push(ass_line);
+                    }
+                } else {
+                    panic!("Downcasting from {:?} to Branch failed!", inst.get_type());
                 }
             }
             _ => {
@@ -66,10 +76,6 @@ pub fn generate_ass(program_body: &[Box<dyn ast::Node>], entry_point: usize) -> 
                 );
             }
         }
-    }
-
-    for _ in 0..var_count {
-        decrement_stack_ptr();
     }
 
     ass_prog

@@ -2,12 +2,6 @@
 * Handles arithmetic generation. Such as generating the necessary algorithms to make multiplication and
 * division work.
 *
-* To make the compiler more consistent it has 4 designated arithmetic registers.
-* r0 - num1/result
-* r1 - num2
-* r2 - helper register, useful for things like mul, or div
-* r3 - helper register, useful for things like mul, or div
-*
 * Since these functions will be used by the compiler some sanity checks aren't performed since they
 * are assumed to not be able to happen.
 *
@@ -16,7 +10,9 @@
 * checks for the first of these whenever you check for a field.
 */
 
-use super::memory_manager::{pop_from_stack, push_to_stack, read_from_dm};
+use super::memory_manager::{
+    decrement_stack_ptr, get_reg, get_var_id_from_addr, push_to_stack, read_from_dm,
+};
 
 /// Performs addition on 2 operands. Only expects 2 parameters to be Some
 pub fn add(
@@ -28,7 +24,12 @@ pub fn add(
     const2: Option<i16>,
 ) -> Vec<String> {
     if const1.is_some() && const2.is_some() {
-        return vec![format!("ldi, r0, {}", const1.unwrap() + const2.unwrap())];
+        let reg: u8 = get_reg(None);
+        return vec![format!(
+            "ldi, {}, {}",
+            reg,
+            const1.unwrap() + const2.unwrap()
+        )];
     }
     if const1.is_some() {
         return perform_op("addi", reg1, reg2, addr1, addr2, const1);
@@ -46,7 +47,12 @@ pub fn sub(
     const2: Option<i16>,
 ) -> Vec<String> {
     if const1.is_some() && const2.is_some() {
-        return vec![format!("ldi, r0, {}", const1.unwrap() - const2.unwrap())];
+        let reg: u8 = get_reg(None);
+        return vec![format!(
+            "ldi, {}, {}",
+            reg,
+            const1.unwrap() - const2.unwrap()
+        )];
     }
     if const1.is_some() {
         return perform_op("subi", reg1, reg2, addr1, addr2, const1);
@@ -64,7 +70,12 @@ pub fn mul(
     const2: Option<i16>,
 ) -> Vec<String> {
     if const1.is_some() && const2.is_some() {
-        return vec![format!("ldi, r0, {}", const1.unwrap() * const2.unwrap())];
+        let reg: u8 = get_reg(None);
+        return vec![format!(
+            "ldi, {}, {}",
+            reg,
+            const1.unwrap() * const2.unwrap()
+        )];
     }
     if let Some(val) = const1 {
         if val == 2 {
@@ -85,7 +96,12 @@ pub fn div(
     const2: Option<i16>,
 ) -> Vec<String> {
     if const1.is_some() && const2.is_some() {
-        return vec![format!("ldi, r0, {}", const1.unwrap() / const2.unwrap())];
+        let reg: u8 = get_reg(None);
+        return vec![format!(
+            "ldi, {}, {}",
+            reg,
+            const1.unwrap() / const2.unwrap()
+        )];
     }
     if let Some(val) = const1 {
         if val == 2 {
@@ -154,7 +170,10 @@ fn perform_op(
         // If no register was set, use addr1 as first term
         if let Some(addr) = addr1 {
             instructions.push(read_from_dm(0, addr));
-            work_reg = String::from("r0"); // Set register to work on.
+
+            // Get a valid / optimal register to work on
+            let var_id: Option<u32> = get_var_id_from_addr(addr);
+            work_reg = format!("r{}", get_reg(var_id)); // Set register to work on.
 
             if let Some(addr) = addr2 {
                 asm_addr = Some(addr);
@@ -185,7 +204,7 @@ fn perform_op(
     }
 
     if stack_pushed {
-        instructions.push(pop_from_stack(2)) // Just pop to helper register for now.
+        decrement_stack_ptr() // Just pop the stack_ptr
     }
 
     instructions
