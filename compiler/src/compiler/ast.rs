@@ -8,6 +8,7 @@ pub enum ValueEnum {
     Float(f32),
     String(String),
     Char(char),
+    Bool(bool),
     Void,
 }
 
@@ -672,6 +673,12 @@ impl Value {
     pub fn value_as_i16(&self) -> i16 {
         match self.value {
             ValueEnum::Int(val) => val,
+            ValueEnum::Bool(val) => {
+                if val {
+                    return 1;
+                }
+                0
+            }
             _ => panic!("Types other than 16-bit integer not currently supported!"),
         }
     }

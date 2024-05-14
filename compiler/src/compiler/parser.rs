@@ -229,6 +229,9 @@ fn parse_body(tokens: &mut VecDeque<Token>) -> Vec<Box<dyn ast::Node>> {
                 "void" => Some(Box::new(ast::Type {
                     type_value: ast::ValueEnum::Void,
                 })),
+                "bool" => Some(Box::new(ast::Type {
+                    type_value: ast::ValueEnum::Bool(true),
+                })),
 
                 &_ => panic!("Unknown type supplied!"),
             },
@@ -322,7 +325,9 @@ fn build_function(token: &Token, tokens: &mut VecDeque<Token>) -> Box<ast::Funct
                 "void" => Box::new(ast::Type {
                     type_value: ast::ValueEnum::Void,
                 }),
-
+                "bool" => Box::new(ast::Type {
+                    type_value: ast::ValueEnum::Bool(true),
+                }),
                 &_ => panic!("Unknown type supplied!"),
             },
             TokenType::Integer => build_var_or_value(token),
@@ -431,6 +436,9 @@ fn build_var_or_value(token: Token) -> Box<dyn ast::Node> {
         },
         TokenType::String => Value {
             value: ValueEnum::String(token.value),
+        },
+        TokenType::Bool => Value {
+            value: ValueEnum::Bool(token.value.parse::<bool>().unwrap()),
         },
         _ => panic!("Invalid TokenType!"),
     };
