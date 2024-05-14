@@ -110,24 +110,28 @@ pub fn parse_builtin_functions(builtin: &ast::Builtin) -> Vec<String> {
             if builtin.params.len() != 1 {
                 panic!("Wrong number of arguments supplied to sleep()")
             }
-            sleep(
-                builtin.params[0]
-                    .parse::<u16>()
-                    .expect("Invalid argument passed to sleep()!"),
-            )
+            let time = builtin.params[0]
+                .as_any()
+                .downcast_ref::<ast::Value>()
+                .expect("Invalid type passed as argument to sleep()!")
+                .value_as_i16();
+            sleep(time as u16)
         }
         "move_to" => {
             if builtin.params.len() != 2 {
                 panic!("Wrong number of arguments supplied to move_to()")
             }
-            move_to(
-                builtin.params[0]
-                    .parse::<u32>()
-                    .expect("Invalid var_name passed to write_to()!"),
-                builtin.params[1]
-                    .parse::<u16>()
-                    .expect("Invalid addr passed to move_to()!"),
-            )
+            let var_id = builtin.params[0]
+                .as_any()
+                .downcast_ref::<ast::Variable>()
+                .expect("Invalid type passed as first argument to move_to()!");
+            let addr = builtin.params[1]
+                .as_any()
+                .downcast_ref::<ast::Value>()
+                .expect("Invalid type passed as second argument to move_to()!")
+                .value_as_i16();
+
+            move_to(var_id.identifier.parse::<u32>().unwrap(), addr as u16)
         }
 
         &_ => {

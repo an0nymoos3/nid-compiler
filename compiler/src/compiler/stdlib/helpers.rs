@@ -32,7 +32,7 @@ pub fn move_to(var_id: u32, addr: u16) -> Vec<String> {
 
         // Push relevant instructions to run
         instructions.push(read_from_dm(reg, var_addr.unwrap()));
-        instructions.push(write_to_dm(reg, addr));
+        instructions.push(format!("st, r{reg}, {addr}"));
 
         // Change the location of var_id in mem_map
         remove_from_mem_map(var_id);

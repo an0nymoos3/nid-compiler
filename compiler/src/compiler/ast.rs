@@ -153,7 +153,7 @@ pub struct Branch {
 /// Buildint functions
 pub struct Builtin {
     pub identifier: String,
-    pub params: Vec<String>,
+    pub params: Vec<Box<dyn Node>>,
 }
 /// Condition, used by branches and loops
 pub struct Condition {

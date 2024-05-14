@@ -69,11 +69,6 @@ pub fn pop_from_stack(register: u8) -> String {
 
 /// Store data from regisster to addr in DM
 pub fn write_to_dm(register: u8, addr: u16) -> String {
-    unsafe {
-        if PREALLOC_START <= addr && addr <= PREALLOC_END {
-            panic!("Trying to allocated memory inside user defined range!")
-        }
-    }
     if addr >= MAX_ADDR {
         panic!("Trying to allocated outside of MAX_ADDR!")
     }
@@ -107,12 +102,6 @@ pub fn decrement_stack_ptr() {
 pub fn push_to_mem_map(var_id: u32, address: u16) {
     if address >= MAX_ADDR {
         panic!("Trying to allocate outside of MAX_ADDR!")
-    }
-
-    unsafe {
-        if PREALLOC_START <= address && address <= PREALLOC_END {
-            panic!("Trying to allocate memory inside of PREALLOC range!")
-        }
     }
 
     MEMORY_MAP

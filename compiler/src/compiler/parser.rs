@@ -100,6 +100,12 @@ pub fn hash_variables(ast: &mut [Box<dyn Node>], path: &str) {
                     var.identifier = variable_hasher(&var.identifier, path).to_string();
                 }
             }
+        } else if let Some(builtin) = node.as_any_mut().downcast_mut::<ast::Builtin>() {
+            for param in builtin.params.iter_mut() {
+                if let Some(var) = param.as_any_mut().downcast_mut::<ast::Variable>() {
+                    var.identifier = variable_hasher(&var.identifier, path).to_string();
+                }
+            }
         }
     }
 }
@@ -349,11 +355,13 @@ fn build_builtin(name: &str, tokens: &mut VecDeque<Token>) -> Box<ast::Builtin> 
         panic!("Expected parenthesis after builtin identifier!")
     }
 
-    let mut params: Vec<String> = Vec::new();
+    let mut params: Vec<Box<dyn Node>> = Vec::new();
     let mut token: Token = tokens.pop_front().unwrap();
 
     while token.token_type != TokenType::CloseParen {
-        params.push(token.value);
+        if token.token_type != TokenType::Seperator {
+            params.push(build_var_or_value(token));
+        }
         token = tokens.pop_front().unwrap();
     }
 
