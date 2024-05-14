@@ -185,6 +185,9 @@ fn parse_body(tokens: &mut VecDeque<Token>) -> Vec<Box<dyn ast::Node>> {
             // A branch instruction
             TokenType::Branch => Some(build_branch(tokens)),
 
+            // Builtin function call
+            TokenType::BuiltIn => Some(build_builtin(&token.value, tokens)),
+
             // Build variables. or functions
             TokenType::Identifier => {
                 if is_function(tokens) {
@@ -337,6 +340,26 @@ fn build_function(token: &Token, tokens: &mut VecDeque<Token>) -> Box<ast::Funct
         identifier: token.value.clone(),
         params,
         body,
+    })
+}
+
+/// Builds a builtin function node
+fn build_builtin(name: &str, tokens: &mut VecDeque<Token>) -> Box<ast::Builtin> {
+    if tokens.pop_front().unwrap().token_type != TokenType::OpenParen {
+        panic!("Expected parenthesis after builtin identifier!")
+    }
+
+    let mut params: Vec<String> = Vec::new();
+    let mut token: Token = tokens.pop_front().unwrap();
+
+    while token.token_type != TokenType::CloseParen {
+        params.push(token.value);
+        token = tokens.pop_front().unwrap();
+    }
+
+    Box::new(ast::Builtin {
+        identifier: name.to_string(),
+        params,
     })
 }
 

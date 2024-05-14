@@ -22,13 +22,13 @@ lazy_static! {
 // Acts as a stack pointer to allow the compiler to use the more optimized st and ld instructions,
 // rather than psh or pop
 static mut STACK_PTR: u16 = 0;
-static MAX_ADDR: u16 = 513;
+pub static MAX_ADDR: u16 = 512;
 
 // Address range that is allocated at compile time by the user that is not allowed to be touched by
 // the compiler. Useful if something in asm {} requires memory to not be overwritten by the
 // compuiler.
-static mut PREALLOC_START: u16 = MAX_ADDR;
-static mut PREALLOC_END: u16 = MAX_ADDR;
+pub static mut PREALLOC_START: u16 = MAX_ADDR;
+pub static mut PREALLOC_END: u16 = MAX_ADDR;
 
 /// Push variable to the next available position in the "DM stack"
 pub fn push_to_stack(register: u8) -> String {

@@ -11,6 +11,9 @@ use super::{
     program_generator::generate_body_ass,
 };
 use crate::compiler::ast::{self, Node};
+use crate::compiler::stdlib::helpers::move_to;
+use crate::compiler::stdlib::utils::sleep;
+use rand::distributions::Alphanumeric;
 use rand::Rng;
 
 /// Converts assignment in nid-lang to an equivalent instruction in ASS.
@@ -73,6 +76,39 @@ pub fn parse_assignment(assign: &ast::Assignment) -> Vec<String> {
     }
 
     instructions
+}
+
+/// Matches the correct builtin function with the correct ass code.
+pub fn parse_builtin_functions(builtin: &ast::Builtin) -> Vec<String> {
+    match builtin.identifier.as_str() {
+        "sleep" => {
+            if builtin.params.len() != 1 {
+                panic!("Wrong number of arguments supplied to sleep()")
+            }
+            sleep(
+                builtin.params[0]
+                    .parse::<u16>()
+                    .expect("Invalid argument passed to sleep()!"),
+            )
+        }
+        "move_to" => {
+            if builtin.params.len() != 2 {
+                panic!("Wrong number of arguments supplied to move_to()")
+            }
+            move_to(
+                builtin.params[0]
+                    .parse::<u32>()
+                    .expect("Invalid var_name passed to write_to()!"),
+                builtin.params[1]
+                    .parse::<u16>()
+                    .expect("Invalid addr passed to move_to()!"),
+            )
+        }
+
+        &_ => {
+            panic!("Invalid builtin function supplied!")
+        }
+    }
 }
 
 /// Parses if-statements
@@ -262,10 +298,19 @@ fn condition_parser(condition: &ast::Condition, branch_name: &str) -> Vec<String
 /// Geenrates a random name for a branch to be used in jumps
 pub fn random_branch_name() -> String {
     // Create a thread-local RNG (random number generator)
-    let mut rng = rand::thread_rng();
+    let rng = rand::thread_rng();
 
     // Generate a random u16 number
-    let random_number: u32 = rng.gen();
+    let random_string: String = rng
+        .sample_iter(&Alphanumeric)
+        .take(10) // Hard coded length of 10 for now
+        .map(|mut ch| {
+            if !ch.is_ascii_alphabetic() {
+                ch = b'a'
+            }
+            char::from(ch)
+        })
+        .collect();
 
-    format!("#{}", random_number)
+    format!("#{}", random_string)
 }

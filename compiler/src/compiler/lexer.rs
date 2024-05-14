@@ -30,7 +30,8 @@ pub enum TokenType {
     Eol,       // End of line, basically ; representing end of line.
     Eof, // Represents the end of the code (EOF all caps appears to be a reserved word of some kind)
     Macro, // Basic macro functionality, such as allocating memory that the compiler is not allowed
-         // to touch
+    // to touch
+    BuiltIn, // Built in functions, like sleep(), write_to()
 }
 #[derive(Debug, Clone)]
 #[allow(dead_code)] // TODO: Remove once fields are being read
@@ -289,6 +290,11 @@ pub fn tokenize(file_content: String) -> VecDeque<Token> {
                     value: token_value,
                     token_type: reserved_word,
                 }
+            } else if let Some(builtin) = is_builtin(&token_value) {
+                token = Token {
+                    value: token_value,
+                    token_type: builtin,
+                }
             } else {
                 token = Token {
                     value: token_value,
@@ -355,6 +361,19 @@ fn is_reserved_keywords(word: &str) -> Option<TokenType> {
         ("while", TokenType::Loop),
         ("return", TokenType::Return),
         ("asm", TokenType::Asm),
+    ]);
+
+    if keyword_map.contains_key(word) {
+        return Some(keyword_map[word]);
+    }
+    None
+}
+
+/// Returns if a detected word is a builtin function
+fn is_builtin(word: &str) -> Option<TokenType> {
+    let keyword_map: HashMap<&str, TokenType> = HashMap::from([
+        ("sleep", TokenType::BuiltIn),
+        ("move_to", TokenType::BuiltIn),
     ]);
 
     if keyword_map.contains_key(word) {

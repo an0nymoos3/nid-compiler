@@ -53,6 +53,7 @@ pub enum AstType {
     Value,
     Macro,
     Debug,
+    Builtin,
 }
 
 #[derive(Debug)]
@@ -149,7 +150,11 @@ pub struct Branch {
     pub true_body: Block,          // If block
     pub false_body: Option<Block>, // Else block
 }
-
+/// Buildint functions
+pub struct Builtin {
+    pub identifier: String,
+    pub params: Vec<String>,
+}
 /// Condition, used by branches and loops
 pub struct Condition {
     pub operator: ConditionalOperator,
@@ -397,6 +402,39 @@ impl Node for Branch {
         self.true_body.traverse_leaves(tree);
         if let Some(body) = &self.false_body {
             body.traverse_leaves(tree);
+        }
+
+        tree.end_child();
+    }
+}
+impl Node for Builtin {
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
+
+    fn as_any_mut(&mut self) -> &mut dyn Any {
+        self
+    }
+
+    fn display(&self) -> String {
+        String::from("Builtin")
+    }
+
+    fn get_type(&self) -> AstType {
+        AstType::Builtin
+    }
+
+    fn has_leaves(&self) -> bool {
+        true
+    }
+
+    fn traverse_leaves(&self, tree: &mut ptree::TreeBuilder) {
+        tree.begin_child(self.display());
+
+        tree.add_empty_child(format!("Identifier: {:?}", self.identifier));
+
+        for param in &self.params {
+            tree.add_empty_child(format!("Param: {param}"));
         }
 
         tree.end_child();
