@@ -448,6 +448,27 @@ fn build_var_or_value(token: Token) -> Box<dyn ast::Node> {
 
 /// Helper function used to build conditions for both Branches and Loops
 fn build_condition(tokens: &mut VecDeque<Token>) -> Box<ast::Condition> {
+    // If only one token was sent as param (eg. while(true) or while(x))
+    if tokens[1].token_type == TokenType::CloseParen {
+        if tokens.front().unwrap().token_type == TokenType::Bool
+            || tokens.front().unwrap().token_type == TokenType::Identifier
+        {
+            let working_token = tokens.pop_front().unwrap();
+            tokens.pop_front().unwrap(); // Remove the closing paren
+            return Box::new(ast::Condition {
+                operator: ast::ConditionalOperator::Eq,
+                left: Some(build_var_or_value(working_token)),
+                right: Box::new(Value {
+                    value: ValueEnum::Int(1),
+                }),
+            });
+        }
+        panic!(
+            "Invalid type supplied alone to while loop! Type: {:?}",
+            tokens.front().unwrap()
+        )
+    }
+
     let left_op: Option<Box<dyn ast::Node>> = if tokens.front().unwrap().token_type
         != TokenType::Comparison
         && tokens.front().unwrap().token_type != TokenType::LogicOperator
