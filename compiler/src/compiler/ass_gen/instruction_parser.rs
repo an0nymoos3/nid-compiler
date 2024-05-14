@@ -182,7 +182,12 @@ pub fn parse_loop_statement(nid_loop: &ast::Loop) -> Vec<String> {
 
     let mut instructions: Vec<String> = vec![loop_branch.clone()];
     // Add condition instructions to branch instructions
-    for inst in condition_parser(&nid_loop.condition, Some(&while_body)) {
+    let condition: Vec<String> = condition_parser(&nid_loop.condition, Some(&while_body));
+
+    if condition.is_empty() {
+        return Vec::new(); // Loop will never be run
+    }
+    for inst in condition {
         instructions.push(inst);
     }
 
@@ -266,7 +271,7 @@ fn condition_parser(condition: &ast::Condition, branch_name: Option<&str>) -> Ve
     let mut const2: Option<i16> = None;
 
     // TODO: FIX PROPER BRANCH SELECTION, CURRENTLY SOME BUGS, LIKE <= BECOMING STRICTLY LESS THAN
-    let op: String = match condition.operator {
+    let mut op: String = match condition.operator {
         ast::ConditionalOperator::Not => String::from("beq"), // The logic is to think of not in reverse. So you jmp if the variable is eq to 0.
         ast::ConditionalOperator::NotEq => String::from("bne"),
         ast::ConditionalOperator::Eq => String::from("beq"),
@@ -326,8 +331,18 @@ fn condition_parser(condition: &ast::Condition, branch_name: Option<&str>) -> Ve
     }
 
     // Push the arithmetic instructions that need to be performed
-    for inst in arithmetic::cmp(reg1, reg2, addr1, addr2, const1, const2) {
-        instructions.push(inst);
+    if const1.is_some() && const2.is_some() {
+        if const1.unwrap() != const2.unwrap() {
+            // Returning empty vec will tell the compiler that loop is never run
+            return Vec::new();
+        }
+        if const1.unwrap() == const2.unwrap() {
+            op = "jmp".to_string();
+        }
+    } else {
+        for inst in arithmetic::cmp(reg1, reg2, addr1, addr2, const1, const2) {
+            instructions.push(inst);
+        }
     }
 
     if let Some(jmp_point) = branch_name {

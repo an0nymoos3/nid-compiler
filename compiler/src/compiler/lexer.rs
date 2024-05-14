@@ -7,6 +7,7 @@ pub enum TokenType {
     Floating,
     String,
     Char,
+    Bool,
     Identifier,       // Human readable identifier, such as variable name
     Assignment,       // Assigning operator
     OpenParen,        // (
@@ -370,6 +371,9 @@ fn is_reserved_keywords(word: &str) -> Option<TokenType> {
         ("float", TokenType::TypeIndicator),
         ("string", TokenType::TypeIndicator),
         ("char", TokenType::TypeIndicator),
+        ("bool", TokenType::TypeIndicator),
+        ("true", TokenType::Bool),
+        ("false", TokenType::Bool),
         ("if", TokenType::Branch),
         ("else", TokenType::Branch),
         ("while", TokenType::Loop),
