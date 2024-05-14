@@ -448,6 +448,21 @@ fn build_var_or_value(token: Token) -> Box<dyn ast::Node> {
 
 /// Helper function used to build conditions for both Branches and Loops
 fn build_condition(tokens: &mut VecDeque<Token>) -> Box<ast::Condition> {
+    // If is_pressed() was sent
+    if tokens.front().unwrap().token_type == TokenType::BuiltIn {
+        let token = tokens.pop_front().unwrap();
+        if token.value != "is_pressed" {
+            panic!("Invalid builtin function sent as condition!")
+        }
+        let builtin = build_builtin(&token.value, tokens);
+        tokens.pop_front().unwrap(); // Remove the closing paren
+        return Box::new(ast::Condition {
+            operator: ast::ConditionalOperator::Eq,
+            left: None,
+            right: builtin,
+        });
+    }
+
     // If only one token was sent as param (eg. while(true) or while(x))
     if tokens[1].token_type == TokenType::CloseParen {
         if tokens.front().unwrap().token_type == TokenType::Bool

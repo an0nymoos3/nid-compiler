@@ -392,6 +392,7 @@ fn is_builtin(word: &str) -> Option<TokenType> {
     let keyword_map: HashMap<&str, TokenType> = HashMap::from([
         ("sleep", TokenType::BuiltIn),
         ("move_to", TokenType::BuiltIn),
+        ("is_pressed", TokenType::BuiltIn),
     ]);
 
     if keyword_map.contains_key(word) {

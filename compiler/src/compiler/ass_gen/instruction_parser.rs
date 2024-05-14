@@ -13,6 +13,7 @@ use super::{
 };
 use crate::compiler::ast::{self, Node};
 use crate::compiler::stdlib::helpers::move_to;
+use crate::compiler::stdlib::input::is_pressed;
 use crate::compiler::stdlib::utils::sleep;
 use rand::distributions::Alphanumeric;
 use rand::Rng;
@@ -149,11 +150,7 @@ pub fn parse_branch_statement(branch: &ast::Branch) -> Vec<String> {
     let mut instructions: Vec<String>;
 
     // Add condition instructions to branch instructions
-    if branch.false_body.is_some() {
-        instructions = condition_parser(&branch.condition, Some(&true_branch));
-    } else {
-        instructions = condition_parser(&branch.condition, None);
-    }
+    instructions = condition_parser(&branch.condition, &true_branch);
 
     if let Some(false_body) = &branch.false_body {
         let false_ass = generate_body_ass(false_body.get_body());
@@ -182,7 +179,7 @@ pub fn parse_loop_statement(nid_loop: &ast::Loop) -> Vec<String> {
 
     let mut instructions: Vec<String> = vec![loop_branch.clone()];
     // Add condition instructions to branch instructions
-    let condition: Vec<String> = condition_parser(&nid_loop.condition, Some(&while_body));
+    let condition: Vec<String> = condition_parser(&nid_loop.condition, &while_body);
 
     if condition.is_empty() {
         return Vec::new(); // Loop will never be run
@@ -258,7 +255,21 @@ fn binary_expression_parser(bin_exp: &ast::BinaryExpression) -> Vec<String> {
 /// Helper function to parse the condition of if statements and loops.
 /// Note: Handling ! (not) as a special case. Load 0 for comparison and run cmp, check if result is
 /// 0
-fn condition_parser(condition: &ast::Condition, branch_name: Option<&str>) -> Vec<String> {
+fn condition_parser(condition: &ast::Condition, branch_name: &str) -> Vec<String> {
+    // Check if is_pressed was sent as condition
+    if let Some(builtin) = condition.right.as_any().downcast_ref::<ast::Builtin>() {
+        if builtin.params.len() != 1 {
+            panic!("Invalid number of arguments sent to is_pressed()!")
+        }
+        let scancode = builtin.params[0]
+            .as_any()
+            .downcast_ref::<ast::Value>()
+            .expect("Invalid argument passed to is_pressed()!")
+            .value_as_i16();
+
+        return is_pressed(scancode as u16, branch_name);
+    }
+
     let mut instructions: Vec<String> = Vec::new();
 
     let mut reg1: Option<u8> = None;
@@ -345,10 +356,8 @@ fn condition_parser(condition: &ast::Condition, branch_name: Option<&str>) -> Ve
         }
     }
 
-    if let Some(jmp_point) = branch_name {
-        // Push jump instruction
-        instructions.push(format!("{op}, {jmp_point}"));
-    }
+    // Push jump instruction
+    instructions.push(format!("{op}, {branch_name}"));
 
     instructions
 }

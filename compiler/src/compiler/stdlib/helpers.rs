@@ -1,6 +1,6 @@
 use crate::compiler::ass_gen::memory_manager::{
     already_in_reg, get_reg, push_to_mem_map, read_from_dm, read_from_mem_map, remove_from_mem_map,
-    write_to_dm, MAX_ADDR, PREALLOC_END, PREALLOC_START,
+    MAX_ADDR, PREALLOC_END, PREALLOC_START,
 };
 
 /// Generates the required assembly code for allocating a variable in a specific mem_address
