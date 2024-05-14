@@ -18,6 +18,10 @@ pub fn move_to(var_id: u32, addr: u16) -> Vec<String> {
 
     if let Some(reg) = already_in_reg(var_id) {
         instructions.push(format!("st, r{reg}, {addr}"));
+
+        // Change the location of var_id in mem_map
+        remove_from_mem_map(var_id);
+        push_to_mem_map(var_id, addr);
     } else {
         let reg = get_reg(Some(var_id));
         let var_addr = read_from_mem_map(var_id);
