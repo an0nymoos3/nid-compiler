@@ -1,17 +1,17 @@
 /*
 * Handles general conversion from high-level (NID) to assembly (ASS) languge.
 */
+use super::memory_manager::{
+    get_stack_ptr, load_const, push_to_mem_map, push_to_stack, read_from_dm, read_from_mem_map,
+    write_to_dm, MemoryItem,
+};
 use super::{
     arithmetic,
     memory_manager::{already_in_reg, get_reg, use_reg},
     program_generator::generate_body_ass,
 };
 use crate::compiler::ast::{self, Node};
-
-use super::memory_manager::{
-    get_stack_ptr, load_const, push_to_mem_map, push_to_stack, read_from_dm, read_from_mem_map,
-    write_to_dm, MemoryItem,
-};
+use rand::Rng;
 
 /// Converts assignment in nid-lang to an equivalent instruction in ASS.
 pub fn parse_assignment(assign: &ast::Assignment) -> Vec<String> {
@@ -77,8 +77,12 @@ pub fn parse_assignment(assign: &ast::Assignment) -> Vec<String> {
 
 /// Parses if-statements
 pub fn parse_branch_statement(branch: &ast::Branch) -> Vec<String> {
+    // Generate assembly jump branches
+    let skip_branch: String = random_branch_name();
+    let false_branch: String = random_branch_name();
+
     // Add condition instructions to branch instructions
-    let mut instructions: Vec<String> = condition_parser(&branch.condition);
+    let mut instructions: Vec<String> = condition_parser(&branch.condition, &skip_branch);
     let true_ass = generate_body_ass(branch.true_body.get_body());
 
     for inst in true_ass {
@@ -92,13 +96,31 @@ pub fn parse_branch_statement(branch: &ast::Branch) -> Vec<String> {
         }
     }
 
+    instructions.push(skip_branch);
+
     instructions
 }
 
 /// Parses while loops
 pub fn parse_loop_statement(nid_loop: &ast::Loop) -> Vec<String> {
+    // Generate assembly jump branches
+    let skip_branch: String = random_branch_name();
+    let loop_branch: String = random_branch_name();
+
+    let mut instructions: Vec<String> = vec![loop_branch.clone()];
     // Add condition instructions to branch instructions
-    let mut instructions: Vec<String> = condition_parser(&nid_loop.condition);
+    for inst in condition_parser(&nid_loop.condition, &skip_branch) {
+        instructions.push(inst);
+    }
+
+    let loop_ass = generate_body_ass(nid_loop.body.get_body());
+
+    for inst in loop_ass {
+        instructions.push(inst);
+    }
+
+    instructions.push(format!("jmp, {loop_branch}"));
+    instructions.push(skip_branch);
 
     instructions
 }
@@ -155,7 +177,7 @@ fn binary_expression_parser(bin_exp: &ast::BinaryExpression) -> Vec<String> {
 /// Helper function to parse the condition of if statements and loops.
 /// Note: Handling ! (not) as a special case. Load 0 for comparison and run cmp, check if result is
 /// 0
-fn condition_parser(condition: &ast::Condition) -> Vec<String> {
+fn condition_parser(condition: &ast::Condition, branch_name: &str) -> Vec<String> {
     let mut instructions: Vec<String> = Vec::new();
 
     let mut reg1: Option<u8> = None;
@@ -232,7 +254,18 @@ fn condition_parser(condition: &ast::Condition) -> Vec<String> {
     }
 
     // Push jump instruction
-    instructions.push(format!("{op}, smthn"));
+    instructions.push(format!("{op}, {branch_name}"));
 
     instructions
+}
+
+/// Geenrates a random name for a branch to be used in jumps
+pub fn random_branch_name() -> String {
+    // Create a thread-local RNG (random number generator)
+    let mut rng = rand::thread_rng();
+
+    // Generate a random u16 number
+    let random_number: u32 = rng.gen();
+
+    format!("#{}", random_number)
 }

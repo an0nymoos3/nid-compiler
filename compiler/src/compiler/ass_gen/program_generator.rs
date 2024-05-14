@@ -4,7 +4,7 @@
 */
 
 use super::{
-    instruction_parser::{parse_assignment, parse_branch_statement},
+    instruction_parser::{parse_assignment, parse_branch_statement, parse_loop_statement},
     memory_manager::remove_mem_from_compiler,
 };
 use crate::compiler::ast;
@@ -71,6 +71,15 @@ pub fn generate_body_ass(program_body: &[Box<dyn ast::Node>]) -> Vec<String> {
                     }
                 } else {
                     panic!("Downcasting from {:?} to Branch failed!", inst.get_type());
+                }
+            }
+            ast::AstType::Loop => {
+                if let Some(loop_inst) = inst.as_any().downcast_ref::<ast::Loop>() {
+                    for ass_line in parse_loop_statement(loop_inst) {
+                        ass_prog.push(ass_line);
+                    }
+                } else {
+                    panic!("Downcasting from {:?} to Loop failed!", inst.get_type());
                 }
             }
             _ => {
