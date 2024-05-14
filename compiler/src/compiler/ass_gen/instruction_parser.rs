@@ -55,9 +55,29 @@ pub fn parse_assignment(assign: &ast::Assignment) -> Vec<String> {
         } else if let Some(other_var) = assign.expression.as_any().downcast_ref::<ast::Variable>() {
             if let Some(addr) = read_from_mem_map(other_var.identifier.parse::<u32>().unwrap()) {
                 instructions.push(read_from_dm(register, addr));
-                let write_addr = read_from_mem_map(assigned_var.identifier.parse::<u32>().unwrap())
-                    .expect("Trying to write to uninitialized variable!");
-                instructions.push(write_to_dm(register, write_addr));
+
+                let var_addr: u16;
+                if let Some(write_addr) =
+                    read_from_mem_map(assigned_var.identifier.parse::<u32>().unwrap())
+                {
+                    instructions.push(write_to_dm(register, write_addr));
+                    var_addr = write_addr;
+                } else {
+                    // If variable does not already exist in DM
+                    instructions.push(push_to_stack(register));
+                    push_to_mem_map(
+                        assigned_var.identifier.parse::<u32>().unwrap(),
+                        get_stack_ptr() - 1,
+                    );
+                    var_addr = get_stack_ptr() - 1;
+                }
+
+                // Add the variable as a known variable in register
+                use_reg(&MemoryItem {
+                    var_id: assigned_var.identifier.parse::<u32>().unwrap(),
+                    reg: Some(register),
+                    addr: var_addr,
+                })
             }
         } else if let Some(bin_exp) = assign
             .expression
@@ -241,6 +261,7 @@ fn condition_parser(condition: &ast::Condition, branch_name: Option<&str>) -> Ve
     let mut const1: Option<i16> = None;
     let mut const2: Option<i16> = None;
 
+    // TODO: FIX PROPER BRANCH SELECTION, CURRENTLY SOME BUGS, LIKE <= BECOMING STRICTLY LESS THAN
     let op: String = match condition.operator {
         ast::ConditionalOperator::Not => String::from("beq"), // The logic is to think of not in reverse. So you jmp if the variable is eq to 0.
         ast::ConditionalOperator::NotEq => String::from("bne"),
