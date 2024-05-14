@@ -51,8 +51,9 @@ pub fn push_to_stack(register: u8) -> String {
     }
 }
 
+// TODO: Find a use for the function below
 /// Pop variable from the last position in the "DM stack"
-pub fn pop_from_stack(register: u8) -> String {
+pub fn _pop_from_stack(register: u8) -> String {
     unsafe {
         let ass_output: String = format!("ld, r{register}, {STACK_PTR}");
 
