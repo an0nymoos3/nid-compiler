@@ -47,6 +47,20 @@ pub fn export_tokens(tokens: &VecDeque<Token>) {
     }
 }
 
+/// Removes comments from program
+pub fn remove_comments(file_content: &str) -> String {
+    let mut new_program: String = String::new();
+
+    for line in file_content.lines() {
+        let mut trimmed_line: &str = line;
+        if let Some(pos) = line.find("//") {
+            trimmed_line = &trimmed_line[..pos];
+        }
+        new_program.push_str(trimmed_line)
+    }
+    new_program
+}
+
 /// Converts the source code from a contious string of text to a queue of tokens.
 pub fn tokenize(file_content: String) -> VecDeque<Token> {
     // Returns queue with tokens.

@@ -7,15 +7,19 @@ use crate::{
     utils::command_line::Args,
 };
 
-use super::{ass_gen::program_generator::generate_ass, ast::export_ast, exporter::write_to_file};
+use super::{
+    ass_gen::program_generator::generate_ass, ast::export_ast, exporter::write_to_file,
+    lexer::remove_comments,
+};
 
 /// The main compile function. Takes care of the overall logic of compilation while handing out the
 /// details to helper functions.
 pub fn compile(args: &Args) -> String {
     let output_name: String = args.filename.to_string().replace(".nid", ".ass");
     let source_code = read_file(&args.filename);
+    let source_code_no_comments = remove_comments(&source_code);
 
-    let mut tokens = tokenize(source_code);
+    let mut tokens = tokenize(source_code_no_comments);
 
     if args.debug {
         export_tokens(&tokens);
