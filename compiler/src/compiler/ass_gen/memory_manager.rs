@@ -211,7 +211,8 @@ pub fn get_reg(var_id: Option<u32>) -> u8 {
     }
 
     // Else pop the least recently used item and return it's register
-    if reg_map.len() == 8 {
+    // Use all 16 register available
+    if reg_map.len() == 16 {
         return reg_map
             .pop_front()
             .expect("Failed to perform pop_front() on REG_MAP!")
