@@ -115,14 +115,15 @@ pub fn parse_builtin_functions(builtin: &ast::Builtin) -> Vec<String> {
 pub fn parse_branch_statement(branch: &ast::Branch) -> Vec<String> {
     // Generate assembly jump branches
     let skip_branch: String = random_branch_name();
-    let false_branch: String = random_branch_name();
+    let true_branch: String = random_branch_name();
+
+    let mut instructions: Vec<String>;
 
     // Add condition instructions to branch instructions
-    let mut instructions: Vec<String> = condition_parser(&branch.condition, &skip_branch);
-    let true_ass = generate_body_ass(branch.true_body.get_body());
-
-    for inst in true_ass {
-        instructions.push(inst);
+    if branch.false_body.is_some() {
+        instructions = condition_parser(&branch.condition, Some(&true_branch));
+    } else {
+        instructions = condition_parser(&branch.condition, None);
     }
 
     if let Some(false_body) = &branch.false_body {
@@ -130,6 +131,12 @@ pub fn parse_branch_statement(branch: &ast::Branch) -> Vec<String> {
         for inst in false_ass {
             instructions.push(inst);
         }
+        instructions.push(format!("jmp, {}", skip_branch)); // Jump past the true body if false was run
+    }
+
+    instructions.push(true_branch);
+    for inst in generate_body_ass(branch.true_body.get_body()) {
+        instructions.push(inst);
     }
 
     instructions.push(skip_branch);
@@ -140,14 +147,18 @@ pub fn parse_branch_statement(branch: &ast::Branch) -> Vec<String> {
 /// Parses while loops
 pub fn parse_loop_statement(nid_loop: &ast::Loop) -> Vec<String> {
     // Generate assembly jump branches
-    let skip_branch: String = random_branch_name();
+    let while_body: String = random_branch_name();
     let loop_branch: String = random_branch_name();
+    let loop_done: String = random_branch_name();
 
     let mut instructions: Vec<String> = vec![loop_branch.clone()];
     // Add condition instructions to branch instructions
-    for inst in condition_parser(&nid_loop.condition, &skip_branch) {
+    for inst in condition_parser(&nid_loop.condition, Some(&while_body)) {
         instructions.push(inst);
     }
+
+    instructions.push(format!("jmp, {}", loop_done));
+    instructions.push(while_body);
 
     let loop_ass = generate_body_ass(nid_loop.body.get_body());
 
@@ -156,7 +167,7 @@ pub fn parse_loop_statement(nid_loop: &ast::Loop) -> Vec<String> {
     }
 
     instructions.push(format!("jmp, {loop_branch}"));
-    instructions.push(skip_branch);
+    instructions.push(loop_done);
 
     instructions
 }
@@ -213,7 +224,7 @@ fn binary_expression_parser(bin_exp: &ast::BinaryExpression) -> Vec<String> {
 /// Helper function to parse the condition of if statements and loops.
 /// Note: Handling ! (not) as a special case. Load 0 for comparison and run cmp, check if result is
 /// 0
-fn condition_parser(condition: &ast::Condition, branch_name: &str) -> Vec<String> {
+fn condition_parser(condition: &ast::Condition, branch_name: Option<&str>) -> Vec<String> {
     let mut instructions: Vec<String> = Vec::new();
 
     let mut reg1: Option<u8> = None;
@@ -289,8 +300,10 @@ fn condition_parser(condition: &ast::Condition, branch_name: &str) -> Vec<String
         instructions.push(inst);
     }
 
-    // Push jump instruction
-    instructions.push(format!("{op}, {branch_name}"));
+    if let Some(jmp_point) = branch_name {
+        // Push jump instruction
+        instructions.push(format!("{op}, {jmp_point}"));
+    }
 
     instructions
 }
@@ -303,7 +316,7 @@ pub fn random_branch_name() -> String {
     // Generate a random u16 number
     let random_string: String = rng
         .sample_iter(&Alphanumeric)
-        .take(10) // Hard coded length of 10 for now
+        .take(16) // Hard coded length of 10 for now
         .map(|mut ch| {
             if !ch.is_ascii_alphabetic() {
                 ch = b'a'

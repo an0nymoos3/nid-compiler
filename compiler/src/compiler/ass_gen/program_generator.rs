@@ -9,7 +9,7 @@ use super::{
     },
     memory_manager::remove_mem_from_compiler,
 };
-use crate::compiler::{ast, stdlib::utils::sleep};
+use crate::compiler::ast;
 
 /// Converts AST to ASS code, which is represented as a vector of strings (each string being an ASS
 /// instruction)
