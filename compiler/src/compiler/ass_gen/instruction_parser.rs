@@ -1,3 +1,4 @@
+use super::arithmetic::LATEST_RESULT;
 /*
 * Handles general conversion from high-level (NID) to assembly (ASS) languge.
 */
@@ -66,8 +67,12 @@ pub fn parse_assignment(assign: &ast::Assignment) -> Vec<String> {
             instructions = binary_expression_parser(bin_exp);
             let write_addr = read_from_mem_map(assigned_var.identifier.parse::<u32>().unwrap())
                 .expect("Trying to write to uninitialized variable!");
-            instructions.push(write_to_dm(register, write_addr)); // Write result from reigster to
-                                                                  // variable
+
+            unsafe {
+                instructions.push(write_to_dm(LATEST_RESULT, write_addr)); // Write result from reigster to
+            }
+
+            // variable
         } else {
             panic!("Trying to assign variable to something that is niether a value, variable or binary expression!");
         }

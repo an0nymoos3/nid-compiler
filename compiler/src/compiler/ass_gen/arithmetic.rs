@@ -14,6 +14,9 @@ use super::memory_manager::{
     decrement_stack_ptr, get_reg, get_var_id_from_addr, push_to_stack, read_from_dm,
 };
 
+/// Global variable to get the latest result register
+pub static mut LATEST_RESULT: u8 = 0;
+
 /// Performs addition on 2 operands. Only expects 2 parameters to be Some
 pub fn add(
     reg1: Option<u8>,
@@ -25,6 +28,7 @@ pub fn add(
 ) -> Vec<String> {
     if const1.is_some() && const2.is_some() {
         let reg: u8 = get_reg(None);
+        unsafe { LATEST_RESULT = reg };
         return vec![format!(
             "ldi, {}, {}",
             reg,
@@ -48,6 +52,7 @@ pub fn sub(
 ) -> Vec<String> {
     if const1.is_some() && const2.is_some() {
         let reg: u8 = get_reg(None);
+        unsafe { LATEST_RESULT = reg };
         return vec![format!(
             "ldi, {}, {}",
             reg,
@@ -71,6 +76,7 @@ pub fn mul(
 ) -> Vec<String> {
     if const1.is_some() && const2.is_some() {
         let reg: u8 = get_reg(None);
+        unsafe { LATEST_RESULT = reg };
         return vec![format!(
             "ldi, {}, {}",
             reg,
@@ -97,6 +103,7 @@ pub fn div(
 ) -> Vec<String> {
     if const1.is_some() && const2.is_some() {
         let reg: u8 = get_reg(None);
+        unsafe { LATEST_RESULT = reg };
         return vec![format!(
             "ldi, {}, {}",
             reg,
@@ -131,11 +138,13 @@ pub fn cmp(
 
 /// Logical shift left
 pub fn lsl(register: u8) -> String {
+    unsafe { LATEST_RESULT = register };
     format!("lsl, r{register}")
 }
 
 /// Logical shift right
 pub fn lsr(register: u8) -> String {
+    unsafe { LATEST_RESULT = register };
     format!("lsr, r{register}")
 }
 
@@ -156,7 +165,7 @@ fn perform_op(
                                         // operation.
 
     if let Some(reg) = reg1 {
-        work_reg = reg.to_string();
+        work_reg = format!("r{reg}");
     }
 
     // If second register is used, it has to be pushed to the stack
@@ -206,6 +215,10 @@ fn perform_op(
     if stack_pushed {
         decrement_stack_ptr() // Just pop the stack_ptr
     }
+
+    // Set latest result register
+    work_reg.remove(0);
+    unsafe { LATEST_RESULT = work_reg.parse::<u8>().unwrap() };
 
     instructions
 }
