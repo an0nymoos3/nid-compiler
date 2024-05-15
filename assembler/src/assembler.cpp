@@ -23,8 +23,8 @@ std::vector<AssembeledLine> assemble_lines(std::vector<Line> lines,
       non_empty_lines++;
       for (int j = 0; j < lines[i].line_tokens.size(); j++) {
         if (lines[i].line_tokens[j].token_type == JmpPoint) {
-          // -2 to give correct line after fecthing assembly instruction
-          jmp_map[lines[i].line_tokens[j].value] = non_empty_lines - 2;
+          // -1 to give correct line after fecthing assembly instruction
+          jmp_map[lines[i].line_tokens[j].value] = non_empty_lines - 1;
 
           // Remove lines only containing JmpPoints
           if (j == 0 && lines[i].line_tokens.size() <= 2) {
@@ -153,30 +153,22 @@ std::string operation_to_binary(std::string value, int line_number,
     return "100000";
   } else if (value == "BNK") {
     return "100001";
-  } else if (value == "ADDIX") {
-    return "100010";
-  } else if (value == "ADDIY") {
-    return "100011";
-  } else if (value == "ADDIIX") {
-    return "100100";
-  } else if (value == "ADDIIY") {
-    return "100101";
   } else if (value == "SUPI") {
-    return "100110";
+    return "100010";
   } else if (value == "SDWI") {
-    return "100111";
+    return "100011";
   } else if (value == "SUPII") {
-    return "101000";
+    return "100100";
   } else if (value == "SDWII") {
-    return "101001";
+    return "100101";
   } else if (value == "LFLIP") {
-    return "101010";
+    return "100110";
   } else if (value == "RFLIP") {
-    return "101011";
+    return "100111";
   } else if (value == "WAIT") {
-    return "101100";
+    return "101000";
   } else if (value == "HALT") {
-    return "101101";
+    return "101001";
   }
 
   Error err = {line_number,

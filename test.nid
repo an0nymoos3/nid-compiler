@@ -16,7 +16,7 @@ void main() {
   x = x + 50;
   y = y + 50;
 
-  sleep(500);
+  sleep(3000);
 
 
   asm {
@@ -27,7 +27,7 @@ void main() {
   x = x + 50;
   y = y + 50;
 
-  sleep(500);
+  sleep(3000);
 
   asm {
     mvix, 500
@@ -37,7 +37,7 @@ void main() {
   x = x + 50;
   y = y + 50;
 
-  sleep(500);
+  sleep(3000);
   
   asm {
     mvix, 500
@@ -47,5 +47,5 @@ void main() {
   x = x + 50;
   y = y + 50;
 
-  sleep(500);
+  sleep(3000);
 }
