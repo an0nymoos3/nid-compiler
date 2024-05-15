@@ -157,9 +157,9 @@ pub fn parse_branch_statement(branch: &ast::Branch) -> Vec<String> {
         for inst in false_ass {
             instructions.push(inst);
         }
-        instructions.push(format!("jmp {}", skip_branch)); // Jump past the true body if false was run
     }
 
+    instructions.push(format!("jmp {}", skip_branch)); // Jump past the true body if false was run
     instructions.push(true_branch);
     for inst in generate_body_ass(branch.true_body.get_body()) {
         instructions.push(inst);

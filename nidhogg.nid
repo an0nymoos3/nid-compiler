@@ -33,13 +33,17 @@ void main() {
     // Player 1 input
     // Check for A presed
     if(is_pressed(0)) {
-      player_one_x = player_one_x - 4;
-      asm { lflip, r1 } // Ingore the register, we know what we're doing
+      if (player_one_x > 0) {
+        player_one_x = player_one_x - 4;
+        asm { lflip, r1 } // Ingore the register, we know what we're doing
+      }
     } 
     // Check for D presed
     if(is_pressed(3)) {
-      player_one_x = player_one_x + 4;
-      asm { rflip, r1 }
+      if (player_one_x < 400) {
+        player_one_x = player_one_x + 4;
+        asm { rflip, r1 }
+      }
     } 
     // Check for W presed
     if(is_pressed(22)) {
@@ -53,13 +57,17 @@ void main() {
     // Player 2 input
     // Check for J presed
     if(is_pressed(9)) {
-      player_two_x = player_two_x - 4;
-      asm { lflip, r2 }
+      if (player_two_x > 0) {
+        player_two_x = player_two_x - 4;
+        asm { lflip, r2 }
+      }
     } 
     // Check for L presed
     if(is_pressed(11)) {
-      player_two_x = player_two_x + 4;
-      asm { rflip, r2 }
+      if (player_two_x < 400) {
+        player_two_x = player_two_x + 4;
+        asm { rflip, r2 }
+      }
     } 
     // Check for I presed
     if(is_pressed(8)) {
