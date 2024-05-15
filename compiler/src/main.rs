@@ -5,6 +5,8 @@ use std::time::{Duration, Instant};
 
 use crate::utils::command_line::print_help;
 use compiler::compile::compile;
+use std::env;
+use std::path::PathBuf;
 use std::process::Command;
 use utils::command_line::{build_args, Args};
 use utils::compile_times::{calc_total_time, time_now};
@@ -30,8 +32,23 @@ fn main() {
     println!("Total compilation time: {:?}", exec_time);
     println!("Assembly written to: {}", output_file);
 
+    // Retrieve the path to the root directory of the Rust project
+    let cwd = env::current_exe().expect("Failed to get path of compiler binary!");
+    let bin_folder = cwd
+        .parent()
+        .expect("Failed to get parent directory of compiler binary!");
+
+    // Get path to assembler with path relative to compiler
+    let assembler = bin_folder.join("assembler");
+
+    // Check if the C++ library path exists (optional)
+    if !assembler.exists() {
+        panic!("Assembler not found at: {}", assembler.display());
+    }
+    println!("Found assembler: {}", assembler.display());
+
     start = time_now();
-    let _ = Command::new("bin/assembler")
+    let _ = Command::new(format!("{}", assembler.display()))
         .arg(&output_file)
         .output()
         .unwrap();

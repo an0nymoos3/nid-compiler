@@ -9,7 +9,7 @@ ifndef VERBOSE
 endif
 
 # Builds in release mode
-all:	compiler	assembler
+all:	assembler	 compiler
 
 compiler: | $(TARGET_DIR)
 	echo "Building compiler..."
