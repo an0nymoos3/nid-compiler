@@ -16,87 +16,87 @@ ldi, r5, 3
 st, r5, 5
 ldi, r6, 3
 st, r6, 6
-#OaYdLkZgUjNJrnda
-cmp, r4, 1
-beq #RRavqpsNwqaiYHaF
-jmp #UacBaqurERBxHama
-#RRavqpsNwqaiYHaF
-cmp, r1, 350
-bmi #mZoSafMnaOtTnivd
-#mZoSafMnaOtTnivd
+#WdKaDajzuGYYynSa
+cmpi, r4, 1
+beq #JaDSfNyaevXaNRPG
+jmp #aIHDEqOAcmaGqgCs
+#JaDSfNyaevXaNRPG
+cmpi, r1, 350
+bmi #MkaalsWcgReIaOdA
+#MkaalsWcgReIaOdA
 addi, r1, 4
 st, r1, 501
-#FquXUnrEiiyBQaiI
-cmp, r3, 350
-bmi #dHVMmQkkDMtZpmFZ
-#dHVMmQkkDMtZpmFZ
+#tPnMraXbTCaPaDdz
+cmpi, r3, 350
+bmi #rHvusaaqhwaHaaos
+#rHvusaaqhwaHaaos
 addi, r3, 4
 st, r3, 503
-#fAFaYqacRqaGrIIS
+#saTSAAhCWSaDfmOo
 kbd, 0
-byk #kKszJaKgboSKaxQl
-#kKszJaKgboSKaxQl
+byk #MNhfAUzjnajaaaap
+#MNhfAUzjnajaaaap
 subi, r0, 4
 st, r0, 500
 lflip,r1
-#awwaGVNLHaaKaaUS
+#MNcnfKJOeFhiQBUU
 kbd, 3
-byk #lJAxqARvbaGtcbfI
-#lJAxqARvbaGtcbfI
+byk #thaBUaaIGBWRaFKa
+#thaBUaaIGBWRaFKa
 addi, r0, 4
 st, r0, 500
 rflip,r1
-#aDdEFCiSdlOJyaaa
+#JFaaafHYwTbQkTjX
 kbd, 22
-byk #vXnxnagagMaPxLQZ
-#vXnxnagagMaPxLQZ
+byk #aQypCkEAZcseiasx
+#aQypCkEAZcseiasx
 supi
-#OoMalXXHJugPPtBE
+#CrmOvuXPpbjCuxYt
 kbd, 18
-byk #atZrvaMYaUGasDTa
-#atZrvaMYaUGasDTa
+byk #PaHODcBkMEGaSzPa
+#PaHODcBkMEGaSzPa
 sdwi
-#aVGazfKKPIaWzsMz
+#XFwBafndlazJazLa
 kbd, 9
-byk #aagJaFvkqaaWBIHy
-#aagJaFvkqaaWBIHy
+byk #javWCSCvMDavaagy
+#javWCSCvMDavaagy
 subi, r2, 4
 st, r2, 502
 lflip,r2
-#kNMFaExaaAdsgUnq
+#omaZWyOuDlEuEEaP
 kbd, 11
-byk #onIFRapIfWwangJw
-#onIFRapIfWwangJw
+byk #ratHxRlZauHxngaW
+#ratHxRlZauHxngaW
 addi, r2, 4
 st, r2, 502
 rflip,r2
-#XsqagPjFMaYETpNz
+#VAFmlerJaaUcJapa
 kbd, 8
-byk #ELOrcdeUJZsNoiJJ
-#ELOrcdeUJZsNoiJJ
+byk #cZqjNxBtXramqaQa
+#cZqjNxBtXramqaQa
 supii
-#BTLVEVriGaHEFDaX
+#gYwquzHgGZUWppav
 kbd, 10
-byk #iaYvsTffqnhHZBqs
-#iaYvsTffqnhHZBqs
+byk #ofaBSpJHnhgaaaFa
+#ofaBSpJHnhgaaaFa
 sdwii
-#FPalaTezSToiaaUn
+#JckzjPqCPvmVUzKa
 mvix,500
 mviy,501
 mviix,502,
 mviiy,503
-cmp, r5, 0
-blt #AbaQbqXahfWKjiBa
-#AbaQbqXahfWKjiBa
+cmpi, r5, 0
+blt #kXJReeFBdBfUdqxB
+#kXJReeFBdBfUdqxB
 ldi, r4, 0
 st, r4, 4
-#aAtQgMGWiFzSRRLW
-cmp, r6, 0
-blt #LrhbqwbaLPQOaNub
-#LrhbqwbaLPQOaNub
+#apjTaOLrgaaiTlvQ
+cmpi, r6, 0
+blt #KuMepghWmgPkmUZS
+#KuMepghWmgPkmUZS
 ldi, r4, 0
 st, r4, 4
-#DChuNQaNaOcCdRbC
+#kTfjhULjaMpaLDXz
 wait, 10
-jmp #OaYdLkZgUjNJrnda
-#UacBaqurERBxHama
+jmp #WdKaDajzuGYYynSa
+#aIHDEqOAcmaGqgCs

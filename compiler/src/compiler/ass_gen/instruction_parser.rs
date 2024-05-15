@@ -11,7 +11,7 @@ use super::{
     memory_manager::{already_in_reg, get_reg, use_reg},
     program_generator::generate_body_ass,
 };
-use crate::compiler::ast::{self, Node};
+use crate::compiler::ast::{self, ConditionalOperator, Node};
 use crate::compiler::stdlib::helpers::move_to;
 use crate::compiler::stdlib::input::is_pressed;
 use crate::compiler::stdlib::utils::sleep;
@@ -150,7 +150,7 @@ pub fn parse_branch_statement(branch: &ast::Branch) -> Vec<String> {
     let mut instructions: Vec<String>;
 
     // Add condition instructions to branch instructions
-    instructions = condition_parser(&branch.condition, &true_branch);
+    instructions = condition_parser(&branch.condition, &true_branch, branch.false_body.is_some());
 
     if let Some(false_body) = &branch.false_body {
         let false_ass = generate_body_ass(false_body.get_body());
@@ -179,7 +179,7 @@ pub fn parse_loop_statement(nid_loop: &ast::Loop) -> Vec<String> {
 
     let mut instructions: Vec<String> = vec![loop_branch.clone()];
     // Add condition instructions to branch instructions
-    let condition: Vec<String> = condition_parser(&nid_loop.condition, &while_body);
+    let condition: Vec<String> = condition_parser(&nid_loop.condition, &while_body, false);
 
     if condition.is_empty() {
         return Vec::new(); // Loop will never be run
@@ -255,7 +255,11 @@ fn binary_expression_parser(bin_exp: &ast::BinaryExpression) -> Vec<String> {
 /// Helper function to parse the condition of if statements and loops.
 /// Note: Handling ! (not) as a special case. Load 0 for comparison and run cmp, check if result is
 /// 0
-fn condition_parser(condition: &ast::Condition, branch_name: &str) -> Vec<String> {
+fn condition_parser(
+    condition: &ast::Condition,
+    branch_name: &str,
+    false_body: bool,
+) -> Vec<String> {
     // Check if is_pressed was sent as condition
     if let Some(builtin) = condition.right.as_any().downcast_ref::<ast::Builtin>() {
         if builtin.params.len() != 1 {
@@ -282,15 +286,7 @@ fn condition_parser(condition: &ast::Condition, branch_name: &str) -> Vec<String
     let mut const2: Option<i16> = None;
 
     // TODO: FIX PROPER BRANCH SELECTION, CURRENTLY SOME BUGS, LIKE <= BECOMING STRICTLY LESS THAN
-    let mut op: String = match condition.operator {
-        ast::ConditionalOperator::Not => String::from("beq"), // The logic is to think of not in reverse. So you jmp if the variable is eq to 0.
-        ast::ConditionalOperator::NotEq => String::from("bne"),
-        ast::ConditionalOperator::Eq => String::from("beq"),
-        ast::ConditionalOperator::LessThan => String::from("bmi"),
-        ast::ConditionalOperator::LessEq => String::from("blt"),
-        ast::ConditionalOperator::GreatThan => String::from("bpl"),
-        ast::ConditionalOperator::GreatEq => String::from("bge"),
-    };
+    let mut op: String = get_op(&condition.operator, false_body);
 
     // First perform check on left operand as it's optional.
     if let Some(left_op) = &condition.left {
@@ -360,6 +356,29 @@ fn condition_parser(condition: &ast::Condition, branch_name: &str) -> Vec<String
     instructions.push(format!("{op} {branch_name}"));
 
     instructions
+}
+
+fn get_op(operator: &ConditionalOperator, false_body: bool) -> String {
+    if false_body {
+        return match operator {
+            ast::ConditionalOperator::Not => String::from("beq"), // The logic is to think of not in reverse. So you jmp if the variable is eq to 0.
+            ast::ConditionalOperator::NotEq => String::from("bne"),
+            ast::ConditionalOperator::Eq => String::from("beq"),
+            ast::ConditionalOperator::LessThan => String::from("bmi"),
+            ast::ConditionalOperator::LessEq => String::from("blt"),
+            ast::ConditionalOperator::GreatThan => String::from("bpl"),
+            ast::ConditionalOperator::GreatEq => String::from("bge"),
+        };
+    }
+    match operator {
+        ast::ConditionalOperator::Not => String::from("beq"), // The logic is to think of not in reverse. So you jmp if the variable is eq to 0.
+        ast::ConditionalOperator::NotEq => String::from("bne"),
+        ast::ConditionalOperator::Eq => String::from("beq"),
+        ast::ConditionalOperator::LessThan => String::from("bmi"),
+        ast::ConditionalOperator::LessEq => String::from("blt"),
+        ast::ConditionalOperator::GreatThan => String::from("bpl"),
+        ast::ConditionalOperator::GreatEq => String::from("bge"),
+    }
 }
 
 /// Geenrates a random name for a branch to be used in jumps
