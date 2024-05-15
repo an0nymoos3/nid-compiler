@@ -16,121 +16,125 @@ ldi, r5, 3
 st, r5, 5
 ldi, r6, 3
 st, r6, 6
-#DVHaaUlIzatTPeyp
+mvix,500
+mviy,501
+mviix,502
+mviiy,503
+#ykXaTadbSeaSvafa
 cmpi, r4, 1
-beq #awDJnlMcqaVfQgSf
-jmp #thGGjcclFuayaPUV
-#awDJnlMcqaVfQgSf
+beq #pqxaGaOqnuLpbEHf
+jmp #SIpqbaaNCnbFiaGR
+#pqxaGaOqnuLpbEHf
 cmpi, r1, 350
-bmi #HAJzactCbVpamaaG
-jmp #waqXrxwFaiaBCXgR
-#HAJzactCbVpamaaG
+bmi #QiNaHFnoAzydgqdf
+jmp #oagQEkADaapQCkOd
+#QiNaHFnoAzydgqdf
 addi, r1, 4
 st, r1, 501
 mviy,501
-#waqXrxwFaiaBCXgR
+#oagQEkADaapQCkOd
 cmpi, r3, 350
-bmi #BHXfoaaCyBaWlPCa
-jmp #BbEeFavmoDGqHVUG
-#BHXfoaaCyBaWlPCa
+bmi #JGFOavRNatRIaDYj
+jmp #JUJrFxazyQeJliRa
+#JGFOavRNatRIaDYj
 addi, r3, 4
 st, r3, 503
 mviiy,503
-#BbEeFavmoDGqHVUG
+#JUJrFxazyQeJliRa
 kbd, 0
-byk #aqwamaBYrHpcaabs
-jmp #aLUPFaYRKBtFuqaS
-#aqwamaBYrHpcaabs
+byk #jdaUETaliRQDakai
+jmp #haaautaTmbDYwaza
+#jdaUETaliRQDakai
 cmpi, r0, 0
-bpl #DCUaqeBanhonaaWa
-jmp #FmIaNDJXTayfaTaR
-#DCUaqeBanhonaaWa
+bpl #iLAaXaIkaaaYrAxY
+jmp #axaJUtVrCIAcSNvx
+#iLAaXaIkaaaYrAxY
 subi, r0, 4
 st, r0, 500
 mvix,500
 lflip,r1
-#FmIaNDJXTayfaTaR
-#aLUPFaYRKBtFuqaS
+#axaJUtVrCIAcSNvx
+#haaautaTmbDYwaza
 kbd, 3
-byk #VZHEnsaagDcaiarQ
-jmp #QoojadUNKDeqYuna
-#VZHEnsaagDcaiarQ
+byk #yYsazGpNHDUxcaDT
+jmp #CmaWAaSamGTaUaoO
+#yYsazGpNHDUxcaDT
 cmpi, r0, 560
-bmi #jaagayObXaFaaagh
-jmp #oaaaVajywkakANnK
-#jaagayObXaFaaagh
+bmi #aamnVVZavIaDaqsE
+jmp #jDojEnWsHqyzYFZB
+#aamnVVZavIaDaqsE
 addi, r0, 4
 st, r0, 500
 mvix,500
 rflip,r1
-#oaaaVajywkakANnK
-#QoojadUNKDeqYuna
+#jDojEnWsHqyzYFZB
+#CmaWAaSamGTaUaoO
 kbd, 22
-byk #kGaXDaBMcqfWTHfr
-jmp #NkxaDGaDdyiufzgw
-#kGaXDaBMcqfWTHfr
+byk #GNPXUxaRaaSbxbMa
+jmp #pCaRAADxRBVkSaIV
+#GNPXUxaRaaSbxbMa
 supi
-#NkxaDGaDdyiufzgw
+#pCaRAADxRBVkSaIV
 kbd, 18
-byk #aaBdUaarwjajEALR
-jmp #WIAwtlGZHaxoNiXa
-#aaBdUaarwjajEALR
+byk #zprAvjwuaCyuqnWu
+jmp #HanQUfKiaDBQXaaa
+#zprAvjwuaCyuqnWu
 sdwi
-#WIAwtlGZHaxoNiXa
+#HanQUfKiaDBQXaaa
 kbd, 9
-byk #uWIaOpchahzOaFoW
-jmp #CXTVsNBXZasasUaZ
-#uWIaOpchahzOaFoW
+byk #GaxnakpaBSaaRpqH
+jmp #pZaXYOnhasatJuRl
+#GaxnakpaBSaaRpqH
 cmpi, r2, 0
-bpl #DhUHyhntcIYLbkRN
-jmp #DLJaalUvYJdbRaRF
-#DhUHyhntcIYLbkRN
+bpl #PhaoTagUxAaLeXzn
+jmp #aoAMeIIoCwUayDzg
+#PhaoTagUxAaLeXzn
 subi, r2, 4
 st, r2, 502
 mviix,502
 lflip,r2
-#DLJaalUvYJdbRaRF
-#CXTVsNBXZasasUaZ
+#aoAMeIIoCwUayDzg
+#pZaXYOnhasatJuRl
 kbd, 11
-byk #qMemtIALYHGaZOIG
-jmp #orIyGaSavasaXaVW
-#qMemtIALYHGaZOIG
+byk #wDJanaZvbDabiXtB
+jmp #NaVfOQnRynKaMwFl
+#wDJanaZvbDabiXtB
 cmpi, r2, 560
-bmi #eXvcLaRdmrryGMyk
-jmp #BlFxRCWVaIIIqqia
-#eXvcLaRdmrryGMyk
+bmi #aZNJVaEdkajadkvv
+jmp #aaaEHTFaYZcpdyaG
+#aZNJVaEdkajadkvv
 addi, r2, 4
 st, r2, 502
 mviix,502
 rflip,r2
-#BlFxRCWVaIIIqqia
-#orIyGaSavasaXaVW
+#aaaEHTFaYZcpdyaG
+#NaVfOQnRynKaMwFl
 kbd, 8
-byk #raDgjKKWaBFYRDOa
-jmp #aQxsBzYIFNzVOWJI
-#raDgjKKWaBFYRDOa
+byk #IepaVSaaiqogcUla
+jmp #mCgzLvvFaNaaMPMu
+#IepaVSaaiqogcUla
 supii
-#aQxsBzYIFNzVOWJI
+#mCgzLvvFaNaaMPMu
 kbd, 10
-byk #RSnRBKaqWYzaEQRh
-jmp #vaYOzzhaaoRAqkyg
-#RSnRBKaqWYzaEQRh
+byk #BkpSGqMGEvmcAaHa
+jmp #WBLlVeQDFxmaQpKt
+#BkpSGqMGEvmcAaHa
 sdwii
-#vaYOzzhaaoRAqkyg
+#WBLlVeQDFxmaQpKt
 cmpi, r5, 0
-blt #MdwTjrRdKqbJhllb
-jmp #oOaWavParPGLmakr
-#MdwTjrRdKqbJhllb
+blt #FCOCCwCayYCPiUBB
+jmp #SwTVxeusVNCYbqUv
+#FCOCCwCayYCPiUBB
 ldi, r4, 0
 st, r4, 4
-#oOaWavParPGLmakr
+#SwTVxeusVNCYbqUv
 cmpi, r6, 0
-blt #zlFmNXFVZZjajplo
-jmp #Fjalfaxxaaacajmc
-#zlFmNXFVZZjajplo
+blt #oEPFJvLEUMjAasCG
+jmp #DWTPjcSgaoGhteMs
+#oEPFJvLEUMjAasCG
 ldi, r4, 0
 st, r4, 4
-#Fjalfaxxaaacajmc
+#DWTPjcSgaoGhteMs
 wait, 10
-jmp #DVHaaUlIzatTPeyp
-#thGGjcclFuayaPUV
+jmp #ykXaTadbSeaSvafa
+#SIpqbaaNCnbFiaGR

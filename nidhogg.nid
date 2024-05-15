@@ -19,6 +19,14 @@ void main() {
   int player_one_health = 3;
   int player_two_health = 3;
 
+  // Initial drawing of characters
+  asm {
+      mvix, 500
+      mviy, 501
+      mviix, 502
+      mviiy, 503
+  }
+
   // Main game loop
   while (is_running) {
 
