@@ -23,8 +23,8 @@ std::vector<AssembeledLine> assemble_lines(std::vector<Line> lines,
       non_empty_lines++;
       for (int j = 0; j < lines[i].line_tokens.size(); j++) {
         if (lines[i].line_tokens[j].token_type == JmpPoint) {
-          // -2 to give correct line after fecthing assembly instruction
-          jmp_map[lines[i].line_tokens[j].value] = non_empty_lines - 2;
+          // -1 to give correct line after fecthing assembly instruction
+          jmp_map[lines[i].line_tokens[j].value] = non_empty_lines - 1;
 
           // Remove lines only containing JmpPoints
           if (j == 0 && lines[i].line_tokens.size() <= 2) {
