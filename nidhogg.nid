@@ -25,9 +25,11 @@ void main() {
     // Gravity
     if (player_one_y < 350) {
       player_one_y = player_one_y + 4;
+      asm { mviy, 501 }
     }
     if (player_two_y < 350) {
       player_two_y = player_two_y + 4;
+      asm { mviiy, 503 }
     }
 
     // Player 1 input
@@ -35,14 +37,20 @@ void main() {
     if(is_pressed(0)) {
       if (player_one_x > 0) {
         player_one_x = player_one_x - 4;
-        asm { lflip, r1 } // Ingore the register, we know what we're doing
+        asm {
+          mvix, 500
+          lflip, r1 
+        } // Ingore the register, we know what we're doing
       }
     } 
     // Check for D presed
     if(is_pressed(3)) {
-      if (player_one_x < 400) {
+      if (player_one_x < 560) {
         player_one_x = player_one_x + 4;
-        asm { rflip, r1 }
+        asm { 
+          mvix, 500
+          rflip, r1 
+        }
       }
     } 
     // Check for W presed
@@ -59,14 +67,20 @@ void main() {
     if(is_pressed(9)) {
       if (player_two_x > 0) {
         player_two_x = player_two_x - 4;
-        asm { lflip, r2 }
+        asm { 
+          mviix, 502
+          lflip, r2 
+        }
       }
     } 
     // Check for L presed
     if(is_pressed(11)) {
-      if (player_two_x < 400) {
+      if (player_two_x < 560) {
         player_two_x = player_two_x + 4;
-        asm { rflip, r2 }
+        asm { 
+          mviix, 502
+          rflip, r2 
+        }
       }
     } 
     // Check for I presed
@@ -77,14 +91,6 @@ void main() {
     if(is_pressed(10)) {
       asm { sdwii }
     } 
-
-    // Draw characters and do shit NID cant in here
-    asm {
-      mvix, 500
-      mviy, 501
-      mviix, 502,
-      mviiy, 503
-    }
 
     // Check win condition
     if (player_one_health <= 0) {
