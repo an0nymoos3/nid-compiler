@@ -1,0 +1,10 @@
+ldi, r4, 0
+st, r4, 0
+ldi, r4, 10
+st, r4, 1
+ldi, r4, 5
+st, r4, 1
+ld, r4, 1
+st, r4, 0
+ldi, r0, 15
+st, r0, 1
