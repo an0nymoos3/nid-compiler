@@ -6,7 +6,6 @@ use std::time::{Duration, Instant};
 use crate::utils::command_line::print_help;
 use compiler::compile::compile;
 use std::env;
-use std::path::PathBuf;
 use std::process::Command;
 use utils::command_line::{build_args, Args};
 use utils::compile_times::{calc_total_time, time_now};
@@ -47,11 +46,21 @@ fn main() {
     }
     println!("Found assembler: {}", assembler.display());
 
+    let assembler_args: Vec<String> = if args.debug {
+        vec![output_file, String::from("-d")]
+    } else {
+        vec![output_file]
+    };
+
     start = time_now();
-    let _ = Command::new(format!("{}", assembler.display()))
-        .arg(&output_file)
+    let output = Command::new(format!("{}", assembler.display()))
+        .args(assembler_args)
         .output()
         .unwrap();
     exec_time = calc_total_time(&start);
     println!("Total assembly time: {:?}", exec_time);
+    println!(
+        "Assembler result: {}",
+        String::from_utf8(output.stdout).unwrap()
+    );
 }
