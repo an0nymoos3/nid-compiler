@@ -7,6 +7,7 @@ pub enum TokenType {
     Floating,
     String,
     Char,
+    Bool,
     Identifier,       // Human readable identifier, such as variable name
     Assignment,       // Assigning operator
     OpenParen,        // (
@@ -17,8 +18,8 @@ pub enum TokenType {
     ArrayAccessClose, // ]
     BinaryOperator,   // +, -, *, /
     Comparison,       // ==, <=, >=
-    LogicOperator,    // &&, ||
-    TypeDecleration,  // Used to declare variable type and function return
+    LogicOperator,    // !, &&, ||
+    TypeIndicator,    // Used to declare variable type and function return
     Loop,
     Branch,    // If conditions etc...
     Seperator, // for identifying seperations for things like parameters (,)
@@ -28,10 +29,12 @@ pub enum TokenType {
     Return,    // Return statement
     Asm,       // Allows for inline assembly code
     Eol,       // End of line, basically ; representing end of line.
-    Eof,       // Represents the end of the code (EOF all caps appears to be a reserved
-               // word of some kind)
+    Eof, // Represents the end of the code (EOF all caps appears to be a reserved word of some kind)
+    Macro, // Basic macro functionality, such as allocating memory that the compiler is not allowed
+    // to touch
+    BuiltIn, // Built in functions, like sleep(), write_to()
 }
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 #[allow(dead_code)] // TODO: Remove once fields are being read
 pub struct Token {
     pub value: String,
@@ -43,6 +46,20 @@ pub fn export_tokens(tokens: &VecDeque<Token>) {
     for token in tokens {
         println!("Token: {:?}", token);
     }
+}
+
+/// Removes comments from program
+pub fn remove_comments(file_content: &str) -> String {
+    let mut new_program: String = String::new();
+
+    for line in file_content.lines() {
+        let mut trimmed_line: &str = line;
+        if let Some(pos) = line.find("//") {
+            trimmed_line = &trimmed_line[..pos];
+        }
+        new_program.push_str(trimmed_line)
+    }
+    new_program
 }
 
 /// Converts the source code from a contious string of text to a queue of tokens.
@@ -182,6 +199,67 @@ pub fn tokenize(file_content: String) -> VecDeque<Token> {
             }
 
         /*
+         * Check for not / not equal
+         */
+        } else if current_char == '!' {
+            let value: String;
+            if *src_code.front().unwrap() == '=' {
+                value = String::from("!=");
+                src_code.pop_front();
+            } else {
+                value = String::from("!");
+            }
+            token = Token {
+                value,
+                token_type: TokenType::LogicOperator,
+            }
+
+        /*
+         * Check for greater / greater equal
+         */
+        } else if current_char == '>' {
+            let value: String;
+            if *src_code.front().unwrap() == '=' {
+                value = String::from(">=");
+                src_code.pop_front();
+            } else {
+                value = String::from(">");
+            }
+            token = Token {
+                value,
+                token_type: TokenType::LogicOperator,
+            }
+
+        /*
+         * Check for less / less equal
+         */
+        } else if current_char == '<' {
+            let value: String;
+            if *src_code.front().unwrap() == '=' {
+                value = String::from("<=");
+                src_code.pop_front();
+            } else {
+                value = String::from("<");
+            }
+            token = Token {
+                value,
+                token_type: TokenType::LogicOperator,
+            }
+
+        /*
+         * Check for OR
+         */
+        } else if current_char == '|' {
+            if src_code.pop_front().unwrap() != '|' {
+                panic!("Missing second | in logical OR operation!");
+            }
+
+            token = Token {
+                value: String::from("||"),
+                token_type: TokenType::LogicOperator,
+            }
+
+        /*
          * Lexes binary operations.
          */
         } else if current_char == '+' || current_char == '-' || current_char == '/' {
@@ -205,8 +283,19 @@ pub fn tokenize(file_content: String) -> VecDeque<Token> {
             }
 
         /*
-         * Finds words, such as reserved keywords, function names, variable names, etc.
+         * Find nid-lang macros
          */
+        } else if current_char == '#' {
+            let macro_value: String = build_word(&mut src_code);
+
+            token = Token {
+                value: macro_value,
+                token_type: TokenType::Macro,
+            };
+
+            /*
+             * Finds words, such as reserved keywords, function names, variable names, etc.
+             */
         } else if is_letter(current_char) {
             let mut token_value: String = String::from(current_char);
             token_value.push_str(&build_word(&mut src_code));
@@ -215,6 +304,11 @@ pub fn tokenize(file_content: String) -> VecDeque<Token> {
                 token = Token {
                     value: token_value,
                     token_type: reserved_word,
+                }
+            } else if let Some(builtin) = is_builtin(&token_value) {
+                token = Token {
+                    value: token_value,
+                    token_type: builtin,
                 }
             } else {
                 token = Token {
@@ -272,16 +366,33 @@ fn is_num(cur_char: char) -> bool {
 /// Returns if a detected word is reserved (eg. void, int, etc)
 fn is_reserved_keywords(word: &str) -> Option<TokenType> {
     let keyword_map: HashMap<&str, TokenType> = HashMap::from([
-        ("void", TokenType::TypeDecleration),
-        ("int", TokenType::TypeDecleration),
-        ("float", TokenType::TypeDecleration),
-        ("string", TokenType::TypeDecleration),
-        ("char", TokenType::TypeDecleration),
+        ("void", TokenType::TypeIndicator),
+        ("int", TokenType::TypeIndicator),
+        ("float", TokenType::TypeIndicator),
+        ("string", TokenType::TypeIndicator),
+        ("char", TokenType::TypeIndicator),
+        ("bool", TokenType::TypeIndicator),
+        ("true", TokenType::Bool),
+        ("false", TokenType::Bool),
         ("if", TokenType::Branch),
         ("else", TokenType::Branch),
         ("while", TokenType::Loop),
         ("return", TokenType::Return),
         ("asm", TokenType::Asm),
+    ]);
+
+    if keyword_map.contains_key(word) {
+        return Some(keyword_map[word]);
+    }
+    None
+}
+
+/// Returns if a detected word is a builtin function
+fn is_builtin(word: &str) -> Option<TokenType> {
+    let keyword_map: HashMap<&str, TokenType> = HashMap::from([
+        ("sleep", TokenType::BuiltIn),
+        ("move_to", TokenType::BuiltIn),
+        ("is_pressed", TokenType::BuiltIn),
     ]);
 
     if keyword_map.contains_key(word) {

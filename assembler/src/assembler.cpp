@@ -2,6 +2,7 @@
  * This file is for assembling or converting from regular english to binary.
  */
 #include "assembler.hpp"
+#include "utils/errors.hpp"
 #include <algorithm>
 #include <bitset>
 #include <ios>
@@ -10,7 +11,8 @@
 #include <sstream>
 #include <vector>
 
-std::vector<AssembeledLine> assemble_lines(std::vector<Line> lines) {
+std::vector<AssembeledLine> assemble_lines(std::vector<Line> lines,
+                                           bool &assembly_failed) {
   std::vector<AssembeledLine> assembeled_lines;
   std::map<std::string, int> jmp_map;
 
@@ -21,7 +23,7 @@ std::vector<AssembeledLine> assemble_lines(std::vector<Line> lines) {
       non_empty_lines++;
       for (int j = 0; j < lines[i].line_tokens.size(); j++) {
         if (lines[i].line_tokens[j].token_type == JmpPoint) {
-          // -1 to give correct line after fecthing assembly instruction
+          // -2 to give correct line after fecthing assembly instruction
           jmp_map[lines[i].line_tokens[j].value] = non_empty_lines - 2;
 
           // Remove lines only containing JmpPoints
@@ -34,8 +36,7 @@ std::vector<AssembeledLine> assemble_lines(std::vector<Line> lines) {
   }
 
   for (int i = 0; i < lines.size(); i++) {
-    AssembeledLine line = assemble_line(lines[i], jmp_map);
-    line.error_code = lines[i].error_code;
+    AssembeledLine line = assemble_line(lines[i], jmp_map, assembly_failed);
     if (line.line_content.size() != 0) {
       line.line_number = i + 1;
       assembeled_lines.push_back(line);
@@ -45,7 +46,8 @@ std::vector<AssembeledLine> assemble_lines(std::vector<Line> lines) {
   return assembeled_lines;
 }
 
-AssembeledLine assemble_line(Line line, std::map<std::string, int> jmp_map) {
+AssembeledLine assemble_line(Line line, std::map<std::string, int> jmp_map,
+                             bool &assembly_failed) {
   AssembeledLine ass_line;
   std::string ass_string;
 
@@ -57,7 +59,7 @@ AssembeledLine assemble_line(Line line, std::map<std::string, int> jmp_map) {
       return ass_line;
     } else if (token.token_type == Operation) {
       ass_string +=
-          operation_to_binary(token.value, line.line_number, line.error_code);
+          operation_to_binary(token.value, line.line_number, assembly_failed);
     } else if (token.token_type == Mode || token.token_type == Register ||
                token.token_type == Constant) {
       ass_string += token.value;
@@ -70,13 +72,16 @@ AssembeledLine assemble_line(Line line, std::map<std::string, int> jmp_map) {
       ass_string += value;
     }
   }
-
-  std::cout << "Warning: Line did not end with EOL character!" << std::endl;
+  Error err = {line.line_number,
+               "Warning: Line did not end with EOL character!",
+               line.line_content};
+  print_error(err);
   return ass_line;
 }
 
 std::string operation_to_binary(std::string value, int line_number,
-                                int &error_code) {
+                                bool &assembly_failed) {
+
   // Convert the entire string to uppercase using std::transform()
   std::transform(value.begin(), value.end(), value.begin(), ::toupper);
 
@@ -174,10 +179,14 @@ std::string operation_to_binary(std::string value, int line_number,
     return "101101";
   }
 
-  std::cout << "Error 2: Unknown operation at line " << line_number
-            << "\nOperation " << value << " used, parsed as NOP" << std::endl
-            << std::endl;
-  error_code = 2;
+  Error err = {line_number,
+               "Error: Unkown assembly operation! For more info on what "
+               "operations are supported: "
+               "https://github.com/an0nymoos3/nid-compiler/blob/assembler/docs/"
+               "assembly.md",
+               value};
+  print_error(err);
+  assembly_failed = true;
 
   return "000000";
 }
@@ -203,14 +212,8 @@ std::string binary_to_hex(std::string binary_string) {
 }
 
 void printAssembeledLine(std::vector<AssembeledLine> lines) {
-  std::cout << "Printing lines as hex code: " << std::endl;
-
+  std::cout << "Resulting hex code: " << std::endl;
   for (int i = 0; i < lines.size(); i++) {
-    if (lines[i].error_code == 0) {
-      std::cout << "x\"" << lines[i].line_content << "\", " << std::endl;
-    } else {
-      std::cout << "x\"" << lines[i].line_content
-                << "\", \t --Line error: " << lines[i].error_code << std::endl;
-    }
+    std::cout << "x\"" << lines[i].line_content << "\", " << std::endl;
   }
 }

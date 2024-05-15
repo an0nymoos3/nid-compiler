@@ -1,5 +1,5 @@
 TARGET_DIR=bin/
-CPP_OBJS=$(wildcard assembler/src/*.cpp) $(wildcard assembler/src/utils/*.cpp)
+CPP_OBJS=$(wildcard assembler/src/utils/*.cpp) $(wildcard assembler/src/*.cpp)
 
 .PHONY: all compiler assembler clean
 
@@ -9,7 +9,7 @@ ifndef VERBOSE
 endif
 
 # Builds in release mode
-all:	compiler	assembler
+all:	assembler	 compiler
 
 compiler: | $(TARGET_DIR)
 	echo "Building compiler..."

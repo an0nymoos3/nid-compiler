@@ -44,11 +44,11 @@ To compile a manually written `.ass` file you can use the `assembler` found unde
 ## Features
 | Feature                  | Status |
 | -------                  | ------ |
-| Working compiler         | 🟡 Developing |
-| Working assembler        | 🟡 Developing |
-| Heap allocations         | 🔴 Planned    |
-| Imports between files    | 🔴 Planned    |
-| std library              | 🔴 Planned    |
+| Working compiler         | 🟢 Working state, missing features  |
+| Working assembler        | 🟢 Mostly done                      |
+| Heap allocations         | 🔴 Planned                          |
+| Imports between files    | 🔴 Planned                          |
+| std library              | 🔴 Planned                          |
 
 ## Contributing
 Anyone with a lot of free time on their hands is free to contribute to this project. I would love to see NID-Lang
