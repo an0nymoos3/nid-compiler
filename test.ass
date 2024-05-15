@@ -10,25 +10,25 @@ addi, r0, 50
 st, r0, 500
 addi, r1, 50
 st, r1, 501
-wait, 500
+wait, 3000
 mvix,500
 mviy,501
 addi, r0, 50
 st, r0, 500
 addi, r1, 50
 st, r1, 501
-wait, 500
+wait, 3000
 mvix,500
 mviy,501
 addi, r0, 50
 st, r0, 500
 addi, r1, 50
 st, r1, 501
-wait, 500
+wait, 3000
 mvix,500
 mviy,501
 addi, r0, 50
 st, r0, 500
 addi, r1, 50
 st, r1, 501
-wait, 500
+wait, 3000
