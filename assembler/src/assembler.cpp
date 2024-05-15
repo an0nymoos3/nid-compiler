@@ -22,7 +22,7 @@ std::vector<AssembeledLine> assemble_lines(std::vector<Line> lines) {
       for (int j = 0; j < lines[i].line_tokens.size(); j++) {
         if (lines[i].line_tokens[j].token_type == JmpPoint) {
           // -1 to give correct line after fecthing assembly instruction
-          jmp_map[lines[i].line_tokens[j].value] = non_empty_lines - 1;
+          jmp_map[lines[i].line_tokens[j].value] = non_empty_lines - 2;
 
           // Remove lines only containing JmpPoints
           if (j == 0 && lines[i].line_tokens.size() <= 2) {
@@ -170,6 +170,8 @@ std::string operation_to_binary(std::string value, int line_number,
     return "101011";
   } else if (value == "WAIT") {
     return "101100";
+  } else if (value == "HALT") {
+    return "101101";
   }
 
   std::cout << "Error 2: Unknown operation at line " << line_number
