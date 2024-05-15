@@ -131,6 +131,8 @@ pub fn cmp(
 ) -> Vec<String> {
     if const1.is_some() && const2.is_some() {
         panic!("Compiler error! Two constants should not have entered the cmp() function!")
+    } else if const1.is_some() {
+        perform_op("cmpi", reg1, reg2, addr1, addr2, const1)
     } else {
         perform_op("cmp", reg1, reg2, addr1, addr2, const1)
     }
