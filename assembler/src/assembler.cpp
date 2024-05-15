@@ -23,8 +23,8 @@ std::vector<AssembeledLine> assemble_lines(std::vector<Line> lines,
       non_empty_lines++;
       for (int j = 0; j < lines[i].line_tokens.size(); j++) {
         if (lines[i].line_tokens[j].token_type == JmpPoint) {
-          // -1 to give correct line after fecthing assembly instruction
-          jmp_map[lines[i].line_tokens[j].value] = non_empty_lines - 1;
+          // -2 to give correct line after fecthing assembly instruction
+          jmp_map[lines[i].line_tokens[j].value] = non_empty_lines - 2;
 
           // Remove lines only containing JmpPoints
           if (j == 0 && lines[i].line_tokens.size() <= 2) {
@@ -53,7 +53,8 @@ AssembeledLine assemble_line(Line line, std::map<std::string, int> jmp_map,
 
   for (Token token : line.line_tokens) {
     if (token.token_type == EOL || token.token_type == Comment) {
-      // ass_string = binary_to_hex(ass_string);
+      ass_string += "\n";
+      ass_string = binary_to_hex(ass_string);
       ass_line = {ass_string, line.line_number};
       return ass_line;
     } else if (token.token_type == Operation) {
@@ -174,6 +175,8 @@ std::string operation_to_binary(std::string value, int line_number,
     return "101011";
   } else if (value == "WAIT") {
     return "101100";
+  } else if (value == "HALT") {
+    return "101101";
   }
 
   Error err = {line_number,
@@ -209,9 +212,8 @@ std::string binary_to_hex(std::string binary_string) {
 }
 
 void printAssembeledLine(std::vector<AssembeledLine> lines) {
-  std::cout << "Resulting binary code: " << std::endl;
-
+  std::cout << "Resulting hex code: " << std::endl;
   for (int i = 0; i < lines.size(); i++) {
-    std::cout << lines[i].line_content << std::endl;
+    std::cout << "x\"" << lines[i].line_content << "\", " << std::endl;
   }
 }

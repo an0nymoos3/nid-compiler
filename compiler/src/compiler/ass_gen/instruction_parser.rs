@@ -157,7 +157,7 @@ pub fn parse_branch_statement(branch: &ast::Branch) -> Vec<String> {
         for inst in false_ass {
             instructions.push(inst);
         }
-        instructions.push(format!("jmp, {}", skip_branch)); // Jump past the true body if false was run
+        instructions.push(format!("jmp {}", skip_branch)); // Jump past the true body if false was run
     }
 
     instructions.push(true_branch);
@@ -188,7 +188,7 @@ pub fn parse_loop_statement(nid_loop: &ast::Loop) -> Vec<String> {
         instructions.push(inst);
     }
 
-    instructions.push(format!("jmp, {}", loop_done));
+    instructions.push(format!("jmp {}", loop_done));
     instructions.push(while_body);
 
     let loop_ass = generate_body_ass(nid_loop.body.get_body());
@@ -197,7 +197,7 @@ pub fn parse_loop_statement(nid_loop: &ast::Loop) -> Vec<String> {
         instructions.push(inst);
     }
 
-    instructions.push(format!("jmp, {loop_branch}"));
+    instructions.push(format!("jmp {loop_branch}"));
     instructions.push(loop_done);
 
     instructions
@@ -357,7 +357,7 @@ fn condition_parser(condition: &ast::Condition, branch_name: &str) -> Vec<String
     }
 
     // Push jump instruction
-    instructions.push(format!("{op}, {branch_name}"));
+    instructions.push(format!("{op} {branch_name}"));
 
     instructions
 }

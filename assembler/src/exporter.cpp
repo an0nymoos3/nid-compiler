@@ -16,7 +16,7 @@ void write_to_file(std::vector<AssembeledLine> &binary_content,
   output.open(outname);
 
   for (const AssembeledLine binline : binary_content) {
-    output << binline.line_content;
+    output << "x\"" << binline.line_content << "\", " << std::endl;
   }
 
   output.close();
