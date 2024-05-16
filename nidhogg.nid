@@ -1,6 +1,6 @@
 // Allocate the last 12 addresses for programmer to use in asm {} blocks
-#PREALLOCSTART=500
-#PREALLOCEND=511
+#PREALLOCSTART=0
+#PREALLOCEND=11
 
 void main() {
   // Setup initial variables that will be used.
@@ -10,21 +10,21 @@ void main() {
   int player_two_y = 0;
 
   // Move them to our allocated memory that compiler isnt allowed to overwrite
-  move_to(player_one_x, 500);
-  move_to(player_one_y, 501);
-  move_to(player_two_x, 502);
-  move_to(player_two_y, 503);
+  move_to(player_one_x, 0);
+  move_to(player_one_y, 1);
+  move_to(player_two_x, 2);
+  move_to(player_two_y, 3);
 
   bool is_running = true;
   int player_one_health = 3;
   int player_two_health = 3;
 
-  // Initial drawing of characters
+  // Set initial character positions on screen
   asm {
-      mvix, 500
-      mviy, 501
-      mviix, 502
-      mviiy, 503
+      mvix, 0
+      mviy, 1
+      mviix, 2
+      mviiy, 3
   }
 
   // Main game loop
@@ -33,11 +33,11 @@ void main() {
     // Gravity
     if (player_one_y < 350) {
       player_one_y = player_one_y + 4;
-      asm { mviy, 501 }
+      asm { mviy, 1 }
     }
     if (player_two_y < 350) {
       player_two_y = player_two_y + 4;
-      asm { mviiy, 503 }
+      asm { mviiy, 3 }
     }
 
     // Player 1 input
@@ -46,7 +46,7 @@ void main() {
       if (player_one_x > 0) {
         player_one_x = player_one_x - 4;
         asm {
-          mvix, 500
+          mvix, 0
           lflip, r1 
         } // Ingore the register, we know what we're doing
       }
@@ -56,7 +56,7 @@ void main() {
       if (player_one_x < 560) {
         player_one_x = player_one_x + 4;
         asm { 
-          mvix, 500
+          mvix, 0
           rflip, r1 
         }
       }
@@ -76,7 +76,7 @@ void main() {
       if (player_two_x > 0) {
         player_two_x = player_two_x - 4;
         asm { 
-          mviix, 502
+          mviix, 2
           lflip, r2 
         }
       }
@@ -86,7 +86,7 @@ void main() {
       if (player_two_x < 560) {
         player_two_x = player_two_x + 4;
         asm { 
-          mviix, 502
+          mviix, 2
           rflip, r2 
         }
       }

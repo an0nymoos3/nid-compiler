@@ -33,6 +33,10 @@ pub static mut PREALLOC_END: u16 = MAX_ADDR;
 /// Push variable to the next available position in the "DM stack"
 pub fn push_to_stack(register: u8) -> String {
     unsafe {
+        // Jump over preallocated range if one is set
+        if PREALLOC_START <= STACK_PTR && STACK_PTR <= PREALLOC_END && PREALLOC_END < MAX_ADDR {
+            STACK_PTR = PREALLOC_END + 1;
+        }
         if PREALLOC_START <= STACK_PTR && STACK_PTR <= PREALLOC_END {
             panic!("Trying to allocated memory inside user defined range!")
         }
@@ -42,11 +46,6 @@ pub fn push_to_stack(register: u8) -> String {
         let ass_output: String = format!("st, r{register}, {STACK_PTR}");
         STACK_PTR += 1;
 
-        // Jump over preallocated range if one is set
-        if PREALLOC_START <= STACK_PTR && STACK_PTR <= PREALLOC_END && PREALLOC_END < MAX_ADDR {
-            STACK_PTR = PREALLOC_END + 1;
-        }
-
         ass_output
     }
 }
@@ -55,14 +54,14 @@ pub fn push_to_stack(register: u8) -> String {
 /// Pop variable from the last position in the "DM stack"
 pub fn _pop_from_stack(register: u8) -> String {
     unsafe {
-        let ass_output: String = format!("ld, r{register}, {STACK_PTR}");
-
-        STACK_PTR -= 1;
-
         // Jump over preallocated range if one is set
         if PREALLOC_START <= STACK_PTR && STACK_PTR <= PREALLOC_END && PREALLOC_START > 0 {
             STACK_PTR = PREALLOC_START - 1;
         }
+
+        let ass_output: String = format!("ld, r{register}, {STACK_PTR}");
+
+        STACK_PTR -= 1;
 
         ass_output
     }
