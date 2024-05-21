@@ -12,6 +12,14 @@ int main(int argc, char **argv) {
   std::vector<Line> lines = parse_file(args);
   lines = tokenize(lines, assembly_failed);
 
+  if (args.debug) {
+    for (const Line &line : lines) {
+      for (const Token &token : line.line_tokens) {
+        std::cout << token.value << std::endl;
+      }
+    }
+  }
+
   std::vector<AssembeledLine> assembeled_lines =
       assemble_lines(lines, assembly_failed);
 
