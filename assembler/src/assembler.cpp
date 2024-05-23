@@ -169,6 +169,16 @@ std::string operation_to_binary(std::string value, int line_number,
     return "101000";
   } else if (value == "HALT") {
     return "101001";
+  } else if (value == "RSLMP") {
+    return "101010";
+  } else if (value == "LSLMP") {
+    return "101011";
+  } else if (value == "SIK") {
+    return "101100";
+  } else if (value == "SIIK") {
+    return "101101";
+  } else if (value == "SWC") {
+    return "101110";
   }
 
   Error err = {line_number,
