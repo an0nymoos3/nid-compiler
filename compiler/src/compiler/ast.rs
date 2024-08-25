@@ -770,11 +770,9 @@ fn traverse_ast_body(tree: &mut ptree::TreeBuilder, body: &[Box<dyn Node>], bran
 
 /// For prettier debug AST
 fn is_new_asm_instruction(instruciton: &str) -> bool {
-    let reserved_words: [&str; 42] = [
+    let reserved_words: [&str; 25] = [
         "nop", "ldi", "ld", "st", "psh", "pop", "add", "addi", "sub", "subi", "cmp", "cmpi", "and",
-        "andi", "or", "ori", "jmp", "jsr", "ret", "beq", "bne", "bpl", "bmi", "bge", "blt", "mvix",
-        "mviy", "mviix", "mviiy", "kbd", "byk", "bnk", "addix", "addiy", "addiix", "addiiy",
-        "supi", "sdwi", "supii", "sdwii", "lflip", "rflip",
+        "andi", "or", "ori", "jmp", "jsr", "ret", "beq", "bne", "bpl", "bmi", "bge", "blt",
     ];
     reserved_words.contains(&instruciton)
 }

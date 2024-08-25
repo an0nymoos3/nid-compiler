@@ -12,8 +12,8 @@ use super::{
     program_generator::generate_body_ass,
 };
 use crate::compiler::ast::{self, ConditionalOperator, Node};
-use crate::compiler::stdlib::helpers::move_to;
 use crate::compiler::stdlib::input::is_pressed;
+use crate::compiler::stdlib::mem::move_to;
 use crate::compiler::stdlib::utils::sleep;
 use rand::distributions::Alphanumeric;
 use rand::Rng;

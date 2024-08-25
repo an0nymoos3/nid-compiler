@@ -20,19 +20,16 @@ pub fn compile(args: &Args) -> String {
     let source_code_no_comments = remove_comments(&source_code);
 
     let mut tokens = tokenize(source_code_no_comments);
-
     if args.debug {
         export_tokens(&tokens);
     }
 
     let ast: Ast<dyn Node> = generate_ast(&mut tokens);
-
     if args.debug {
         export_ast(&ast);
     }
 
     let ass_program: Vec<String> = generate_ass(&ast.body, ast.entry_point);
-
     if args.debug {
         println!("Generated ASS code:");
         for (line, inst) in ass_program.iter().enumerate() {

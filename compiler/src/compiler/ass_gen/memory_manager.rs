@@ -22,7 +22,7 @@ lazy_static! {
 // Acts as a stack pointer to allow the compiler to use the more optimized st and ld instructions,
 // rather than psh or pop
 static mut STACK_PTR: u16 = 0;
-pub static MAX_ADDR: u16 = 512;
+pub static MAX_ADDR: u16 = 256;
 
 // Address range that is allocated at compile time by the user that is not allowed to be touched by
 // the compiler. Useful if something in asm {} requires memory to not be overwritten by the

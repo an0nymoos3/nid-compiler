@@ -1,6 +1,5 @@
 use std::collections::{HashMap, VecDeque};
 
-#[allow(dead_code)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum TokenType {
     Integer, // A value such as "45"
@@ -35,7 +34,6 @@ pub enum TokenType {
     BuiltIn, // Built in functions, like sleep(), write_to()
 }
 #[derive(Debug, Clone)]
-#[allow(dead_code)] // TODO: Remove once fields are being read
 pub struct Token {
     pub value: String,
     pub token_type: TokenType,

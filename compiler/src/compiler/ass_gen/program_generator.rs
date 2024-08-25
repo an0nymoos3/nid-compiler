@@ -16,7 +16,6 @@ use crate::compiler::ast;
 pub fn generate_ass(program_body: &[Box<dyn ast::Node>], entry_point: usize) -> Vec<String> {
     let mut preallocstart: Option<u16> = None;
     let mut preallocend: Option<u16> = None;
-    //
     // First look for certain global things in the code. Currently only looks for macros
     for inst in program_body {
         // Look for macros
@@ -31,7 +30,6 @@ pub fn generate_ass(program_body: &[Box<dyn ast::Node>], entry_point: usize) -> 
 
     // Tell compiler to not touch certain memory addresses
     remove_mem_from_compiler(preallocstart, preallocend);
-
     generate_body_ass(program_body[entry_point].get_body())
 }
 
