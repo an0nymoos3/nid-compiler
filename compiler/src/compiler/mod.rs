@@ -3,6 +3,6 @@ pub mod ast;
 pub mod compile;
 pub mod exporter;
 pub mod lexer;
-pub mod optimizer;
+pub mod optimizations;
 pub mod parser;
 pub mod stdlib;
