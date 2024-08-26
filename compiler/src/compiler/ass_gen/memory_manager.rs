@@ -6,7 +6,7 @@ use lazy_static::lazy_static;
 use std::collections::VecDeque;
 use std::sync::Mutex;
 
-/// Struct representing an item in memory, most likely variable.
+/// Struct representing an item in memory, such as a varible or an array.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct MemoryItem {
     pub var_id: u32,
@@ -22,14 +22,28 @@ lazy_static! {
 // Acts as a stack pointer to allow the compiler to use the more optimized st and ld instructions,
 // rather than psh or pop
 static mut STACK_PTR: u16 = 0;
-pub static MAX_ADDR: u16 = 256;
+pub static mut MAX_ADDR: u16 = 0;
+
+pub fn set_max_addr(max_addr: u16) {
+    unsafe {
+        MAX_ADDR = max_addr;
+    }
+}
+
+// Set the maximum number of registers available to compiler/CPU
+pub static mut MAX_REGS: u8 = 0;
+
+pub fn set_max_regs(max_regs: u8) {
+    unsafe {
+        MAX_REGS = max_regs;
+    }
+}
 
 // Address range that is allocated at compile time by the user that is not allowed to be touched by
 // the compiler. Useful if something in asm {} requires memory to not be overwritten by the
 // compuiler.
-pub static mut PREALLOC_START: u16 = MAX_ADDR;
-pub static mut PREALLOC_END: u16 = MAX_ADDR;
-
+pub static mut PREALLOC_START: u16 = u16::MAX;
+pub static mut PREALLOC_END: u16 = u16::MAX;
 /// Push variable to the next available position in the "DM stack"
 pub fn push_to_stack(register: u8) -> String {
     unsafe {
@@ -69,8 +83,10 @@ pub fn _pop_from_stack(register: u8) -> String {
 
 /// Store data from regisster to addr in DM
 pub fn write_to_dm(register: u8, addr: u16) -> String {
-    if addr >= MAX_ADDR {
-        panic!("Trying to allocated outside of MAX_ADDR!")
+    unsafe {
+        if addr >= MAX_ADDR {
+            panic!("Trying to allocated outside of MAX_ADDR!")
+        }
     }
 
     format!("st, r{register}, {addr}")
@@ -100,8 +116,10 @@ pub fn decrement_stack_ptr() {
 
 /// Push new variable to memory map
 pub fn push_to_mem_map(var_id: u32, address: u16) {
-    if address >= MAX_ADDR {
-        panic!("Trying to allocate outside of MAX_ADDR!")
+    unsafe {
+        if address >= MAX_ADDR {
+            panic!("Trying to allocate outside of MAX_ADDR!")
+        }
     }
 
     MEMORY_MAP
@@ -146,17 +164,17 @@ pub fn remove_from_mem_map(var_id: u32) {
 /// Pre-allocate memory space that is not allowed to be touched by the compiler
 pub fn remove_mem_from_compiler(start: Option<u16>, end: Option<u16>) {
     if let Some(start_addr) = start {
-        let mut end_addr = MAX_ADDR;
-
-        if let Some(addr) = end {
-            end_addr = addr;
-        }
-
-        if start_addr > end_addr {
-            panic!("Invalid memory range set with PREALLOC macro!")
-        }
-
         unsafe {
+            let mut end_addr = MAX_ADDR;
+
+            if let Some(addr) = end {
+                end_addr = addr;
+            }
+
+            if start_addr > end_addr {
+                panic!("Invalid memory range set with PREALLOC macro!")
+            }
+
             PREALLOC_START = start_addr;
             PREALLOC_END = end_addr;
         }
@@ -201,12 +219,14 @@ pub fn get_reg(var_id: Option<u32>) -> u8 {
 
     // Else pop the least recently used item and return it's register
     // Use all 16 register available
-    if reg_map.len() == 16 {
-        return reg_map
-            .pop_front()
-            .expect("Failed to perform pop_front() on REG_MAP!")
-            .reg
-            .unwrap(); // use_reg() requires that a register is set on each item added to REG_MAP
+    unsafe {
+        if reg_map.len() == MAX_REGS as usize {
+            return reg_map
+                .pop_front()
+                .expect("Failed to perform pop_front() on REG_MAP!")
+                .reg
+                .unwrap(); // use_reg() requires that a register is set on each item added to REG_MAP
+        }
     }
     reg_map.len() as u8 // Return the next available position, which should be the current
                         // length of the reg_map

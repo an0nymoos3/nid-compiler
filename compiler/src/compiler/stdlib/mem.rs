@@ -12,8 +12,10 @@ pub fn move_to(var_id: u32, addr: u16) -> Vec<String> {
             println!("Warning: Trying to allocate memory inside compiler space! This may result in memory being overwritten/corrupted!");
         }
     }
-    if addr > MAX_ADDR {
-        panic!("addr outside MAX_ADDR!")
+    unsafe {
+        if addr > MAX_ADDR {
+            panic!("addr outside MAX_ADDR!")
+        }
     }
 
     if let Some(reg) = already_in_reg(var_id) {
