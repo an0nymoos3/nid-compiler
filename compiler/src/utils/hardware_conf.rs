@@ -4,7 +4,7 @@
 *
 * Currently only TOML files are supported as config files.
 *
-* NOTE: Currently only mem_addresses actually affects compilation.
+* NOTE: Currently only mem_addresses & registers actually affects compilation.
 * TODO: Implement support for extended / custom intructions.
 */
 
