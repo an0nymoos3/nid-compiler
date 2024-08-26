@@ -1,10 +1,12 @@
 use std::{fs, process::exit};
 
 use crate::{
-    compiler::ast::{Ast, Node},
-    compiler::lexer::{export_tokens, tokenize},
-    compiler::parser::generate_ast,
-    utils::command_line::Args,
+    compiler::{
+        ast::{Ast, Node},
+        lexer::{export_tokens, tokenize},
+        parser::generate_ast,
+    },
+    utils::{command_line::Args, hardware_conf::Hardware},
 };
 
 use super::{
@@ -14,23 +16,23 @@ use super::{
 
 /// The main compile function. Takes care of the overall logic of compilation while handing out the
 /// details to helper functions.
-pub fn compile(args: &Args) -> String {
+pub fn compile(args: &Args, hardware_conf: &Hardware) -> String {
     let output_name: String = args.filename.to_string().replace(".nid", ".ass");
     let source_code = read_file(&args.filename);
     let source_code_no_comments = remove_comments(&source_code);
 
     let mut tokens = tokenize(source_code_no_comments);
-    if args.debug {
+    if args.verbose {
         export_tokens(&tokens);
     }
 
     let ast: Ast<dyn Node> = generate_ast(&mut tokens);
-    if args.debug {
+    if args.verbose {
         export_ast(&ast);
     }
 
-    let ass_program: Vec<String> = generate_ass(&ast.body, ast.entry_point);
-    if args.debug {
+    let ass_program: Vec<String> = generate_ass(&ast.body, ast.entry_point, hardware_conf);
+    if args.verbose {
         println!("Generated ASS code:");
         for (line, inst) in ass_program.iter().enumerate() {
             println!("{} | {}", line + 1, inst);

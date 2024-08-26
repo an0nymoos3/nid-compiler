@@ -4,6 +4,7 @@ mod utils;
 use std::time::{Duration, Instant};
 
 use crate::utils::command_line::print_help;
+use crate::utils::hardware_conf::Hardware;
 use compiler::compile::compile;
 use std::env;
 use std::process::Command;
@@ -22,11 +23,21 @@ fn main() {
     println!("Compiling...");
     let mut start: Instant = time_now();
 
-    if args.debug {
+    if args.verbose {
         println!("Running in debug (verbose) mode!");
     }
 
-    let output_file: String = compile(&args);
+    // Generate a hardware conf struct, that will be sent to compiler as
+    // a read-only refrence.
+    let hardware_conf: Hardware = if args.hardware_conf.exists() {
+        Hardware::from(&args.hardware_conf)
+    } else {
+        println!("No valid hardware config file passed! Using default config.");
+        Hardware::default()
+    };
+
+    // Run compiler
+    let output_file: String = compile(&args, &hardware_conf);
     let mut exec_time: Duration = calc_total_time(&start);
     println!("Total compilation time: {:?}", exec_time);
     println!("Assembly written to: {}", output_file);
@@ -39,14 +50,12 @@ fn main() {
 
     // Get path to assembler with path relative to compiler
     let assembler = bin_folder.join("assembler");
-
-    // Check if the C++ library path exists (optional)
     if !assembler.exists() {
         panic!("Assembler not found at: {}", assembler.display());
     }
     println!("Found assembler: {}", assembler.display());
 
-    let assembler_args: Vec<String> = if args.debug {
+    let assembler_args: Vec<String> = if args.verbose {
         vec![output_file, String::from("-d")]
     } else {
         vec![output_file]

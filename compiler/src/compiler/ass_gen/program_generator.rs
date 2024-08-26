@@ -7,15 +7,23 @@ use super::{
     instruction_parser::{
         parse_assignment, parse_branch_statement, parse_builtin_functions, parse_loop_statement,
     },
-    memory_manager::remove_mem_from_compiler,
+    memory_manager::{remove_mem_from_compiler, set_max_addr, set_max_regs},
 };
-use crate::compiler::ast;
+use crate::{compiler::ast, utils::hardware_conf::Hardware};
 
 /// Converts AST to ASS code, which is represented as a vector of strings (each string being an ASS
 /// instruction)
-pub fn generate_ass(program_body: &[Box<dyn ast::Node>], entry_point: usize) -> Vec<String> {
+pub fn generate_ass(
+    program_body: &[Box<dyn ast::Node>],
+    entry_point: usize,
+    hardware_conf: &Hardware,
+) -> Vec<String> {
     let mut preallocstart: Option<u16> = None;
     let mut preallocend: Option<u16> = None;
+
+    set_max_addr(hardware_conf.mem_addresses);
+    set_max_regs(hardware_conf.registers);
+
     // First look for certain global things in the code. Currently only looks for macros
     for inst in program_body {
         // Look for macros
