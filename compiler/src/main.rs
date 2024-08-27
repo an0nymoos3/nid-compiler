@@ -1,20 +1,18 @@
 mod compiler;
 mod utils;
 
-use std::time::{Duration, Instant};
-
 use crate::utils::command_line::print_help;
 use crate::utils::hardware_conf::Hardware;
 use compiler::compile::compile;
 use std::env;
 use std::process::Command;
+use std::time::{Duration, Instant};
 use utils::command_line::{build_args, Args};
 use utils::compile_times::{calc_total_time, time_now};
 
 /// main()
 fn main() {
     let args: Args = build_args();
-
     if args.help {
         print_help();
         return;
@@ -55,12 +53,14 @@ fn main() {
     }
     println!("Found assembler: {}", assembler.display());
 
+    // Check if assembler should run with debug/verbose flag
     let assembler_args: Vec<String> = if args.verbose {
         vec![output_file, String::from("-d")]
     } else {
         vec![output_file]
     };
 
+    // Run assembler
     start = time_now();
     let output = Command::new(format!("{}", assembler.display()))
         .args(assembler_args)

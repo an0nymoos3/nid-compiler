@@ -1,5 +1,13 @@
-use crate::compiler::compile::Line;
+/*
+* This file will will be responsible for outputing human readable
+* errors on screen.
+*
+* TODO: Implement some sort of Line struct to store data about what
+* line of NID code that caused error.
+* After that this file will be functional.
+*/
 
+/*
 /// Pretty print error
 fn print_err(line: &Line, err: &str, solution: Option<&str>) {
     println!(); // Newline
@@ -20,4 +28,4 @@ fn print_err(line: &Line, err: &str, solution: Option<&str>) {
     println!();
     println!("----------------------------------------");
 }
-
+*/

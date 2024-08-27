@@ -1,3 +1,8 @@
+/*
+* This is the entry point of the actual compiler which converts
+* human-readable NID code into ASS code.
+*/
+
 use std::{fs, process::exit};
 
 use crate::{
@@ -21,16 +26,19 @@ pub fn compile(args: &Args, hardware_conf: &Hardware) -> String {
     let source_code = read_file(&args.filename);
     let source_code_no_comments = remove_comments(&source_code);
 
+    // Generate Tokens from the source code.
     let mut tokens = tokenize(source_code_no_comments);
     if args.verbose {
         export_tokens(&tokens);
     }
 
+    // Use the Tokens to create an AST of the NID program.
     let ast: Ast<dyn Node> = generate_ast(&mut tokens);
     if args.verbose {
         export_ast(&ast);
     }
 
+    // Convert the AST into ASS code.
     let ass_program: Vec<String> = generate_ass(&ast.body, ast.entry_point, hardware_conf);
     if args.verbose {
         println!("Generated ASS code:");
@@ -39,6 +47,7 @@ pub fn compile(args: &Args, hardware_conf: &Hardware) -> String {
         }
     }
 
+    // Output the ASS code into a .ass file of the same name.
     if let Err(e) = write_to_file(&ass_program, &output_name) {
         println!("Something went wrong while writing generated ASS to: {output_name} | Err: {e}");
         exit(1);

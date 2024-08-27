@@ -1,3 +1,9 @@
+/*
+* This file handles command line arguments sent to the compiler.
+*
+* TODO: Add a --output | -o flag to specify an ouput file.
+*/
+
 use std::env;
 use std::path::PathBuf;
 

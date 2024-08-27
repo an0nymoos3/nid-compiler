@@ -1,10 +1,16 @@
+/*
+* This file handles the logic of parsing the lexed Tokens into some sort of
+* Abstract Syntax Tree.
+*/
+
 use super::ast::{self, Node, Value, ValueEnum, Variable};
 use super::lexer::{Token, TokenType};
 use std::collections::hash_map::DefaultHasher;
 use std::collections::VecDeque;
 use std::hash::{Hash, Hasher};
 
-/// Builds an AST from a queue of tokens.
+/// Entry point for building AST. It takes a Dequeue of Tokens and iterates over
+/// them until EOF is reached, indicating the AST its complete.
 pub fn generate_ast(tokens: &mut VecDeque<Token>) -> ast::Ast<dyn ast::Node> {
     let body: Vec<Box<dyn ast::Node>> = parse_body(tokens);
     let mut ast: ast::Ast<dyn ast::Node> = ast::Ast::new(body);
@@ -12,20 +18,25 @@ pub fn generate_ast(tokens: &mut VecDeque<Token>) -> ast::Ast<dyn ast::Node> {
     ast
 }
 
-/// Traverses AST and hashes variables based on their location
+/// Traverses AST and hashes variables based on their location in the program.
 pub fn hash_variables(ast: &mut [Box<dyn Node>], path: &str) {
     for node in ast.iter_mut() {
-        // Hash variables
+        /*
+         * Hash variables
+         */
         if let Some(var) = node.as_any_mut().downcast_mut::<ast::Variable>() {
             var.identifier = variable_hasher(&var.identifier, path).to_string();
-        }
-        // Hash another functions variables with different seed
-        else if let Some(func) = node.as_any_mut().downcast_mut::<ast::Function>() {
-            let new_path: String = format!("{}{}", path, func.get_name());
 
+        /*
+         * Hash function names
+         */
+        } else if let Some(func) = node.as_any_mut().downcast_mut::<ast::Function>() {
+            let new_path: String = format!("{}{}", path, func.get_name());
             hash_variables(&mut func.body.body, &new_path);
 
-            // Hash variables in assignments
+        /*
+         * Hash variables inside assignment statement
+         */
         } else if let Some(assign) = node.as_any_mut().downcast_mut::<ast::Assignment>() {
             if let Some(var) = (*assign.var).as_any_mut().downcast_mut::<ast::Variable>() {
                 var.identifier = variable_hasher(&var.identifier, path).to_string();
@@ -51,11 +62,15 @@ pub fn hash_variables(ast: &mut [Box<dyn Node>], path: &str) {
                 }
             }
 
-        // Hash variables in code blocks
+        /*
+         * Hash variables inside of code blocks
+         */
         } else if let Some(block) = node.as_any_mut().downcast_mut::<ast::Block>() {
             hash_variables(block.body.as_mut_slice(), path);
 
-        // Hash inside if-statements
+        /*
+         * Hash variables inside if-statements
+         */
         } else if let Some(branch) = node.as_any_mut().downcast_mut::<ast::Branch>() {
             if let Some(left) = &mut branch.condition.left {
                 if let Some(l_var) = left.as_any_mut().downcast_mut::<ast::Variable>() {
@@ -77,7 +92,9 @@ pub fn hash_variables(ast: &mut [Box<dyn Node>], path: &str) {
                 hash_variables(false_body.body.as_mut_slice(), path);
             }
 
-        // Hash inside if-statements
+        /*
+         * Hash variables inside if-statements
+         */
         } else if let Some(nid_loop) = node.as_any_mut().downcast_mut::<ast::Loop>() {
             if let Some(left) = &mut nid_loop.condition.left {
                 if let Some(l_var) = left.as_any_mut().downcast_mut::<ast::Variable>() {
@@ -92,8 +109,11 @@ pub fn hash_variables(ast: &mut [Box<dyn Node>], path: &str) {
             {
                 r_var.identifier = variable_hasher(&r_var.identifier, path).to_string();
             }
-
             hash_variables(nid_loop.body.body.as_mut_slice(), path);
+
+        /*
+         * Hash variables found in return statements
+         */
         } else if let Some(nid_return) = node.as_any_mut().downcast_mut::<ast::Return>() {
             if let Some(return_val) = &mut nid_return.return_value {
                 if let Some(var) = return_val.as_any_mut().downcast_mut::<ast::Variable>() {
@@ -121,17 +141,23 @@ fn parse_body(tokens: &mut VecDeque<Token>) -> Vec<Box<dyn ast::Node>> {
 
         // Create a new Node.
         let new_node: Option<Box<dyn ast::Node>> = match token.token_type {
-            // Inner block, traversed via recursion
+            /*
+             * Inner block, traversed via recursion
+             */
             TokenType::OpenScope => Some(Box::new(ast::Block {
                 body: parse_body(tokens),
             })),
 
-            // Exit function if closing scope
+            /*
+             * Exit function if closing scope
+             */
             TokenType::CloseScope => {
                 return code_body;
             }
 
-            // Inline assembly
+            /*
+             * Inline assembly
+             */
             TokenType::Asm => {
                 if tokens.pop_front().unwrap().token_type != TokenType::OpenScope {
                     panic!("Expected '{{'!");
@@ -145,7 +171,9 @@ fn parse_body(tokens: &mut VecDeque<Token>) -> Vec<Box<dyn ast::Node>> {
                 Some(Box::new(asm))
             }
 
-            // Assignemnets
+            /*
+             * Assignemnets
+             */
             TokenType::Assignment => {
                 let assigned_var: Box<dyn ast::Node> = code_body.pop().unwrap(); // Get last node added,
 
@@ -188,13 +216,19 @@ fn parse_body(tokens: &mut VecDeque<Token>) -> Vec<Box<dyn ast::Node>> {
                 }))
             }
 
-            // A branch instruction
+            /*
+             * A branch instruction
+             */
             TokenType::Branch => Some(build_branch(tokens)),
 
-            // Builtin function call
+            /*
+             * Builtin function call
+             */
             TokenType::BuiltIn => Some(build_builtin(&token.value, tokens)),
 
-            // Build variables. or functions
+            /*
+             * Build variables. or functions
+             */
             TokenType::Identifier => {
                 if is_function(tokens) {
                     Some(build_function(&token, tokens))
@@ -204,15 +238,24 @@ fn parse_body(tokens: &mut VecDeque<Token>) -> Vec<Box<dyn ast::Node>> {
                 }
             }
 
-            // While loops
+            /*
+             * While loops
+             */
             TokenType::Loop => Some(build_loop(tokens)),
 
+            /*
+             * Nid-lang macros
+             */
             TokenType::Macro => Some(build_macro(&token, tokens)),
 
-            // Return statement
+            /*
+             * Return statement
+             */
             TokenType::Return => Some(build_return(tokens)),
 
-            // Parse type indicator
+            /*
+             * Parse type indicator
+             */
             TokenType::TypeIndicator => match token.value.as_str() {
                 "int" => Some(Box::new(ast::Type {
                     type_value: ast::ValueEnum::Int(0),
@@ -236,10 +279,14 @@ fn parse_body(tokens: &mut VecDeque<Token>) -> Vec<Box<dyn ast::Node>> {
                 &_ => panic!("Unknown type supplied!"),
             },
 
-            // Not really sure what to do with EOL rn...
+            /*
+             * Not really sure what to do with EOL rn...
+             */
             TokenType::Eol => None,
 
-            // Anything else turns into Debug rn
+            /*
+             * Anything else turns into Debug rn
+             */
             _ => panic!(
                 "Unknown TokenType supplied! TokenType: {:?}",
                 token.token_type

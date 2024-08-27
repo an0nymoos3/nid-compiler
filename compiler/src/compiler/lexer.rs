@@ -1,3 +1,9 @@
+/*
+* This file contains logic for breaking down the text of a .nid program and
+* turning it into tokens that the compiler can understand and later
+* parse into an AST.
+*/
+
 use std::collections::{HashMap, VecDeque};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

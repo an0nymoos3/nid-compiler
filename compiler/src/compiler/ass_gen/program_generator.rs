@@ -1,6 +1,5 @@
 /*
-* This is the main file that goes through the entire syntax tree and generates the correct ASS
-* instructions in order.
+* This is the main file that goes through the entire syntax tree and generates ASS code.
 */
 
 use super::{
@@ -45,12 +44,12 @@ pub fn generate_ass(
 pub fn generate_body_ass(program_body: &[Box<dyn ast::Node>]) -> Vec<String> {
     let mut ass_prog: Vec<String> = Vec::new();
 
+    // Iterate over the list of nodes
     for inst in program_body.iter() {
+        // Match the correct node type
         match inst.get_type() {
             ast::AstType::Asm => {
                 if let Some(asm_inst) = inst.as_any().downcast_ref::<ast::Asm>() {
-                    // Check if asm
-                    // block
                     for asm_line in &asm_inst.code {
                         ass_prog.push(asm_line.value.clone()); // Push the line of code to program.
                     }
@@ -60,8 +59,6 @@ pub fn generate_body_ass(program_body: &[Box<dyn ast::Node>]) -> Vec<String> {
             }
             ast::AstType::Assignment => {
                 if let Some(assign_inst) = inst.as_any().downcast_ref::<ast::Assignment>() {
-                    // Check if asm
-                    // block
                     for ass_line in parse_assignment(assign_inst) {
                         ass_prog.push(ass_line); // Push the line of code to program.
                     }
@@ -98,6 +95,9 @@ pub fn generate_body_ass(program_body: &[Box<dyn ast::Node>]) -> Vec<String> {
                 } else {
                     panic!("Downcasting from {:?} to Loop failed!", inst.get_type());
                 }
+            }
+            ast::AstType::Return => {
+                // TODO: Handle return statements once functions are implemented.
             }
             _ => {
                 panic!(

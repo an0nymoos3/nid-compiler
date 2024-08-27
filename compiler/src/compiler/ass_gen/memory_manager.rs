@@ -1,5 +1,11 @@
 /*
 * This file is dedicated to generating ASS code related to memory.
+*
+* It also acts like a sort of memory manager, which has to keep
+* track of what memory is free or not right now.
+*
+* TODO: Look into a more general way of handling memory which does
+* not require the compiler to know where things are stored.
 */
 
 use lazy_static::lazy_static;
@@ -24,6 +30,7 @@ lazy_static! {
 static mut STACK_PTR: u16 = 0;
 pub static mut MAX_ADDR: u16 = 0;
 
+// Set the maximum number of memory addresses available to compiler/CPU
 pub fn set_max_addr(max_addr: u16) {
     unsafe {
         MAX_ADDR = max_addr;
@@ -218,7 +225,6 @@ pub fn get_reg(var_id: Option<u32>) -> u8 {
     }
 
     // Else pop the least recently used item and return it's register
-    // Use all 16 register available
     unsafe {
         if reg_map.len() == MAX_REGS as usize {
             return reg_map

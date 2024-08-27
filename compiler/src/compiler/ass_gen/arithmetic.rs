@@ -166,6 +166,9 @@ fn perform_op(
     let mut stack_pushed: bool = false; // To know if stack needs to be popped after arithmetic
                                         // operation.
 
+    /*
+     * Check what registers are used.
+     */
     if let Some(reg) = reg1 {
         work_reg = format!("r{reg}");
     }
@@ -176,7 +179,9 @@ fn perform_op(
         stack_pushed = true;
     }
 
-    // Add addresses to instrucitons
+    /*
+     * Add addresses to instrucitons
+     */
     if reg1.is_none() && reg2.is_none() {
         // If no register was set, use addr1 as first term
         if let Some(addr) = addr1 {

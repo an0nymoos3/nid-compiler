@@ -35,7 +35,7 @@ impl Default for Hardware {
     /// Defines the default hardware config
     fn default() -> Self {
         Self {
-            mem_addresses: 256,
+            mem_addresses: 255,
             registers: 8,
             extended_instructions: false,
         }

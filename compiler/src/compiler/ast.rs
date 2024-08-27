@@ -1,3 +1,11 @@
+/*
+* This file doesn't handle any compiler logic.
+* It contains the Node type and different types of Nodes.
+*
+* All nodes must implement all the methods of Node to be
+* able to be used by the compiler and by extension NID lang.
+*/
+
 use super::lexer::Token;
 use std::any::Any;
 use std::fmt::{self, Display, Write};
@@ -129,8 +137,7 @@ pub struct Asm {
 
 pub struct Assignment {
     pub type_dec: Option<Box<dyn Node>>, // Optional type specifier, used for new variables
-    pub var: Box<dyn Node>,              // Var being assigned TODO: Replace with Variable instead
-    // of dyn node
+    pub var: Box<dyn Node>, // Var being assigned TODO: Replace with Variable instead of dyn node
     pub expression: Box<dyn Node>, // Varibale or Value being assigned to var
 }
 

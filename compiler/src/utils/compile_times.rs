@@ -1,3 +1,8 @@
+/*
+* Simple file for abstracting the calculation of time diff
+* when compiling.
+*/
+
 use std::time::{Duration, Instant};
 
 /// Returns current time as Instant

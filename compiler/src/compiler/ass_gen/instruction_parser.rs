@@ -1,7 +1,9 @@
-use super::arithmetic::LATEST_RESULT;
 /*
 * Handles general conversion from high-level (NID) to assembly (ASS) languge.
+* This file essentially contains the helper functions to keep program_generator.rs
+* clean.
 */
+
 use super::memory_manager::{
     get_stack_ptr, load_const, push_to_mem_map, push_to_stack, read_from_dm, read_from_mem_map,
     write_to_dm, MemoryItem,
@@ -17,6 +19,8 @@ use crate::compiler::stdlib::mem::move_to;
 use crate::compiler::stdlib::utils::sleep;
 use rand::distributions::Alphanumeric;
 use rand::Rng;
+
+use super::arithmetic::LATEST_RESULT;
 
 /// Converts assignment in nid-lang to an equivalent instruction in ASS.
 pub fn parse_assignment(assign: &ast::Assignment) -> Vec<String> {

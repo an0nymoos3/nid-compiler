@@ -1,3 +1,7 @@
+/*
+* Code related to manual memory management in NID lang.
+*/
+
 use crate::compiler::ass_gen::memory_manager::{
     already_in_reg, get_reg, push_to_mem_map, read_from_dm, read_from_mem_map, remove_from_mem_map,
     MAX_ADDR, PREALLOC_END, PREALLOC_START,
