@@ -52,7 +52,7 @@ pub fn build_args() -> Args {
 /// Prints this not so helpful help message.
 pub fn print_help() {
     let mut message: String = String::new();
-    message.push_str("nid-compiler [options] [target].nid\n");
+    message.push_str("nidc [options] [target].nid\n");
     message.push_str("Options:\n");
     message.push_str("-h  | --help                  Prints this message.\n");
     message.push_str("-v  | --verbose               Run compiler in verbose mode.\n");

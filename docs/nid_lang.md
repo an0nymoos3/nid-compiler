@@ -11,12 +11,21 @@ the inconvenience of assembly language or ASS.
 | ------- | -------- |
 | void    | No type.                      |
 | int     | 16 bit integer.               |
-| float   | 16 bit floating point.        |
-| string  | Char array type.              |
-| char    | Single character type.        |
 | if      | If-statments.                 |
 | else    | Else condition.               |
 | while   | Basic conditional while loop. |
 | return  | Return instruction.           |
 | asm     | Inline assembly code.         |
 
+## Future implementations
+ - [ ] Structs
+ - [ ] String
+ - [ ] Float
+ - [ ] Dynamic memory allocations
+ - [ ] Imports
+ - [ ] Pointers
+ - [ ] Function calls
+
+## TODO:
+ - Write more optimizaions
+ - Better / more developer friendly errors

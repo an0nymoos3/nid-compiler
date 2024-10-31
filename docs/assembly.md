@@ -31,7 +31,7 @@ The following instructions are the currently implemented.
 | andi, A, Rd, const. | Rd <= Rd & cosnt.     | Performs and between Rd and const.                              |
 | or, A, Rd, const.   | Rd <= Rd \| Mem(addr) | Performs and between Rd and Mem(addr).                          |
 | ori, A, Rd, const.  | Rd <= Rd \| cosnt.    | Performs and between Rd and const.                              |
-| call, proc.         | push call_stack, jmp  | Performs a call to procedure (Similar to calling a function)    |
-| ret                 | pop call_stack, jmp   | Returns to where it was in execution before a call.             |
+| call, proc.         | push call_stack       | Performs a call to procedure (Similar to calling a function)    |
+| ret                 | pop call_stack        | Returns to where it was in execution before a call.             |
 | jmp, branch_name    | jump -> branch_name   | Performs a jump to the line of assembly with 'branch_name'.     |
 | jmpi, n             | jump -> cur_row + n   | Performs a relative jump to current row + n.                    |

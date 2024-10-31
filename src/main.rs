@@ -1,3 +1,4 @@
+mod assembler;
 mod compiler;
 mod utils;
 
