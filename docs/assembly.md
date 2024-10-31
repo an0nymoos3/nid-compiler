@@ -34,4 +34,5 @@ The following instructions are the currently implemented.
 | call, proc.         | push call_stack       | Performs a call to procedure (Similar to calling a function)    |
 | ret                 | pop call_stack        | Returns to where it was in execution before a call.             |
 | jmp, branch_name    | jump -> branch_name   | Performs a jump to the line of assembly with 'branch_name'.     |
-| jmpi, n             | jump -> cur_row + n   | Performs a relative jump to current row + n.                    |
+| jmpi, const.        | jump -> cur_row + n   | Performs a relative jump to current row + n.                    |
+| sleep, const.       | while(const > 0): nop | Sleep for const. milliseconds.                                  |

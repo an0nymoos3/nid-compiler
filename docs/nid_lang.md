@@ -29,3 +29,4 @@ the inconvenience of assembly language or ASS.
 ## TODO:
  - Write more optimizaions
  - Better / more developer friendly errors
+ - Rewrite stdlib implementation
