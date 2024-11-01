@@ -12,33 +12,30 @@ of machine or assembly code. Learn more about the languages under [docs/](https:
 ## Can I run it?
 Yes! But...  
 You need to support our custom instructions that can be found in [docs/](https://github.com/an0nymoos3/nid-compiler/tree/main/docs)
+Alternatively, you can use the compiler and write your own assembler that's compatible with our assembly code,
+but allows you to extend some functionality by adding custom instructions, and so on.
 
 ## How to build.
 Make sure you have Rust/Cargo installed, as well as the GCC compiler.  
 Downloading and compiling can be done in one simple command: 
 ```
-git clone https://github.com/an0nymoos3/nid-compiler.git && cd nid-compiler/ && make
+git clone https://github.com/an0nymoos3/nid-compiler.git && cd nid-compiler/ && cargo build --release
 ```
 For future builds you simply run:
 ```
-make
+cargo build --release
 ```
 
-The binaries can then be found under `bin/`, called `compiler` and `assembler`. Running `compiler` 
-will automatically also call `assembler`.
+The binaries can then be found under `targer/release/`, called `nidc`. Running `nidc` 
+will both compile to ASS and assemble the ASS to binary, outputting 2 files, one `.ass` and one `.out`.
 
 ## Usage:
 ```
-./compiler my_file.nid
+./nidc my_file.nid
 ```
 To view more options, simply run: 
 ```
-./compiler --help
-```
-
-To compile a manually written `.ass` file you can use the `assembler` found under `bin/`.
-```
-./assembler my_file.ass
+./nidc --help
 ```
 
 If you don't have the same number of registers or memory addresses as the reference
@@ -52,7 +49,7 @@ extended_instructions = false
 ```
 To use this file for compilation, you simple add the `--hardware-conf` flag.
 ```
-./compiler my_file.nid --hardware-conf custom_hardware.toml
+./nidc my_file.nid --hardware-conf custom_hardware.toml
 ```
 
 ## Features
@@ -66,4 +63,4 @@ To use this file for compilation, you simple add the `--hardware-conf` flag.
 
 ## Contributing
 Anyone with a lot of free time on their hands is free to contribute to this project. I would love to see NID-Lang
-supported on more platforms.
+supported on more platforms and projects.

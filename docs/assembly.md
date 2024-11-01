@@ -5,6 +5,14 @@ Advanced System Scripting (ASS) is our assembly like language for our custom CPU
 The general structure of ASS is as follows.  
 `Instruction, A-mode, Register, Value`.
 
+## Flags
+To understand the instructions below it is good to familiarise yourself with some of the hardware flags
+that can be set and unset during execution. These are the hardware flags used in the project CPU.
+ - Z: Stands for Zero, which is set when the result in the ALU is equal to 0.
+ - N: Stands for Negative, which is set when the result in the ALU is less than 0.
+ - C: Stands for Carry, which is set when the result from the ALU has a bit carried over, or shifted out.
+ - V: Stands for oVerflow, which is set when the result is larger than the registers can handle.
+
 ## Instructions
 
 The following instructions are the currently implemented.
@@ -29,12 +37,12 @@ The following instructions are the currently implemented.
 | divi, A, Rd, const. | Rd <= Rd / cosnt.     | Divides Rd by const. value.                                     |
 | and, A, Rd, Addr    | Rd <= Rd & Mem(addr)  | Performs and between Rd and Mem(addr).                          |
 | andi, A, Rd, const. | Rd <= Rd & cosnt.     | Performs and between Rd and const.                              |
-| or, A, Rd, Addr     | Rd <= Rd \| Mem(addr) | Performs and between Rd and Mem(addr).                          |
-| ori, A, Rd, const.  | Rd <= Rd \| cosnt.    | Performs and between Rd and const.                              |
-| not, A, Rd, Addr    | Rd != Mem(addr)       | Returns to where it was in execution before a call.             |
-| xor, A, Rd, Addr    | Rd <= Rd ^ Mem(addr)  | Performs and between Rd and Mem(addr).                          |
-| xori, A, Rd, const. | Rd <= Rd ^ cosnt.     | Performs and between Rd and const.                              |
-| call, proc.         | push call_stack       | Performs a call to procedure (Similar to calling a function)    |
+| or, A, Rd, Addr     | Rd <= Rd \| Mem(addr) | Performs or between Rd and Mem(addr).                           |
+| ori, A, Rd, const.  | Rd <= Rd \| cosnt.    | Performs or between Rd and const.                               |
+| not, A, Rd, Addr    | Rd != Mem(addr)       | Performs a not operation between Rd and Mem(Addr).              |
+| xor, A, Rd, Addr    | Rd <= Rd ^ Mem(addr)  | Performs xor between Rd and Mem(addr).                          |
+| xori, A, Rd, const. | Rd <= Rd ^ cosnt.     | Performs xor between Rd and const.                              |
+| call, subr.         | push call_stack       | Performs a call to subroutine (Similar to calling a function).  |
 | ret                 | pop call_stack        | Returns to where it was in execution before a call.             |
 | jmp, branch_name    | jump -> branch_name   | Performs a jump to the line of assembly with 'branch_name'.     |
 | jmpi, const.        | jump -> cur_row + n   | Performs a relative jump to current row + n.                    |
