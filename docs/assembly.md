@@ -32,12 +32,15 @@ The following instructions are the currently implemented.
 | or, A, Rd, Addr     | Rd <= Rd \| Mem(addr) | Performs and between Rd and Mem(addr).                          |
 | ori, A, Rd, const.  | Rd <= Rd \| cosnt.    | Performs and between Rd and const.                              |
 | not, A, Rd, Addr    | Rd != Mem(addr)       | Returns to where it was in execution before a call.             |
-| xor, A, Rd, Addr    | Rd <= Rd ^ Mem(addr) | Performs and between Rd and Mem(addr).                          |
-| xori, A, Rd, const. | Rd <= Rd ^ cosnt.    | Performs and between Rd and const.                              |
+| xor, A, Rd, Addr    | Rd <= Rd ^ Mem(addr)  | Performs and between Rd and Mem(addr).                          |
+| xori, A, Rd, const. | Rd <= Rd ^ cosnt.     | Performs and between Rd and const.                              |
 | call, proc.         | push call_stack       | Performs a call to procedure (Similar to calling a function)    |
 | ret                 | pop call_stack        | Returns to where it was in execution before a call.             |
 | jmp, branch_name    | jump -> branch_name   | Performs a jump to the line of assembly with 'branch_name'.     |
 | jmpi, const.        | jump -> cur_row + n   | Performs a relative jump to current row + n.                    |
-
-# TODO:
- - Branch instructions
+| beq                 | jump if Z = 1         | Branch (jump) if equal.                                         |
+| bne                 | jump if Z = 0         | Branch (jump) if not equal.                                     |
+| bpr                 | jump if N = 0         | Branch (jump) positive result.                                  |
+| bnr                 | jump if N = 1         | Branch (jump) negative result.                                  |
+| bge                 | jump if N ^ V = 0     | Branch (jump) if greater than or equal.                         |
+| blt                 | jump if N ^ V = 1     | Branch (jump) if less than.                                     |

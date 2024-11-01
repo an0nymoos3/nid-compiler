@@ -27,6 +27,6 @@ the inconvenience of assembly language or ASS.
  - [ ] Function calls
 
 ## TODO:
- - Write more optimizaions
+ - Write more optimizations
  - Better / more developer friendly errors
  - Rewrite stdlib implementation
