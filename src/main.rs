@@ -4,10 +4,13 @@ mod utils;
 
 use crate::utils::command_line::print_help;
 use crate::utils::hardware_conf::Hardware;
+use assembler::assemble::assemble_program;
 use compiler::compile::compile;
 use std::time::{Duration, Instant};
 use utils::command_line::{build_args, Args};
 use utils::compile_times::{calc_total_time, time_now};
+
+use std::path::PathBuf;
 
 /// main()
 fn main() {
@@ -34,13 +37,13 @@ fn main() {
     };
 
     // Run compiler
-    let output_file: String = compile(&args, &hardware_conf);
+    let output_file: PathBuf = compile(&args, &hardware_conf);
 
     // Run assembler
-    // TODO: Run assembler
+    assemble_program(&output_file);
 
     // Print time
     let exec_time: Duration = calc_total_time(&start);
     println!("Total compilation time: {:?}", exec_time);
-    println!("Assembly written to: {}", output_file);
+    println!("Assembly written to: {}", output_file.display());
 }

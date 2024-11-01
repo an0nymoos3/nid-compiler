@@ -3,7 +3,8 @@
 * turning it into tokens that the assembler can understand.
 */
 
-use std::collections::{HashMap, VecDeque};
+use core::panic;
+use std::collections::VecDeque;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum TokenType {
@@ -60,7 +61,21 @@ pub fn tokenize(file_content: String) -> VecDeque<Token> {
 
     while !src_code.is_empty() {
         let current_char: char = src_code.pop_front().expect("Failed to get front()");
-        let token: Token;
+        let token: Token = match current_char {
+            '\n' => Token {
+                value: String::new(),
+                token_type: TokenType::EOL,
+            },
+            ',' => Token {
+                value: current_char.to_string(),
+                token_type: TokenType::Seperator,
+            },
+            _ => {
+                panic!("Invalid token detected!");
+            }
+        };
+
+        token_queue.push_back(token);
     }
     token_queue
 }
@@ -76,13 +91,14 @@ fn is_num(cur_char: char) -> bool {
 }
 
 /// Returns if a detected word is reserved (eg. void, int, etc)
-fn is_reserved_keywords(word: &str) -> Option<TokenType> {
-    let keyword_map: HashMap<&str, TokenType> = HashMap::from([]);
+fn is_reserved_keyword(word: &str) -> bool {
+    let keyword_map: Vec<&str> = vec![
+        "nop", "ld", "ldi", "st", "psh", "pop", "add", "addi", "sub", "subi", "cmp", "cmpi", "mul",
+        "muli", "div", "divi", "and", "andi", "or", "ori", "not", "xor", "xori", "call", "ret",
+        "jmp", "jmpi", "beq", "bne", "bpr", "bnr", "bge", "blt",
+    ];
 
-    if keyword_map.contains_key(word) {
-        return Some(keyword_map[word]);
-    }
-    None
+    keyword_map.contains(&word)
 }
 
 /// Builds a string (a word or number) from a series of chars.

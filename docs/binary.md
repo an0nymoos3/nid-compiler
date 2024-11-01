@@ -50,10 +50,7 @@ This operations bit encoding is as follows:
 | blt       | 100000          |
 
 ### A-mode
-The A-modes are encoded as follows:
-| A-mode | Binary encoding |
-| ------ | --------------- |
-| 
+The A-mode value is not affected by the assembler process.
 
 ### Registers
 The number passed in the register field is used to pass to a multiplexer to select
