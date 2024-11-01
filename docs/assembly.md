@@ -21,18 +21,23 @@ The following instructions are the currently implemented.
 | addi, A, Rd, const. | Rd <= Rd + const.     | Add Rd and cosnt. value.                                        |
 | sub, A, Rd, Addr    | Rd <= Rd - Mem(Addr)  | Subtract Mem(address) from Rd.                                  |
 | subi, A, Rd, const. | Rd <= Rd - const.     | Subtract const. value from Rd.                                  |
-| cmp, A, Rd, Addr    | Rd <= Rd - Mem(Addr)  | Compare Rd with Mem(addr) (No return value, only affects flags) |
-| cmpi, A, Rd, const. | Rd <= Rd - const.     | Compare Rd with const. (No return value, only affects flags)    |
+| cmp, A, Rd, Addr    | Rd - Mem(Addr)        | Compare Rd with Mem(addr) (No return value, only affects flags) |
+| cmpi, A, Rd, const. | Rd - const.           | Compare Rd with const. (No return value, only affects flags)    |
 | mul, A, Rd, Addr    | Rd <= Rd * Mem(Addr)  | Multiplies Rd by Mem(address).                                  |
 | muli, A, Rd, const. | Rd <= Rd * cosnt.     | Multiplies Rd by const. value.                                  |
 | div, A, Rd, const.  | Rd <= Rd / Mem(addr)  | Divides Rd by Mem(address).                                     |
 | divi, A, Rd, const. | Rd <= Rd / cosnt.     | Divides Rd by const. value.                                     |
-| and, A, Rd, const.  | Rd <= Rd & Mem(addr)  | Performs and between Rd and Mem(addr).                          |
+| and, A, Rd, Addr    | Rd <= Rd & Mem(addr)  | Performs and between Rd and Mem(addr).                          |
 | andi, A, Rd, const. | Rd <= Rd & cosnt.     | Performs and between Rd and const.                              |
-| or, A, Rd, const.   | Rd <= Rd \| Mem(addr) | Performs and between Rd and Mem(addr).                          |
+| or, A, Rd, Addr     | Rd <= Rd \| Mem(addr) | Performs and between Rd and Mem(addr).                          |
 | ori, A, Rd, const.  | Rd <= Rd \| cosnt.    | Performs and between Rd and const.                              |
+| not, A, Rd, Addr    | Rd != Mem(addr)       | Returns to where it was in execution before a call.             |
+| xor, A, Rd, Addr    | Rd <= Rd ^ Mem(addr) | Performs and between Rd and Mem(addr).                          |
+| xori, A, Rd, const. | Rd <= Rd ^ cosnt.    | Performs and between Rd and const.                              |
 | call, proc.         | push call_stack       | Performs a call to procedure (Similar to calling a function)    |
 | ret                 | pop call_stack        | Returns to where it was in execution before a call.             |
 | jmp, branch_name    | jump -> branch_name   | Performs a jump to the line of assembly with 'branch_name'.     |
 | jmpi, const.        | jump -> cur_row + n   | Performs a relative jump to current row + n.                    |
-| sleep, const.       | while(const > 0): nop | Sleep for const. milliseconds.                                  |
+
+# TODO:
+ - Branch instructions
