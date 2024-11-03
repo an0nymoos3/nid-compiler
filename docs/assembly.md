@@ -13,6 +13,21 @@ that can be set and unset during execution. These are the hardware flags used in
  - C: Stands for Carry, which is set when the result from the ALU has a bit carried over, or shifted out.
  - V: Stands for oVerflow, which is set when the result is larger than the registers can handle.
 
+## Routines
+ASS has support for assembly routines, they can be thought of as functions in higher level languages.
+To return to the previously run ASS code from a routine you *have* to use the `ret` keyword. If `ret` is
+left out the program will simply continue with the next line below the routine. To define a routine you
+simply give it a name and finish with a `:`.
+```
+...
+call, my_routine ; Run the routine
+some, code, goes, here ; Continue running here after my_routine returns
+
+my_routine:
+  ldi, 00, r1, 100
+  ret ; Return to the calling routine
+```
+
 ## Instructions
 
 The following instructions are the currently implemented.

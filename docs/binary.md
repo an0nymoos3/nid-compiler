@@ -53,9 +53,15 @@ This operations bit encoding is as follows:
 The A-mode value is not affected by the assembler process.
 
 ### Registers
-The number passed in the register field is used to pass to a multiplexer to select
-one of multiple general registers.
+ASS expects the registers to be named with the following standard: `rXX`, where `XX` is the number of the
+generic register written in decimal, eg. `r1`.
 
 ### Memory addresses & Constants
 Just like with registers, the number passed in the memory/constants field is interpreted
-either as a memory address or constant value depending on the instruction.
+either as a memory address or constant value depending on the instruction. The values can be sent
+as decimal, binary or hexadecimal.
+```
+15 ; This is a decimal number.
+0b1111 ; This is a binary number.
+0x0E ; This is a hexadecimal number.
+```

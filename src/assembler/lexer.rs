@@ -4,20 +4,15 @@
 */
 
 use core::panic;
-use std::collections::VecDeque;
+use std::{collections::VecDeque, env::current_dir};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum TokenType {
     Operation,
-    Amode,
-    Register,
-    Address,
-    Constant,
+    Numeric,
     Seperator,
-    Comments,
-    BranchName,
     RoutineName,
-    EOL,
+    Eol,
 }
 #[derive(Debug, Clone)]
 pub struct Token {
@@ -61,18 +56,41 @@ pub fn tokenize(file_content: String) -> VecDeque<Token> {
 
     while !src_code.is_empty() {
         let current_char: char = src_code.pop_front().expect("Failed to get front()");
-        let token: Token = match current_char {
-            '\n' => Token {
+        let token: Token = if current_char == '\n' {
+            Token {
                 value: String::new(),
-                token_type: TokenType::EOL,
-            },
-            ',' => Token {
+                token_type: TokenType::Eol,
+            }
+        } else if current_char == ',' {
+            Token {
                 value: current_char.to_string(),
                 token_type: TokenType::Seperator,
-            },
-            _ => {
-                panic!("Invalid token detected!");
             }
+        } else if is_letter(current_char) {
+            src_code.push_front(current_char);
+            let asm_word = build_word(&mut src_code);
+            if is_reserved_keyword(&asm_word) {
+                Token {
+                    value: asm_word,
+                    token_type: TokenType::Operation,
+                }
+            } else if *src_code.front().unwrap() == ':' {
+                Token {
+                    value: format!("{}:", asm_word),
+                    token_type: TokenType::RoutineName,
+                }
+            } else {
+                panic!("Invalid word found!")
+            }
+        } else if is_num(current_char) {
+            src_code.push_front(current_char);
+            let num = build_num(&mut src_code);
+            Token {
+                value: num,
+                token_type: TokenType::Numeric,
+            }
+        } else {
+            panic!("Invalid token detected!");
         };
 
         token_queue.push_back(token);
@@ -113,29 +131,22 @@ fn build_word(src_code: &mut VecDeque<char>) -> String {
     string_val
 }
 
-/// Builds a float value for the float TokenType.
+/// Builds a string representing a number
 fn build_num(src_code: &mut VecDeque<char>) -> String {
-    let mut float_string: String = String::new();
-    let found_decimal_points: i8 = 0;
+    let mut num_string: String = String::new();
 
-    while is_num(*src_code.front().unwrap()) || *src_code.front().unwrap() == '.' {
-        if found_decimal_points >= 2 {
-            panic!("Too many decimal points found!");
-        }
-        float_string.push(src_code.pop_front().unwrap());
+    while is_num(*src_code.front().unwrap()) {
+        num_string.push(src_code.pop_front().unwrap());
     }
 
-    float_string
+    num_string
 }
 
-/// Builds a string value for the string TokenType.
-fn build_string(src_code: &mut VecDeque<char>) -> String {
-    let mut string_val: String = String::new();
-
-    while *src_code.front().unwrap() != '"' {
-        string_val.push(src_code.pop_front().unwrap());
+/// Removes all comments from the ASS code
+fn strip_comments(code: &VecDeque<char>) {
+    for (i, symbol) in code.iter().enumerate() {
+        if symbol == ';' {
+            code.remove(index)
+        }
     }
-    src_code.pop_front();
-
-    string_val
 }
