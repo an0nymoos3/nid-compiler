@@ -33,7 +33,7 @@ pub fn remove_comments(file_content: &str) -> String {
 
     for line in file_content.lines() {
         let mut trimmed_line: &str = line;
-        if let Some(pos) = line.find("//") {
+        if let Some(pos) = line.find(";") {
             trimmed_line = &trimmed_line[..pos];
         }
         new_program.push_str(trimmed_line)
@@ -140,13 +140,4 @@ fn build_num(src_code: &mut VecDeque<char>) -> String {
     }
 
     num_string
-}
-
-/// Removes all comments from the ASS code
-fn strip_comments(code: &VecDeque<char>) {
-    for (i, symbol) in code.iter().enumerate() {
-        if symbol == ';' {
-            code.remove(index)
-        }
-    }
 }

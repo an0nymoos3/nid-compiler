@@ -37,13 +37,12 @@ fn main() {
     };
 
     // Run compiler
-    let output_file: PathBuf = compile(&args, &hardware_conf);
+    let ass_out_file: PathBuf = compile(&args, &hardware_conf);
 
     // Run assembler
-    assemble_program(&output_file);
+    let bin_out_file: PathBuf = assemble_program(&args, &ass_out_file);
 
     // Print time
     let exec_time: Duration = calc_total_time(&start);
     println!("Total compilation time: {:?}", exec_time);
-    println!("Assembly written to: {}", output_file.display());
 }

@@ -18,7 +18,7 @@ pub fn move_to(var_id: u32, addr: u16) -> Vec<String> {
     }
     unsafe {
         if addr > MAX_ADDR {
-            panic!("addr outside MAX_ADDR!")
+            panic!("addr outside MAX_ADDR! | {addr} > {MAX_ADDR}")
         }
     }
 

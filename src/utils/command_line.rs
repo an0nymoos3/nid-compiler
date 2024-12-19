@@ -14,6 +14,7 @@ pub struct Args {
     pub verbose: bool,
     pub help: bool,
     pub hardware_conf: PathBuf,
+    pub string_output: bool,
 }
 
 /// Reads and returns the correct command line args passed by user.
@@ -23,6 +24,7 @@ pub fn build_args() -> Args {
         verbose: false,
         help: false,
         hardware_conf: PathBuf::new(),
+        string_output: false,
     };
 
     let cmd_line: Vec<String> = env::args().collect();
@@ -44,6 +46,9 @@ pub fn build_args() -> Args {
                     .expect("Error getting path from --hardware-conf!"),
             );
         }
+        if arg == "--string-output" || arg == "-s" {
+            args.string_output = true;
+        }
     }
 
     args
@@ -57,6 +62,7 @@ pub fn print_help() {
     message.push_str("-h  | --help                  Prints this message.\n");
     message.push_str("-v  | --verbose               Run compiler in verbose mode.\n");
     message.push_str("-hc | --hardware-conf         Specify custom hardware configuration.\n");
+    message.push_str("-s  | --string-output         Output binary as a text file, rather than actual binary file.\n");
 
     println!("{}", message);
 }
