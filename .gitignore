@@ -20,3 +20,6 @@ Cargo.lock
 *.nid
 *.ass
 *.out
+
+# Ignore .idea directory
+.idea/
