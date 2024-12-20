@@ -3,6 +3,7 @@ use std::path::{Path, PathBuf};
 use crate::assembler::exporter::{write_as_bin, write_as_str};
 use crate::utils::command_line::Args;
 use crate::{assembler::lexer::tokenize, utils::nid_fs::read_file};
+use super::parser::parse_tokens;
 
 pub fn assemble_program(args: &Args, program: &Path) -> PathBuf {
     // Generate the correct filename

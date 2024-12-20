@@ -20,21 +20,28 @@ fn main() {
         return;
     }
 
-    println!("Compiling...");
-    let start: Instant = time_now();
+    if args.compile_only && args.assemble_only {
+        panic!("Can't run compiler in compile only and assembly only modes at the same time!")
+    }
 
     if args.verbose {
         println!("Running in debug (verbose) mode!");
     }
 
-    // Generate a hardware conf struct, that will be sent to compiler as
-    // a read-only refrence.
-    let hardware_conf: Hardware = if args.hardware_conf.exists() {
-        Hardware::from(&args.hardware_conf)
-    } else {
-        println!("No valid hardware config file passed! Using default config.");
-        Hardware::default()
-    };
+    let start: Instant = time_now();
+
+    // Compile NID program
+    let ass_file: PathBuf = if !args.assemble_only {
+        println!("Compiling...");
+
+        // Generate a hardware conf struct, that will be sent to compiler as
+        // a read-only refrence.
+        let hardware_conf: Hardware = if args.hardware_conf.exists() {
+            Hardware::from(&args.hardware_conf)
+        } else {
+            println!("No valid hardware config file passed! Using default config.");
+            Hardware::default()
+        };
 
     // Run compiler
     let ass_out_file: PathBuf = compile(&args, &hardware_conf);

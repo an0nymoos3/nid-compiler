@@ -4,13 +4,14 @@
 */
 
 use core::panic;
-use std::{collections::VecDeque, env::current_dir};
+use std::collections::VecDeque;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum TokenType {
     Operation,
+    Amode,
+    Register,
     Numeric,
-    Seperator,
     RoutineName,
     Eol,
 }
@@ -43,14 +44,17 @@ pub fn remove_comments(file_content: &str) -> String {
 
 /// Converts the source code from a contious string of text to a queue of tokens.
 pub fn tokenize(file_content: String) -> VecDeque<Token> {
-    // Returns queue with tokens.
+    // Strip any comments from the ASS code
+    let code: String = strip_comments(file_content);
+
+    // Returns queue with tokens
     let mut token_queue: VecDeque<Token> = VecDeque::new();
 
-    // Queue for source code to work on.
+    // Queue for source code to work on
     let mut src_code: VecDeque<char> = VecDeque::new();
 
-    // Prepare the source code for lexing.
-    for src_char in file_content.chars() {
+    // Prepare the source code for lexing
+    for src_char in code.chars() {
         src_code.push_back(src_char);
     }
 
@@ -61,22 +65,31 @@ pub fn tokenize(file_content: String) -> VecDeque<Token> {
                 value: String::new(),
                 token_type: TokenType::Eol,
             }
-        } else if current_char == ',' {
-            Token {
-                value: current_char.to_string(),
-                token_type: TokenType::Seperator,
-            }
+        } else if current_char == ',' || current_char == ' ' {
+            continue; // Skip seperating characters
         } else if is_letter(current_char) {
             src_code.push_front(current_char);
             let asm_word = build_word(&mut src_code);
-            if is_reserved_keyword(&asm_word) {
+            if current_char == 'r' && is_register(&src_code) {
+                let register = build_num(&mut src_code);
+                Token {
+                    value: register,
+                    token_type: TokenType::Register,
+                }
+            } else if current_char == 'a' && is_amode(&src_code) {
+                let mode = build_num(&mut src_code);
+                Token {
+                    value: mode,
+                    token_type: TokenType::Amode,
+                }
+            } else if is_reserved_keyword(&asm_word) {
                 Token {
                     value: asm_word,
                     token_type: TokenType::Operation,
                 }
             } else if *src_code.front().unwrap() == ':' {
                 Token {
-                    value: format!("{}:", asm_word),
+                    value: asm_word,
                     token_type: TokenType::RoutineName,
                 }
             } else {
@@ -84,13 +97,13 @@ pub fn tokenize(file_content: String) -> VecDeque<Token> {
             }
         } else if is_num(current_char) {
             src_code.push_front(current_char);
-            let num = build_num(&mut src_code);
+            let num = build_value(&mut src_code);
             Token {
                 value: num,
                 token_type: TokenType::Numeric,
             }
         } else {
-            panic!("Invalid token detected!");
+            panic!("Invalid token detected! | {}", current_char);
         };
 
         token_queue.push_back(token);
@@ -140,4 +153,44 @@ fn build_num(src_code: &mut VecDeque<char>) -> String {
     }
 
     num_string
+}
+
+/// Builds the value that is either a constant or address.
+fn build_value(src_code: &mut VecDeque<char>) -> String {
+    format!(
+        "{val:016b}",
+        val = build_num(src_code).parse::<i32>().unwrap()
+    )
+}
+
+/// Checks if register is found
+fn is_register(src_code: &VecDeque<char>) -> bool {
+    src_code.front().unwrap().is_numeric()
+}
+
+/// Just checks for number like is_register
+fn is_amode(src_code: &VecDeque<char>) -> bool {
+    is_register(src_code)
+}
+
+/// Removes all comments from the ASS code
+fn strip_comments(code: String) -> String {
+    let mut stripped_code: String = String::new();
+    let mut is_comment: bool = false;
+
+    for char in code.chars() {
+        if char == ';' {
+            is_comment = true;
+        }
+
+        if char == '\n' {
+            is_comment = false;
+        }
+
+        if !is_comment {
+            stripped_code.push(char);
+        }
+    }
+
+    stripped_code
 }

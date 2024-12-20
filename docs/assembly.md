@@ -24,7 +24,7 @@ call, my_routine ; Run the routine
 some, code, goes, here ; Continue running here after my_routine returns
 
 my_routine:
-  ldi, 00, r1, 100
+  ldi, a00, r1, 100
   ret ; Return to the calling routine
 ```
 
