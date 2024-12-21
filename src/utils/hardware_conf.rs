@@ -14,12 +14,17 @@ use std::path::Path;
 use toml;
 
 #[derive(Serialize, Deserialize, Debug)]
+/// Struct for defining a custom ASS instruction.
+/// Used by assembler for knowing how to handle custom
+/// CPU instructions.
 pub struct AssInstruction {
     instruction: String,
     binary_encoding: u16,
 }
 
 #[derive(Serialize, Deserialize)]
+/// Hardware configuration struct.
+/// Used by both compiler and assembler.
 pub struct Hardware {
     pub mem_addresses: u16, // Number of memory addresses available
     pub registers: u8,      // Number of registers available
