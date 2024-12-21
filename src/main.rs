@@ -28,26 +28,32 @@ fn main() {
         println!("Running in debug (verbose) mode!");
     }
 
+    // Generate a hardware conf struct, that will be sent to compiler as
+    // a read-only refrence.
+    let hardware_conf: Hardware = if args.hardware_conf.exists() {
+        Hardware::from(&args.hardware_conf)
+    } else {
+        println!("No valid hardware config file passed! Using default config.");
+        Hardware::default()
+    };
+
     let start: Instant = time_now();
 
     // Compile NID program
-    let ass_file: PathBuf = if !args.assemble_only {
+    let ass_out_file: Option<PathBuf> = if !args.assemble_only {
         println!("Compiling...");
-
-        // Generate a hardware conf struct, that will be sent to compiler as
-        // a read-only refrence.
-        let hardware_conf: Hardware = if args.hardware_conf.exists() {
-            Hardware::from(&args.hardware_conf)
-        } else {
-            println!("No valid hardware config file passed! Using default config.");
-            Hardware::default()
-        };
-
-    // Run compiler
-    let ass_out_file: PathBuf = compile(&args, &hardware_conf);
+        Some(compile(&args, &hardware_conf))
+    } else {
+        None
+    };
 
     // Run assembler
-    let bin_out_file: PathBuf = assemble_program(&args, &ass_out_file);
+    let bin_out_file: Option<PathBuf> = if !args.compile_only {
+        println!("Assembling...");
+        Some(assemble_program(&args, &ass_out_file.unwrap()))
+    } else {
+        None
+    };
 
     // Print time
     let exec_time: Duration = calc_total_time(&start);
