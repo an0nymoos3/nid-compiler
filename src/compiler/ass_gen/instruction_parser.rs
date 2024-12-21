@@ -188,6 +188,7 @@ pub fn parse_loop_statement(nid_loop: &ast::Loop) -> Vec<String> {
     if condition.is_empty() {
         return Vec::new(); // Loop will never be run
     }
+
     for inst in condition {
         instructions.push(inst);
     }
@@ -257,7 +258,7 @@ fn binary_expression_parser(bin_exp: &ast::BinaryExpression) -> Vec<String> {
 }
 
 /// Helper function to parse the condition of if statements and loops.
-/// Note: Handling ! (not) as a special case. Load 0 for comparison and run cmp, check if result is
+/// NOTE: Handling ! (not) as a special case. Load 0 for comparison and run cmp, check if result is
 /// 0
 fn condition_parser(
     condition: &ast::Condition,
@@ -345,6 +346,7 @@ fn condition_parser(
     if const1.is_some() && const2.is_some() {
         if const1.unwrap() != const2.unwrap() {
             // Returning empty vec will tell the compiler that loop is never run
+            // TODO: Has to be evaulated properly. Example, right now 0 < 100 is always false
             return Vec::new();
         }
         if const1.unwrap() == const2.unwrap() {
@@ -355,6 +357,8 @@ fn condition_parser(
             instructions.push(inst);
         }
     }
+
+    println!("Insts: {:?}", instructions);
 
     // Push jump instruction
     instructions.push(format!("{op} {branch_name}"));

@@ -20,7 +20,8 @@ pub fn generate_ass(
     let mut preallocstart: Option<u16> = None;
     let mut preallocend: Option<u16> = None;
 
-    set_max_addr(hardware_conf.mem_addresses);
+    set_max_addr(hardware_conf.mem_addresses - 20); // Hard coded 20 last positions in memory as a
+                                                    // call stack
     set_max_regs(hardware_conf.registers);
 
     // First look for certain global things in the code. Currently only looks for macros
