@@ -189,11 +189,19 @@ pub fn parse_loop_statement(nid_loop: &ast::Loop) -> Vec<String> {
         return Vec::new(); // Loop will never be run
     }
 
-    for inst in condition {
-        instructions.push(inst);
+    if condition[0] == "false" {
+        return Vec::new(); // Loop will never be run
     }
 
-    instructions.push(format!("jmp {}", loop_done));
+    // Ignore adding exit condition if loop is infinite
+    if condition[0] != "true" {
+        for inst in condition {
+            instructions.push(inst);
+        }
+
+        instructions.push(format!("jmp {}", loop_done));
+    }
+
     instructions.push(while_body);
 
     let loop_ass = generate_body_ass(nid_loop.body.get_body());
@@ -345,12 +353,13 @@ fn condition_parser(
     // Push the arithmetic instructions that need to be performed
     if const1.is_some() && const2.is_some() {
         if const1.unwrap() != const2.unwrap() {
-            // Returning empty vec will tell the compiler that loop is never run
-            // TODO: Has to be evaulated properly. Example, right now 0 < 100 is always false
-            return Vec::new();
+            if eval_condition(const1.unwrap(), const2.unwrap(), &condition.operator) {
+                return vec!["true".to_string()];
+            }
+            return vec!["false".to_string()];
         }
         if const1.unwrap() == const2.unwrap() {
-            op = "jmp".to_string();
+            return vec!["true".to_string()];
         }
     } else {
         for inst in arithmetic::cmp(reg1, reg2, addr1, addr2, const1, const2) {
@@ -369,23 +378,36 @@ fn condition_parser(
 fn get_op(operator: &ConditionalOperator, false_body: bool) -> String {
     if false_body {
         return match operator {
-            ast::ConditionalOperator::Not => String::from("beq"), // The logic is to think of not in reverse. So you jmp if the variable is eq to 0.
-            ast::ConditionalOperator::NotEq => String::from("bne"),
-            ast::ConditionalOperator::Eq => String::from("beq"),
-            ast::ConditionalOperator::LessThan => String::from("bmi"),
-            ast::ConditionalOperator::LessEq => String::from("blt"),
-            ast::ConditionalOperator::GreatThan => String::from("bpl"),
-            ast::ConditionalOperator::GreatEq => String::from("bge"),
+            ConditionalOperator::Not => String::from("beq"), // The logic is to think of not in reverse. So you jmp if the variable is eq to 0.
+            ConditionalOperator::NotEq => String::from("bne"),
+            ConditionalOperator::Eq => String::from("beq"),
+            ConditionalOperator::LessThan => String::from("bmi"),
+            ConditionalOperator::LessEq => String::from("blt"),
+            ConditionalOperator::GreatThan => String::from("bpl"),
+            ConditionalOperator::GreatEq => String::from("bge"),
         };
     }
     match operator {
-        ast::ConditionalOperator::Not => String::from("beq"), // The logic is to think of not in reverse. So you jmp if the variable is eq to 0.
-        ast::ConditionalOperator::NotEq => String::from("bne"),
-        ast::ConditionalOperator::Eq => String::from("beq"),
-        ast::ConditionalOperator::LessThan => String::from("bmi"),
-        ast::ConditionalOperator::LessEq => String::from("blt"),
-        ast::ConditionalOperator::GreatThan => String::from("bpl"),
-        ast::ConditionalOperator::GreatEq => String::from("bge"),
+        ConditionalOperator::Not => String::from("beq"), // The logic is to think of not in reverse. So you jmp if the variable is eq to 0.
+        ConditionalOperator::NotEq => String::from("bne"),
+        ConditionalOperator::Eq => String::from("beq"),
+        ConditionalOperator::LessThan => String::from("bmi"),
+        ConditionalOperator::LessEq => String::from("blt"),
+        ConditionalOperator::GreatThan => String::from("bpl"),
+        ConditionalOperator::GreatEq => String::from("bge"),
+    }
+}
+
+/// Evaluates if condition between two numbers is always true or false
+fn eval_condition(left: i16, right: i16, op: &ast::ConditionalOperator) -> bool {
+    match op {
+        ConditionalOperator::NotEq => left != right,
+        ConditionalOperator::Eq => left == right,
+        ConditionalOperator::LessThan => left < right,
+        ConditionalOperator::LessEq => left <= right,
+        ConditionalOperator::GreatThan => left > right,
+        ConditionalOperator::GreatEq => left >= right,
+        _ => false,
     }
 }
 
