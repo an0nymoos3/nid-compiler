@@ -13,11 +13,17 @@ use std::fs;
 use std::path::Path;
 use toml;
 
+#[derive(Serialize, Deserialize, Debug)]
+pub struct AssInstruction {
+    instruction: String,
+    binary_encoding: u16,
+}
+
 #[derive(Serialize, Deserialize)]
 pub struct Hardware {
-    pub mem_addresses: u16,          // Number of memory addresses available
-    pub registers: u8,               // Number of registers available
-    pub extended_instructions: bool, // Whether or not to use extended instruction set
+    pub mem_addresses: u16, // Number of memory addresses available
+    pub registers: u8,      // Number of registers available
+    pub extended_instructions: Option<Vec<AssInstruction>>, // Whether or not to use extended instruction set
 }
 
 impl Hardware {
@@ -37,7 +43,7 @@ impl Default for Hardware {
         Self {
             mem_addresses: 255,
             registers: 8,
-            extended_instructions: false,
+            extended_instructions: None,
         }
     }
 }
