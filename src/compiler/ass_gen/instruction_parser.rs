@@ -151,20 +151,35 @@ pub fn parse_branch_statement(branch: &ast::Branch) -> Vec<String> {
     let skip_branch: String = random_branch_name();
     let true_branch: String = random_branch_name();
 
-    let mut instructions: Vec<String>;
+    let mut instructions: Vec<String> = Vec::new();
 
     // Add condition instructions to branch instructions
-    instructions = condition_parser(&branch.condition, &true_branch, branch.false_body.is_some());
+    let condition_instructions =
+        condition_parser(&branch.condition, &true_branch, branch.false_body.is_some());
 
-    if let Some(false_body) = &branch.false_body {
-        let false_ass = generate_body_ass(false_body.get_body());
-        for inst in false_ass {
-            instructions.push(inst);
-        }
+    // Don't compile branch body if statement is always false
+    if condition_instructions.is_empty() {
+        return Vec::new();
+    }
+    if condition_instructions[0] == "false" {
+        return Vec::new();
     }
 
-    instructions.push(format!("jmp {}", skip_branch)); // Jump past the true body if false was run
-    instructions.push(true_branch);
+    // Only add the instruction if branch statement needs runtime comparison
+    if condition_instructions[0] != "true" {
+        instructions = condition_instructions;
+
+        if let Some(false_body) = &branch.false_body {
+            let false_ass = generate_body_ass(false_body.get_body());
+            for inst in false_ass {
+                instructions.push(inst);
+            }
+        }
+
+        instructions.push(format!("jmp {}", skip_branch)); // Jump past the true body if false was run
+        instructions.push(true_branch);
+    }
+
     for inst in generate_body_ass(branch.true_body.get_body()) {
         instructions.push(inst);
     }
@@ -352,19 +367,10 @@ fn condition_parser(
 
     // Push the arithmetic instructions that need to be performed
     if const1.is_some() && const2.is_some() {
-        if const1.unwrap() != const2.unwrap() {
-            if eval_condition(const1.unwrap(), const2.unwrap(), &condition.operator) {
-                return vec!["true".to_string()];
-            }
-            return vec!["false".to_string()];
-        }
-        if const1.unwrap() == const2.unwrap() {
+        if eval_condition(const1.unwrap(), const2.unwrap(), &condition.operator) {
             return vec!["true".to_string()];
         }
-    } else {
-        for inst in arithmetic::cmp(reg1, reg2, addr1, addr2, const1, const2) {
-            instructions.push(inst);
-        }
+        return vec!["false".to_string()];
     }
 
     println!("Insts: {:?}", instructions);
