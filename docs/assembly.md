@@ -11,10 +11,10 @@ The general structure of ASS is as follows.
 To understand the instructions below it is good to familiarise yourself with some of the hardware flags
 that can be set and unset during execution. These are the hardware flags used in the project CPU.
 
-- Z: Stands for Zero, which is set when the result in the ALU is equal to 0.
-- N: Stands for Negative, which is set when the result in the ALU is less than 0.
-- C: Stands for Carry, which is set when the result from the ALU has a bit carried over, or shifted out.
-- V: Stands for oVerflow, which is set when the result is larger than the registers can handle.
+- Z: Stands for **Z**ero, which is set when the result in the ALU is equal to 0.
+- N: Stands for **N**egative, which is set when the result in the ALU is less than 0.
+- C: Stands for **C**arry, which is set when the result from the ALU has a bit carried over, or shifted out.
+- V: Stands for o**V**erflow, which is set when the result is larger than the registers can handle.
 
 ## Routines
 
@@ -27,6 +27,7 @@ simply give it a name and finish with a `:`.
 ...
 call, my_routine ; Run the routine
 some, code, goes, here ; Continue running here after my_routine returns
+...
 
 my_routine:
   ldi, a00, r1, 100
@@ -44,7 +45,7 @@ The following instructions are the currently implemented.
 | ldi, A, Rd, const.  | Rd <= const.          | Loads the constant value const. to register Rd.                                                                      |
 | st, A, Rd, Addr     | Mem(Addr) <= Rd       | Store value from Rd in Mem(address).                                                                                 |
 | psh, A, Rd          | Mem(DC++) <= Rd       | Push the value from Rd to the next spot in memory. (DC = Data Counter; Pointer to current location in memory stack.) |
-| pop                 | DC--                  | Decrements DC. Gives the effect of popping the stack.                                                                |
+| pop, A, Rd          | Rd <= Mem(DC--)       | Decrements DC. Gives the effect of popping the stack. Puts value in Rd.                                              |
 | add, A, Rd, Addr    | Rd <= Rd + Mem(Addr)  | Add Rd and Mem(address).                                                                                             |
 | addi, A, Rd, const. | Rd <= Rd + const.     | Add Rd and cosnt. value.                                                                                             |
 | sub, A, Rd, Addr    | Rd <= Rd - Mem(Addr)  | Subtract Mem(address) from Rd.                                                                                       |
@@ -64,7 +65,7 @@ The following instructions are the currently implemented.
 | xori, A, Rd, const. | Rd <= Rd ^ cosnt.     | Performs xor between Rd and const.                                                                                   |
 | call, subr.         | push call_stack       | Performs a call to subroutine (Similar to calling a function).                                                       |
 | ret                 | pop call_stack        | Returns to where it was in execution before a call.                                                                  |
-| jmp, branch_name    | jump -> branch_name   | Performs a jump to the line of assembly with 'branch_name'.                                                          |
+| jmp, routine_name   | jump -> routine_name  | Performs a jump to the line of assembly with 'routine_name'.                                                         |
 | jmpi, const.        | jump -> cur_row + n   | Performs a relative jump to current row + n.                                                                         |
 | beq                 | jump if Z = 1         | Branch (jump) if equal.                                                                                              |
 | bne                 | jump if Z = 0         | Branch (jump) if not equal.                                                                                          |
@@ -84,4 +85,4 @@ The following instructions have to be implemented on a u-code level for it to wo
   If it was pushed onto the memory, make sure to pop the memory.
 
 If the above instructions are implemented correctly the program should seamlessly be able to jump
-between different functions. If not, you'll likely encounter undefined behaviour. 
+between different functions. If not, you'll likely encounter undefined behaviour.
