@@ -5,7 +5,7 @@ The new blazingly fast high-level programming language. Giving you the simplicit
 the performance of writing native assembly code.
 
 ## What is this project?
-This is a compiler/assembler written in Rust and C++ for our custom high-level language we call NID-Lang.  
+This is a compiler/assembler written in Rust for our custom high-level language we call NID-Lang.  
 This is meant to be a tool to help us develop a game on our custom CPU architecture in a high-level languages instead
 of machine or assembly code. Learn more about the languages under [docs/](https://github.com/an0nymoos3/nid-compiler/tree/main/docs)
 
@@ -58,7 +58,7 @@ To use this file for compilation, you simple add the `--hardware-conf` flag.
 | Working compiler             | 🟢 Working state, missing features  |
 | Working assembler            | 🟢 Mostly done                      |
 | Dynamic memory allocations   | 🔴 Planned                          |
-| Imports between files        | 🔴 Planned                          |
+| Imports between files         | 🔴 Planned                          |
 | std library                  | 🔴 Planned                          |
 
 ## Contributing
