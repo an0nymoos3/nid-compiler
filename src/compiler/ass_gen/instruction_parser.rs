@@ -17,10 +17,12 @@ use crate::compiler::ast::{self, ConditionalOperator, Node};
 use crate::compiler::stdlib::input::is_pressed;
 use crate::compiler::stdlib::mem::move_to;
 use crate::compiler::stdlib::utils::sleep;
-use rand::distributions::Alphanumeric;
-use rand::Rng;
 
 use super::arithmetic::LATEST_RESULT;
+
+static mut LOOP_ROUTINE_CTR: u32 = 0;
+static mut BRANCH_ROUTINE_CTR: u32 = 0;
+static mut EXIT_ROUTINE_CTR: u32 = 0;
 
 /// Converts assignment in nid-lang to an equivalent instruction in ASS.
 pub fn parse_assignment(assign: &ast::Assignment) -> Vec<String> {
@@ -148,8 +150,8 @@ pub fn parse_builtin_functions(builtin: &ast::Builtin) -> Vec<String> {
 /// Parses if-statements
 pub fn parse_branch_statement(branch: &ast::Branch) -> Vec<String> {
     // Generate assembly jump branches
-    let skip_branch: String = random_branch_name();
-    let true_branch: String = random_branch_name();
+    let skip_branch: String = generate_routine_name("exit");
+    let true_branch: String = generate_routine_name("branch");
 
     let mut instructions: Vec<String> = Vec::new();
 
@@ -177,14 +179,14 @@ pub fn parse_branch_statement(branch: &ast::Branch) -> Vec<String> {
         }
 
         instructions.push(format!("jmp {}", skip_branch)); // Jump past the true body if false was run
-        instructions.push(true_branch);
+        instructions.push(format!("{true_branch}:"));
     }
 
     for inst in generate_body_ass(branch.true_body.get_body()) {
         instructions.push(inst);
     }
 
-    instructions.push(skip_branch);
+    instructions.push(format!("{skip_branch}:"));
 
     instructions
 }
@@ -192,11 +194,11 @@ pub fn parse_branch_statement(branch: &ast::Branch) -> Vec<String> {
 /// Parses while loops
 pub fn parse_loop_statement(nid_loop: &ast::Loop) -> Vec<String> {
     // Generate assembly jump branches
-    let while_body: String = random_branch_name();
-    let loop_branch: String = random_branch_name();
-    let loop_done: String = random_branch_name();
+    let while_body: String = generate_routine_name("loop");
+    let loop_branch: String = generate_routine_name("branch");
+    let loop_done: String = generate_routine_name("exit");
 
-    let mut instructions: Vec<String> = vec![loop_branch.clone()];
+    let mut instructions: Vec<String> = vec![format!("{loop_branch}:")];
     // Add condition instructions to branch instructions
     let condition: Vec<String> = condition_parser(&nid_loop.condition, &while_body, false);
 
@@ -217,7 +219,7 @@ pub fn parse_loop_statement(nid_loop: &ast::Loop) -> Vec<String> {
         instructions.push(format!("jmp {}", loop_done));
     }
 
-    instructions.push(while_body);
+    instructions.push(format!("{while_body}:"));
 
     let loop_ass = generate_body_ass(nid_loop.body.get_body());
 
@@ -226,7 +228,7 @@ pub fn parse_loop_statement(nid_loop: &ast::Loop) -> Vec<String> {
     }
 
     instructions.push(format!("jmp {loop_branch}"));
-    instructions.push(loop_done);
+    instructions.push(format!("{loop_done}:"));
 
     instructions
 }
@@ -373,14 +375,13 @@ fn condition_parser(
         return vec!["false".to_string()];
     }
 
-    println!("Insts: {:?}", instructions);
-
     // Push jump instruction
     instructions.push(format!("{op} {branch_name}"));
 
     instructions
 }
 
+/// Returns the correct assembler operation
 fn get_op(operator: &ConditionalOperator, false_body: bool) -> String {
     if false_body {
         return match operator {
@@ -417,22 +418,25 @@ fn eval_condition(left: i16, right: i16, op: &ast::ConditionalOperator) -> bool 
     }
 }
 
-/// Geenrates a random name for a branch to be used in jumps
-pub fn random_branch_name() -> String {
-    // Create a thread-local RNG (random number generator)
-    let rng = rand::thread_rng();
-
-    // Generate a random u16 number
-    let random_string: String = rng
-        .sample_iter(&Alphanumeric)
-        .take(16) // Hard coded length of 10 for now
-        .map(|mut ch| {
-            if !ch.is_ascii_alphabetic() {
-                ch = b'a'
-            }
-            char::from(ch)
-        })
-        .collect();
-
-    format!("#{}", random_string)
+/// Generates a name for a branch. Takes in a type for easier distinguishing
+/// in resulting ASS code.
+pub fn generate_routine_name(routine_type: &str) -> String {
+    if routine_type == "loop" {
+        unsafe {
+            LOOP_ROUTINE_CTR += 1;
+            return format!(".L{LOOP_ROUTINE_CTR}");
+        }
+    } else if routine_type == "branch" {
+        unsafe {
+            BRANCH_ROUTINE_CTR += 1;
+            return format!(".B{BRANCH_ROUTINE_CTR}");
+        }
+    } else if routine_type == "exit" {
+        unsafe {
+            BRANCH_ROUTINE_CTR += 1;
+            return format!(".E{BRANCH_ROUTINE_CTR}");
+        }
+    } else {
+        panic!("Trying to generate invalid routine name! | {routine_type}");
+    }
 }

@@ -38,7 +38,19 @@ pub fn generate_ass(
 
     // Tell compiler to not touch certain memory addresses
     remove_mem_from_compiler(preallocstart, preallocend);
-    generate_body_ass(program_body[entry_point].get_body())
+    let mut ass_code: Vec<String> = vec![String::from("main:")];
+    ass_code.append(&mut generate_body_ass(program_body[entry_point].get_body()));
+
+    ass_code
+        .iter()
+        .cloned()
+        .map(|mut ass_line| {
+            if !ass_line.contains(":") {
+                ass_line = format!("    {ass_line}")
+            }
+            ass_line
+        })
+        .collect::<Vec<String>>()
 }
 
 /// Parses a body of NID AST nodes. Helper function as it can be used for recursive parsing.
