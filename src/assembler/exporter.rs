@@ -17,7 +17,7 @@ pub fn write_as_bin(filename: &Path, binary: &[u32]) {
 pub fn write_as_str(filename: &Path, binary: &[u32]) {
     let bin_str: String = binary
         .iter()
-        .map(|inst| format!("{:032b}", inst))
+        .map(|inst| format!("{:032b}\n", inst))
         .collect::<String>();
 
     let mut file: File = File::create(filename).unwrap();

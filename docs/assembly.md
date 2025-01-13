@@ -62,11 +62,13 @@ The following instructions are the currently implemented.
 | ori, A, Rd, const.  | Rd <= Rd \| cosnt.    | Performs or between Rd and const.                                                                                    |
 | not, A, Rd, Addr    | Rd != Mem(addr)       | Performs a not operation between Rd and Mem(Addr).                                                                   |
 | xor, A, Rd, Addr    | Rd <= Rd ^ Mem(addr)  | Performs xor between Rd and Mem(addr).                                                                               |
+| lsr, A, Rd          | Rd <= Rd >>  .        | Performs logical shift right on bits stored in Rd.                                                                   |  
+| lsl, A, Rd          | Rd <= Rd << .         | Performs logical shift left on bits stored in Rd.                                                                    |
 | xori, A, Rd, const. | Rd <= Rd ^ cosnt.     | Performs xor between Rd and const.                                                                                   |
 | call, subr.         | push call_stack       | Performs a call to subroutine (Similar to calling a function).                                                       |
 | ret                 | pop call_stack        | Returns to where it was in execution before a call.                                                                  |
 | jmp, routine_name   | jump -> routine_name  | Performs a jump to the line of assembly with 'routine_name'.                                                         |
-| jmpi, const.        | jump -> cur_row + n   | Performs a relative jump to current row + n.                                                                         |
+| jmpi, const.        | jump -> n             | Performs an absolute jump (absolute due to simplicity) to program memory address n.                                  |
 | beq                 | jump if Z = 1         | Branch (jump) if equal.                                                                                              |
 | bne                 | jump if Z = 0         | Branch (jump) if not equal.                                                                                          |
 | bpr                 | jump if N = 0         | Branch (jump) positive result.                                                                                       |

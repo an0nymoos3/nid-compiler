@@ -68,8 +68,6 @@ pub fn tokenize(file_content: String) -> VecDeque<Token> {
         } else if current_char == ',' || current_char == ' ' {
             continue; // Skip seperating characters
         } else if is_letter(current_char) {
-            src_code.push_front(current_char);
-            let asm_word = build_word(&mut src_code);
             if current_char == 'r' && is_register(&src_code) {
                 let register = build_num(&mut src_code);
                 Token {
@@ -82,18 +80,25 @@ pub fn tokenize(file_content: String) -> VecDeque<Token> {
                     value: mode,
                     token_type: TokenType::Amode,
                 }
-            } else if is_reserved_keyword(&asm_word) {
-                Token {
-                    value: asm_word,
-                    token_type: TokenType::Operation,
-                }
-            } else if *src_code.front().unwrap() == ':' {
-                Token {
-                    value: asm_word,
-                    token_type: TokenType::RoutineName,
-                }
             } else {
-                panic!("Invalid word found!")
+                src_code.push_front(current_char);
+                let mut asm_word = build_word(&mut src_code);
+
+                if is_reserved_keyword(&asm_word) {
+                    Token {
+                        value: asm_word,
+                        token_type: TokenType::Operation,
+                    }
+                } else {
+                    if *src_code.front().unwrap() == ':' {
+                        src_code.pop_front().unwrap();
+                        asm_word.push(':');
+                    }
+                    Token {
+                        value: asm_word,
+                        token_type: TokenType::RoutineName,
+                    }
+                }
             }
         } else if is_num(current_char) {
             src_code.push_front(current_char);
@@ -113,7 +118,7 @@ pub fn tokenize(file_content: String) -> VecDeque<Token> {
 
 /// Returns if character counts as a letter.
 fn is_letter(cur_char: char) -> bool {
-    cur_char.is_alphabetic() || cur_char == '_'
+    cur_char.is_alphabetic() || cur_char == '_' || cur_char == '.'
 }
 
 /// Returns whether char counts as a num.
@@ -125,8 +130,8 @@ fn is_num(cur_char: char) -> bool {
 fn is_reserved_keyword(word: &str) -> bool {
     let keyword_map: Vec<&str> = vec![
         "nop", "ld", "ldi", "st", "psh", "pop", "add", "addi", "sub", "subi", "cmp", "cmpi", "mul",
-        "muli", "div", "divi", "and", "andi", "or", "ori", "not", "xor", "xori", "call", "ret",
-        "jmp", "jmpi", "beq", "bne", "bpr", "bnr", "bge", "blt",
+        "muli", "div", "divi", "and", "andi", "or", "ori", "not", "xor", "xori", "lsr", "lsl",
+        "call", "ret", "jmp", "jmpi", "beq", "bne", "bpr", "bnr", "bge", "blt",
     ];
 
     keyword_map.contains(&word)
@@ -136,9 +141,8 @@ fn is_reserved_keyword(word: &str) -> bool {
 fn build_word(src_code: &mut VecDeque<char>) -> String {
     let mut string_val: String = String::new();
 
-    while is_letter(*src_code.front().unwrap()) {
-        string_val.push(*src_code.front().unwrap());
-        src_code.pop_front();
+    while is_letter(*src_code.front().unwrap()) || is_num(*src_code.front().unwrap()) {
+        string_val.push(src_code.pop_front().unwrap());
     }
 
     string_val

@@ -390,7 +390,7 @@ fn get_op(operator: &ConditionalOperator, false_body: bool) -> String {
             ConditionalOperator::Eq => String::from("beq"),
             ConditionalOperator::LessThan => String::from("bmi"),
             ConditionalOperator::LessEq => String::from("blt"),
-            ConditionalOperator::GreatThan => String::from("bpl"),
+            ConditionalOperator::GreatThan => String::from("bpr"),
             ConditionalOperator::GreatEq => String::from("bge"),
         };
     }
@@ -400,7 +400,7 @@ fn get_op(operator: &ConditionalOperator, false_body: bool) -> String {
         ConditionalOperator::Eq => String::from("beq"),
         ConditionalOperator::LessThan => String::from("bmi"),
         ConditionalOperator::LessEq => String::from("blt"),
-        ConditionalOperator::GreatThan => String::from("bpl"),
+        ConditionalOperator::GreatThan => String::from("bpr"),
         ConditionalOperator::GreatEq => String::from("bge"),
     }
 }

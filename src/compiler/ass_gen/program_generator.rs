@@ -41,6 +41,7 @@ pub fn generate_ass(
     let mut ass_code: Vec<String> = vec![String::from("main:")];
     ass_code.append(&mut generate_body_ass(program_body[entry_point].get_body()));
 
+    // Makes sure that all lines that are not names of routines get indented for cleaner ASS.
     ass_code
         .iter()
         .cloned()
