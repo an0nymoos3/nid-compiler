@@ -16,12 +16,12 @@ Alternatively, you can use the compiler and write your own assembler that's comp
 but allows you to extend some functionality by adding custom instructions, and so on.
 
 ## How to build.
-Make sure you have Rust/Cargo installed, as well as the GCC compiler.  
+Make sure you have Rust/Cargo installed.  
 Downloading and compiling can be done in one simple command: 
 ```
 git clone https://github.com/an0nymoos3/nid-compiler.git && cd nid-compiler/ && cargo build --release
 ```
-For future builds you simply run:
+If you ever have to rebuild, it can be done with the following command:
 ```
 cargo build --release
 ```
