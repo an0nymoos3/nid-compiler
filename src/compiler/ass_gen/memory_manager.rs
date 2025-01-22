@@ -64,6 +64,7 @@ pub fn push_to_stack(register: u8) -> String {
         if STACK_PTR >= MAX_ADDR {
             panic!("Trying to allocated outside of MAX_ADDR!")
         }
+        #[allow(static_mut_refs)]
         let ass_output: String = format!("st, r{register}, {STACK_PTR}");
         STACK_PTR += 1;
 
@@ -80,6 +81,7 @@ pub fn _pop_from_stack(register: u8) -> String {
             STACK_PTR = PREALLOC_START - 1;
         }
 
+        #[allow(static_mut_refs)]
         let ass_output: String = format!("ld, r{register}, {STACK_PTR}");
 
         STACK_PTR -= 1;

@@ -7,6 +7,8 @@
 */
 
 use super::lexer::Token;
+use crate::utils::error::print_err;
+use crate::utils::lines::Line;
 use std::any::Any;
 use std::fmt::{self, Display, Write};
 
@@ -77,7 +79,12 @@ impl Ast<dyn Node> {
         let mut index: usize = 0;
         loop {
             if index >= body.len() {
-                panic!("main() not found!");
+                print_err(
+                    &Line::new(u32::MAX, String::new(), String::new()),
+                    "Missing main()! (Reached EOF when searching for it)",
+                    Some("Add a main() function."),
+                );
+                std::process::exit(1);
             }
 
             // TODO: Remove the allow()
@@ -118,6 +125,8 @@ pub trait Node {
     }
 
     fn get_type(&self) -> AstType;
+
+    fn get_line(&self) -> Option<Box<Line>>;
 }
 impl Display for dyn Node {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -139,12 +148,14 @@ pub struct Assignment {
     pub type_dec: Option<Box<dyn Node>>, // Optional type specifier, used for new variables
     pub var: Box<dyn Node>, // Var being assigned TODO: Replace with Variable instead of dyn node
     pub expression: Box<dyn Node>, // Varibale or Value being assigned to var
+    pub line: Box<Line>,
 }
 
 pub struct BinaryExpression {
     pub left: Box<dyn Node>,
     pub op: BinaryOperator,
     pub right: Box<dyn Node>,
+    pub line: Box<Line>,
 }
 
 /// Code block, essentially scopes ({...})
@@ -157,55 +168,65 @@ pub struct Branch {
     pub condition: Box<Condition>,
     pub true_body: Block,          // If block
     pub false_body: Option<Block>, // Else block
+    pub line: Box<Line>,
 }
 /// Buildint functions
 pub struct Builtin {
     pub identifier: String,
     pub params: Vec<Box<dyn Node>>,
+    pub line: Box<Line>,
 }
 /// Condition, used by branches and loops
 pub struct Condition {
     pub operator: ConditionalOperator,
     pub left: Option<Box<dyn Node>>, // Variable or value
     pub right: Box<dyn Node>,        // Variable or value
+    pub line: Box<Line>,
 }
 
 pub struct Function {
     pub identifier: String,
     pub params: Vec<Box<dyn Node>>, // Accept nodes as params, such as values or variables etc
     pub body: Block,
+    pub line: Box<Line>,
 }
 
 /// Loops, currently ony while is supported
 pub struct Loop {
     pub condition: Box<Condition>,
     pub body: Block,
+    pub line: Box<Line>,
 }
 
 /// Macros, used for special stuff like telling the compiler what memory it cannot touch
 pub struct Macro {
     pub macro_type: MacroType,
     pub macro_value: u16,
+    pub line: Box<Line>,
 }
 
 /// Return statement, can either contain a return value or not.
 pub struct Return {
     pub return_value: Option<Box<dyn Node>>, // Variable, Value or None
+    pub line: Box<Line>,
 }
 
 pub struct Type {
     pub type_value: ValueEnum,
+    pub line: Box<Line>,
 }
 
 /// Variable Node
 pub struct Variable {
     pub identifier: String, // Identifier (name of variable)
     pub var_type: Option<ValueEnum>,
+    pub line: Box<Line>,
 }
 
 /// Value Node
 pub struct Value {
     pub value: ValueEnum,
+    pub line: Box<Line>,
 }
 
 /// Debug trait. TODO: Remove this
@@ -271,6 +292,10 @@ impl Node for Asm {
 
         tree.end_child();
     }
+
+    fn get_line(&self) -> Option<Box<Line>> {
+        None
+    }
 }
 impl Node for Assignment {
     fn as_any(&self) -> &dyn Any {
@@ -303,6 +328,10 @@ impl Node for Assignment {
         self.expression.traverse_leaves(tree);
 
         tree.end_child();
+    }
+
+    fn get_line(&self) -> Option<Box<Line>> {
+        Some(self.line.clone())
     }
 }
 impl Node for BinaryExpression {
@@ -344,6 +373,10 @@ impl Node for BinaryExpression {
         self.right.traverse_leaves(tree);
         tree.end_child();
     }
+
+    fn get_line(&self) -> Option<Box<Line>> {
+        Some(self.line.clone())
+    }
 }
 impl Node for Block {
     fn as_any(&self) -> &dyn Any {
@@ -381,6 +414,10 @@ impl Node for Block {
     fn traverse_leaves(&self, tree: &mut ptree::TreeBuilder) {
         traverse_ast_body(tree, &self.body, &self.display())
     }
+
+    fn get_line(&self) -> Option<Box<Line>> {
+        None
+    }
 }
 impl Node for Branch {
     fn as_any(&self) -> &dyn Any {
@@ -413,6 +450,10 @@ impl Node for Branch {
         }
 
         tree.end_child();
+    }
+
+    fn get_line(&self) -> Option<Box<Line>> {
+        Some(self.line.clone())
     }
 }
 impl Node for Builtin {
@@ -447,6 +488,10 @@ impl Node for Builtin {
 
         tree.end_child();
     }
+
+    fn get_line(&self) -> Option<Box<Line>> {
+        Some(self.line.clone())
+    }
 }
 impl Node for Condition {
     fn as_any(&self) -> &dyn Any {
@@ -479,6 +524,10 @@ impl Node for Condition {
         self.right.traverse_leaves(tree);
 
         tree.end_child();
+    }
+
+    fn get_line(&self) -> Option<Box<Line>> {
+        Some(self.line.clone())
     }
 }
 impl Function {
@@ -530,6 +579,10 @@ impl Node for Function {
         tree.begin_child(self.display());
         tree.end_child();
     }
+
+    fn get_line(&self) -> Option<Box<Line>> {
+        Some(self.line.clone())
+    }
 }
 impl Node for Loop {
     fn as_any(&self) -> &dyn Any {
@@ -560,6 +613,10 @@ impl Node for Loop {
 
         tree.end_child();
     }
+
+    fn get_line(&self) -> Option<Box<Line>> {
+        Some(self.line.clone())
+    }
 }
 impl Node for Macro {
     fn as_any(&self) -> &dyn Any {
@@ -589,6 +646,10 @@ impl Node for Macro {
         tree.add_empty_child(format!("Value: {:?}", self.macro_value));
 
         tree.end_child();
+    }
+
+    fn get_line(&self) -> Option<Box<Line>> {
+        Some(self.line.clone())
     }
 }
 impl Node for Return {
@@ -623,6 +684,10 @@ impl Node for Return {
 
         tree.end_child();
     }
+
+    fn get_line(&self) -> Option<Box<Line>> {
+        Some(self.line.clone())
+    }
 }
 impl Node for Type {
     fn as_any(&self) -> &dyn Any {
@@ -650,6 +715,10 @@ impl Node for Type {
 
         tree.end_child();
     }
+
+    fn get_line(&self) -> Option<Box<Line>> {
+        Some(self.line.clone())
+    }
 }
 impl Node for Variable {
     fn as_any(&self) -> &dyn Any {
@@ -674,6 +743,10 @@ impl Node for Variable {
 
     fn traverse_leaves(&self, tree: &mut ptree::TreeBuilder) {
         tree.add_empty_child(self.display());
+    }
+
+    fn get_line(&self) -> Option<Box<Line>> {
+        Some(self.line.clone())
     }
 }
 impl Value {
@@ -714,6 +787,10 @@ impl Node for Value {
     fn traverse_leaves(&self, tree: &mut ptree::TreeBuilder) {
         tree.add_empty_child(self.display());
     }
+
+    fn get_line(&self) -> Option<Box<Line>> {
+        Some(self.line.clone())
+    }
 }
 impl Node for DebugNode {
     fn as_any(&self) -> &dyn Any {
@@ -738,6 +815,10 @@ impl Node for DebugNode {
 
     fn traverse_leaves(&self, tree: &mut ptree::TreeBuilder) {
         tree.add_empty_child("DEBUGGING NODE!".to_string());
+    }
+
+    fn get_line(&self) -> Option<Box<Line>> {
+        None
     }
 }
 
@@ -776,10 +857,10 @@ fn traverse_ast_body(tree: &mut ptree::TreeBuilder, body: &[Box<dyn Node>], bran
 }
 
 /// For prettier debug AST
-fn is_new_asm_instruction(instruciton: &str) -> bool {
+fn is_new_asm_instruction(instruction: &str) -> bool {
     let reserved_words: [&str; 25] = [
         "nop", "ldi", "ld", "st", "psh", "pop", "add", "addi", "sub", "subi", "cmp", "cmpi", "and",
         "andi", "or", "ori", "jmp", "jsr", "ret", "beq", "bne", "bpl", "bmi", "bge", "blt",
     ];
-    reserved_words.contains(&instruciton)
+    reserved_words.contains(&instruction)
 }

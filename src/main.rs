@@ -48,7 +48,7 @@ fn main() {
     };
 
     // Run assembler
-    let bin_out_file: Option<PathBuf> = if !args.compile_only {
+    let _bin_out_file: Option<PathBuf> = if !args.compile_only {
         println!("Assembling...");
         Some(assemble_program(&args, &ass_out_file.unwrap()))
     } else {

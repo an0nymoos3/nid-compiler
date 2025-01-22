@@ -5,6 +5,8 @@
 
 use std::{path::PathBuf, process::exit};
 
+use super::{ass_gen::program_generator::generate_ass, ast::export_ast, lexer::remove_comments};
+use crate::utils::lines::{generate_lines, Line};
 use crate::{
     compiler::{
         ast::{Ast, Node},
@@ -18,8 +20,6 @@ use crate::{
     },
 };
 
-use super::{ass_gen::program_generator::generate_ass, ast::export_ast, lexer::remove_comments};
-
 /// The main compile function. Takes care of the overall logic of compilation while handing out the
 /// details to helper functions.
 pub fn compile(args: &Args, hardware_conf: &Hardware) -> PathBuf {
@@ -27,14 +27,23 @@ pub fn compile(args: &Args, hardware_conf: &Hardware) -> PathBuf {
     let source_code = read_file(&PathBuf::from(&args.filename));
     let source_code_no_comments = remove_comments(&source_code);
 
+    let lines: Vec<Box<Line>> = generate_lines(&source_code_no_comments, &args.filename);
+
     // Generate Tokens from the source code.
-    let mut tokens = tokenize(source_code_no_comments);
+    let mut tokens = match tokenize(lines) {
+        Some(t) => t,
+        None => exit(1),
+    };
+
     if args.verbose {
         export_tokens(&tokens);
     }
 
     // Use the Tokens to create an AST of the NID program.
-    let ast: Ast<dyn Node> = generate_ast(&mut tokens);
+    let ast: Ast<dyn Node> = match generate_ast(&mut tokens) {
+        Some(tree) => tree,
+        None => exit(1),
+    };
     if args.verbose {
         export_ast(&ast);
     }

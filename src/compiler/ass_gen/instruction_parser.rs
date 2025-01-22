@@ -420,6 +420,7 @@ fn eval_condition(left: i16, right: i16, op: &ast::ConditionalOperator) -> bool 
 
 /// Generates a name for a branch. Takes in a type for easier distinguishing
 /// in resulting ASS code.
+#[allow(static_mut_refs)]
 pub fn generate_routine_name(routine_type: &str) -> String {
     if routine_type == "loop" {
         unsafe {
@@ -433,8 +434,8 @@ pub fn generate_routine_name(routine_type: &str) -> String {
         }
     } else if routine_type == "exit" {
         unsafe {
-            BRANCH_ROUTINE_CTR += 1;
-            return format!(".E{BRANCH_ROUTINE_CTR}");
+            EXIT_ROUTINE_CTR += 1;
+            return format!(".E{EXIT_ROUTINE_CTR}");
         }
     } else {
         panic!("Trying to generate invalid routine name! | {routine_type}");

@@ -1,31 +1,30 @@
 /*
-* This file will will be responsible for outputing human readable
+* This file is responsible for outputting human-readable
 * errors on screen.
-*
-* TODO: Implement some sort of Line struct to store data about what
-* line of NID code that caused error.
-* After that this file will be functional.
 */
 
-/*
-/// Pretty print error
-fn print_err(line: &Line, err: &str, solution: Option<&str>) {
-    println!(); // Newline
+use super::lines::Line;
+use std::cmp::max;
 
+/// Pretty print error
+pub fn print_err(line: &Line, err: &str, solution: Option<&str>) {
+    let l2: usize = (line.line_num).to_string().len();
+    let l3: usize = (line.line_num + 1).to_string().len();
+
+    let offset: usize = max(l2, l3); // Compare n2 and n3 in case of n3 overflowing
+
+    println!("\nERROR:");
     println!("{err}");
-    println!("{} | ---------- ", line.line_nr - 1);
-    println!(
-        "{} | {}",
-        line.line_nr,
-        line.line_content.iter().collect::<String>()
-    );
-    println!("{} | ---------- ", line.line_nr + 1);
+    println!("=> {}\n", line.filename);
+
+    println!("{:<offset$} | ... ", line.line_num - 1);
+    println!("{:<offset$} | {}", line.line_num, line.code.trim());
+    println!("{:<offset$} | ... ", line.line_num + 1);
 
     if let Some(fix) = solution {
-        println!("Possible fix: {}", fix);
+        println!("\nPossible fix: {}", fix);
     }
 
     println!();
-    println!("----------------------------------------");
+    println!("--------------------------------------------------------------------------------");
 }
-*/

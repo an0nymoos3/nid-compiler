@@ -8,6 +8,7 @@ use crate::compiler::ass_gen::memory_manager::{
 };
 
 /// Generates the required assembly code for allocating a variable in a specific mem_address
+#[allow(static_mut_refs)]
 pub fn move_to(var_id: u32, addr: u16) -> Vec<String> {
     let mut instructions: Vec<String> = Vec::new();
 
