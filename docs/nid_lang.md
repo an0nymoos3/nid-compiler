@@ -7,15 +7,20 @@ the inconvenience of assembly language or ASS.
 
 ## Syntax
 ### Reserved keywords
-| Keyword | Meaning  |
-| ------- | -------- |
-| void    | No type.                      |
-| int     | 16 bit integer.               |
-| if      | If-statments.                 |
-| else    | Else condition.               |
-| while   | Basic conditional while loop. |
-| return  | Return instruction.           |
-| asm     | Inline assembly code.         |
+|  Keyword   | Meaning  |
+| ---------- | -------- |
+| void       | No type.                      |
+| uint       | 16 bit unsigned integer.      |
+| int        | 16 bit signed integer.        |
+| float      | 16 bit floating point.        |
+| char       | character type.               |
+| string     | string type.                  |
+| bool       | boolean type.                 |
+| if         | If-statments.                 |
+| else       | Else condition.               |
+| while      | Basic conditional while loop. |
+| return     | Return instruction.           |
+| asm        | Inline assembly code.         |
 
 ## Future implementations
  - [ ] Structs
@@ -25,8 +30,8 @@ the inconvenience of assembly language or ASS.
  - [ ] Imports
  - [ ] Pointers
  - [ ] Function calls
+ - [ ] Store booleans in one bit
 
 ## TODO:
  - Write more optimizations
- - Better / more developer friendly errors
  - Rewrite stdlib implementation
