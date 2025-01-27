@@ -55,11 +55,11 @@ To use this file for compilation, you simple add the `--hardware-conf` flag.
 ## Features
 | Feature                      | Status |
 | -------                      | ------ |
-| Working compiler             | 🟢 Working state, missing features  |
-| Working assembler            | 🟢 Mostly done                      |
-| Dynamic memory allocations   | 🔴 Planned                          |
-| Imports between files        | 🔴 Planned                          |
-| std library                  | 🔴 Planned                          |
+| Working compiler             | 🟡 Being improved, currently broken (except legacy compiler)  |
+| Working assembler            | 🟢 Done                                                       |
+| Reworked memory management   | 🔴 Planned                                                    |
+| Imports between files        | 🔴 Planned                                                    |
+| std library                  | 🔴 Planned                                                    |
 
 ## Contributing
 Anyone with a lot of free time on their hands is free to contribute to this project. I would love to see NID-Lang
