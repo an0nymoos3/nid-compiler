@@ -20,19 +20,19 @@ impl Line {
 /// Takes in source code in form of a single long string slice.
 /// Returns a vector or Lines, useful for generating errors for
 /// developer.
-pub fn generate_lines(code: &str, filename: &str) -> Vec<Box<Line>> {
-    let mut lines: Vec<Box<Line>> = Vec::new();
+pub fn generate_lines(code: &str, filename: &str) -> Vec<Line> {
+    let mut lines: Vec<Line> = Vec::new();
 
     let mut line_content: String = String::new();
     let mut cur_line: u32 = 1;
 
     for char in code.chars() {
         if char == '\n' || char == '\r' {
-            lines.push(Box::new(Line::new(
+            lines.push(Line::new(
                 cur_line,
                 line_content.to_string(),
                 filename.to_string(),
-            )));
+            ));
             line_content.clear();
             cur_line += 1;
         }
@@ -40,11 +40,11 @@ pub fn generate_lines(code: &str, filename: &str) -> Vec<Box<Line>> {
         line_content.push(char);
     }
 
-    lines.push(Box::new(Line::new(
+    lines.push(Line::new(
         cur_line,
         line_content.to_string(),
         filename.to_string(),
-    )));
+    ));
 
     lines
 }

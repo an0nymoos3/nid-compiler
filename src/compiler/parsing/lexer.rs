@@ -50,7 +50,7 @@ pub struct Token {
 
 #[derive(Debug)]
 struct SourceCodeContainer {
-    pub lines: VecDeque<Box<Line>>,
+    pub lines: VecDeque<Line>,
     pub cur_line: Box<Line>,
     pub chars: VecDeque<char>,
 }
@@ -79,9 +79,9 @@ impl SourceCodeContainer {
             }
 
             // Do-while loop, to ensure an empty line isn't used.
-            self.cur_line = self.lines.pop_front().unwrap();
+            self.cur_line = Box::new(self.lines.pop_front().unwrap());
             while self.cur_line.code.is_empty() {
-                self.cur_line = self.lines.pop_front().unwrap();
+                self.cur_line = Box::new(self.lines.pop_front().unwrap());
             }
 
             self.chars = VecDeque::from(self.cur_line.code.chars().collect::<Vec<char>>());
@@ -114,13 +114,13 @@ pub fn remove_comments(file_content: &str) -> String {
 }
 
 /// Converts the source code from a continuous string of text to a queue of tokens.
-pub fn tokenize(code: Vec<Box<Line>>) -> Option<VecDeque<Token>> {
+pub fn tokenize(code: Vec<Line>) -> Option<VecDeque<Token>> {
     // Returns queue with tokens.
     let mut token_queue: VecDeque<Token> = VecDeque::new();
-    let mut code_dequeue: VecDeque<Box<Line>> = VecDeque::from(code);
+    let mut code_dequeue: VecDeque<Line> = VecDeque::from(code);
 
     // Get the line from file_content
-    let line: Box<Line> = code_dequeue.pop_front().unwrap();
+    let line: Box<Line> = Box::new(code_dequeue.pop_front().unwrap());
 
     // Queue for source code to work on.
     let mut src_code: SourceCodeContainer = SourceCodeContainer {

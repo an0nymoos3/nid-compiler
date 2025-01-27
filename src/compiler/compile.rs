@@ -30,7 +30,7 @@ pub fn compile(args: &Args, hardware_conf: &Hardware) -> PathBuf {
     let source_code = read_file(&PathBuf::from(&args.filename));
     let source_code_no_comments = remove_comments(&source_code);
 
-    let lines: Vec<Box<Line>> = generate_lines(&source_code_no_comments, &args.filename);
+    let lines: Vec<Line> = generate_lines(&source_code_no_comments, &args.filename);
 
     // Generate Tokens from the source code.
     let mut tokens = match tokenize(lines) {
