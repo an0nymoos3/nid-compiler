@@ -28,19 +28,19 @@ pub enum TokenType {
     LogicOperator,    // !, &&, ||
     TypeIndicator,    // Used to declare variable type and function return
     Loop,
-    Branch,    // If conditions etc...
-    Seperator, // for identifying seperations for things like parameters (,)
-    Member,    // . representing a field for something like a struct
-    Pointer,   // Same as ptrs in C and C++, points to a memory address
-    Refrence,  // -- || --
-    Return,    // Return statement
-    Asm,       // Allows for inline assembly code
-    Eol,       // End of line, basically ; representing end of line.
+    Branch,      // If conditions etc...
+    Seperator,   // for identifying seperations for things like parameters (,)
+    Punctuation, // . (used for accessing fields or structs)
+    Pointer,     // Same as ptrs in C and C++, points to a memory address
+    Reference,   // -- || --
+    Return,      // Return statement
+    Asm,         // Allows for inline assembly code
+    Eol,         // End of line, basically ; representing end of line.
     Eof, // Represents the end of the code (EOF all caps appears to be a reserved word of some kind)
     Macro, // Basic macro functionality, such as allocating memory that the compiler is not allowed
-    // to touch
-    BuiltIn, // Built in functions, like sleep(), write_to()
+         // to touch
 }
+
 #[derive(Debug, Clone)]
 pub struct Token {
     pub value: String,
@@ -197,7 +197,7 @@ pub fn tokenize(code: Vec<Line>) -> Option<VecDeque<Token>> {
         } else if current_char == '.' {
             token = Token {
                 value: String::from("."),
-                token_type: TokenType::Member,
+                token_type: TokenType::Punctuation,
                 line: src_code.cur_line.clone(),
             }
 
@@ -256,14 +256,22 @@ pub fn tokenize(code: Vec<Line>) -> Option<VecDeque<Token>> {
          * Getting refrence and var_name for refrence.
          */
         } else if current_char == '&' {
-            src_code.pop_front();
-            let mut token_value: String = String::from("&");
-            let var_name: String = build_word(&mut src_code);
-            token_value.push_str(&var_name);
-            token = Token {
-                value: token_value,
-                token_type: TokenType::Refrence,
-                line: src_code.cur_line.clone(),
+            let next_char = src_code.pop_front().unwrap();
+            if next_char == '&' {
+                token = Token {
+                    value: String::from("&&"),
+                    token_type: TokenType::LogicOperator,
+                    line: src_code.cur_line.clone(),
+                }
+            } else {
+                let mut token_value: String = String::from("&");
+                let var_name: String = build_word(&mut src_code);
+                token_value.push_str(&var_name);
+                token = Token {
+                    value: token_value,
+                    token_type: TokenType::Reference,
+                    line: src_code.cur_line.clone(),
+                }
             }
 
         /*
@@ -390,12 +398,6 @@ pub fn tokenize(code: Vec<Line>) -> Option<VecDeque<Token>> {
                     token_type: reserved_word,
                     line: src_code.cur_line.clone(),
                 }
-            } else if let Some(builtin) = is_builtin(&token_value) {
-                token = Token {
-                    value: token_value,
-                    token_type: builtin,
-                    line: src_code.cur_line.clone(),
-                }
             } else {
                 token = Token {
                     value: token_value,
@@ -441,6 +443,12 @@ pub fn tokenize(code: Vec<Line>) -> Option<VecDeque<Token>> {
         token_queue.push_back(token);
     }
 
+    token_queue.push_back(Token {
+        value: String::new(),
+        token_type: TokenType::Eof,
+        line: src_code.cur_line,
+    });
+
     Some(token_queue)
 }
 
@@ -470,20 +478,6 @@ fn is_reserved_keywords(word: &str) -> Option<TokenType> {
         ("while", TokenType::Loop),
         ("return", TokenType::Return),
         ("asm", TokenType::Asm),
-    ]);
-
-    if keyword_map.contains_key(word) {
-        return Some(keyword_map[word]);
-    }
-    None
-}
-
-/// Returns if a detected word is a builtin function
-fn is_builtin(word: &str) -> Option<TokenType> {
-    let keyword_map: HashMap<&str, TokenType> = HashMap::from([
-        ("sleep", TokenType::BuiltIn),
-        ("move_to", TokenType::BuiltIn),
-        ("is_pressed", TokenType::BuiltIn),
     ]);
 
     if keyword_map.contains_key(word) {
