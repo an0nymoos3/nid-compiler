@@ -5,13 +5,16 @@
 
 use std::{path::PathBuf, process::exit};
 
-use super::{ass_gen::program_generator::generate_ass, ast::export_ast, lexer::remove_comments};
+use super::{
+    ass_gen::program_generator::generate_ass, parsing::ast::export_ast,
+    parsing::lexer::remove_comments,
+};
 use crate::utils::lines::{generate_lines, Line};
 use crate::{
     compiler::{
-        ast::{Ast, Node},
-        lexer::{export_tokens, tokenize},
-        parser::generate_ast,
+        parsing::ast::{Ast, Node},
+        parsing::lexer::{export_tokens, tokenize},
+        parsing::parser::generate_ast,
     },
     utils::{
         command_line::Args,

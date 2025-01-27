@@ -3,12 +3,10 @@
 */
 
 use super::{
-    instruction_parser::{
-        parse_assignment, parse_branch_statement, parse_builtin_functions, parse_loop_statement,
-    },
+    instruction_parser::{parse_assignment, parse_branch_statement, parse_loop_statement},
     memory_manager::{remove_mem_from_compiler, set_max_addr, set_max_regs},
 };
-use crate::{compiler::ast, utils::hardware_conf::Hardware};
+use crate::{compiler::parsing::ast, utils::hardware_conf::Hardware};
 
 /// Converts AST to ASS code, which is represented as a vector of strings (each string being an ASS
 /// instruction)
@@ -90,15 +88,6 @@ pub fn generate_body_ass(program_body: &[Box<dyn ast::Node>]) -> Vec<String> {
                     }
                 } else {
                     panic!("Downcasting from {:?} to Branch failed!", inst.get_type());
-                }
-            }
-            ast::AstType::Builtin => {
-                if let Some(builtin) = inst.as_any().downcast_ref::<ast::Builtin>() {
-                    for ass_line in parse_builtin_functions(builtin) {
-                        ass_prog.push(ass_line);
-                    }
-                } else {
-                    panic!("Downcasting from {:?} to Builtin failed!", inst.get_type())
                 }
             }
             ast::AstType::Loop => {

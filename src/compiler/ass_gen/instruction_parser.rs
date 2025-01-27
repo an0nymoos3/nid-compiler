@@ -13,10 +13,7 @@ use super::{
     memory_manager::{already_in_reg, get_reg, use_reg},
     program_generator::generate_body_ass,
 };
-use crate::compiler::ast::{self, ConditionalOperator, Node};
-use crate::compiler::stdlib::input::is_pressed;
-use crate::compiler::stdlib::mem::move_to;
-use crate::compiler::stdlib::utils::sleep;
+use crate::compiler::parsing::ast::{self, ConditionalOperator, Node};
 
 use super::arithmetic::LATEST_RESULT;
 
@@ -108,43 +105,6 @@ pub fn parse_assignment(assign: &ast::Assignment) -> Vec<String> {
     }
 
     instructions
-}
-
-/// Matches the correct builtin function with the correct ass code.
-pub fn parse_builtin_functions(builtin: &ast::Builtin) -> Vec<String> {
-    match builtin.identifier.as_str() {
-        "sleep" => {
-            if builtin.params.len() != 1 {
-                panic!("Wrong number of arguments supplied to sleep()")
-            }
-            let time = builtin.params[0]
-                .as_any()
-                .downcast_ref::<ast::Value>()
-                .expect("Invalid type passed as argument to sleep()!")
-                .value_as_i16();
-            sleep(time as u16)
-        }
-        "move_to" => {
-            if builtin.params.len() != 2 {
-                panic!("Wrong number of arguments supplied to move_to()")
-            }
-            let var_id = builtin.params[0]
-                .as_any()
-                .downcast_ref::<ast::Variable>()
-                .expect("Invalid type passed as first argument to move_to()!");
-            let addr = builtin.params[1]
-                .as_any()
-                .downcast_ref::<ast::Value>()
-                .expect("Invalid type passed as second argument to move_to()!")
-                .value_as_i16();
-
-            move_to(var_id.identifier.parse::<u32>().unwrap(), addr as u16)
-        }
-
-        &_ => {
-            panic!("Invalid builtin function supplied!")
-        }
-    }
 }
 
 /// Parses if-statements
@@ -290,20 +250,6 @@ fn condition_parser(
     branch_name: &str,
     false_body: bool,
 ) -> Vec<String> {
-    // Check if is_pressed was sent as condition
-    if let Some(builtin) = condition.right.as_any().downcast_ref::<ast::Builtin>() {
-        if builtin.params.len() != 1 {
-            panic!("Invalid number of arguments sent to is_pressed()!")
-        }
-        let scancode = builtin.params[0]
-            .as_any()
-            .downcast_ref::<ast::Value>()
-            .expect("Invalid argument passed to is_pressed()!")
-            .value_as_i16();
-
-        return is_pressed(scancode as u16, branch_name);
-    }
-
     let mut instructions: Vec<String> = Vec::new();
 
     let mut reg1: Option<u8> = None;
