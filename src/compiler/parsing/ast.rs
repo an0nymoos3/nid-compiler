@@ -6,7 +6,7 @@
 * able to be used by the compiler and by extension NID lang.
 */
 
-use super::lexer::Token;
+use super::lexer::{Token, TokenType};
 use crate::utils::error::print_err;
 use crate::utils::lines::Line;
 use std::any::Any;
@@ -65,6 +65,7 @@ pub enum AstType {
     Macro,
     Debug,
     Builtin,
+    Empty,
 }
 
 #[derive(Debug)]
@@ -160,7 +161,7 @@ pub struct BinaryExpression {
 
 /// Code block, essentially scopes ({...})
 pub struct Block {
-    pub body: Vec<Box<dyn Node>>,
+    pub body: Option<Vec<Box<dyn Node>>>,
 }
 
 /// Branches, (if-statements)
@@ -231,6 +232,11 @@ pub struct Value {
 
 /// Debug trait. TODO: Remove this
 pub struct DebugNode;
+
+pub struct EmptyNode {
+    pub token_type: TokenType,
+    pub line: Box<Line>,
+}
 
 /*
 * Impl the Node trait on all Nodes
@@ -402,7 +408,7 @@ impl Node for Block {
     }
 
     fn get_body(&self) -> &[Box<dyn Node>] {
-        &self.body
+        &[]
     }
 
     fn get_name(&self) -> String {
@@ -414,7 +420,7 @@ impl Node for Block {
     }
 
     fn traverse_leaves(&self, tree: &mut ptree::TreeBuilder) {
-        traverse_ast_body(tree, &self.body, &self.display())
+        //traverse_ast_body(tree, &self.body, &self.display())
     }
 
     fn get_line(&self) -> Option<Box<Line>> {
@@ -824,6 +830,35 @@ impl Node for DebugNode {
 
     fn get_line(&self) -> Option<Box<Line>> {
         None
+    }
+}
+impl Node for EmptyNode {
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
+
+    fn as_any_mut(&mut self) -> &mut dyn Any {
+        self
+    }
+
+    fn display(&self) -> String {
+        String::from("Debugging Node")
+    }
+
+    fn get_type(&self) -> AstType {
+        AstType::Empty
+    }
+
+    fn has_leaves(&self) -> bool {
+        true
+    }
+
+    fn traverse_leaves(&self, tree: &mut ptree::TreeBuilder) {
+        tree.add_empty_child("DEBUGGING NODE!".to_string());
+    }
+
+    fn get_line(&self) -> Option<Box<Line>> {
+        Some(self.line.clone())
     }
 }
 

@@ -106,6 +106,19 @@ fn generate_nodes(tokens: &mut VecDeque<Token>) -> Option<Vec<Box<dyn ast::Node>
                     })
                 }
             }
+            TokenType::Assignment => Box::new(ast::Assignment {
+                type_dec: None,
+                var: None,
+                expression: None,
+                line: token.line.clone(),
+            }),
+            TokenType::OpenParen => continue,
+            TokenType::CloseParen => continue,
+            TokenType::OpenScope => Box::new(ast::Block { body: None }),
+            TokenType::CloseScope => Box::new(ast::EmptyNode {
+                token_type: token.token_type,
+                line: token.line.clone(),
+            }),
             _ => {
                 print_err(
                     &token.line,
