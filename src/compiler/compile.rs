@@ -5,10 +5,7 @@
 
 use std::{path::PathBuf, process::exit};
 
-use super::{
-    ass_gen::program_generator::generate_ass, parsing::ast::export_ast,
-    parsing::lexer::remove_comments,
-};
+use super::parsing::lexer::remove_comments;
 use crate::utils::lines::{generate_lines, Line};
 use crate::{
     compiler::{
@@ -47,27 +44,28 @@ pub fn compile(args: &Args, hardware_conf: &Hardware) -> PathBuf {
         Some(tree) => tree,
         None => exit(1),
     };
-    if args.verbose {
-        export_ast(&ast);
-    }
 
-    // Convert the AST into ASS code.
-    let ass_program: Vec<String> = generate_ass(&ast.body, ast.entry_point, hardware_conf);
-    if args.verbose {
-        println!("Generated ASS code:");
-        for (line, inst) in ass_program.iter().enumerate() {
-            println!("{} | {}", line + 1, inst);
+    /*
+        if args.verbose {}
+
+        // Convert the AST into ASS code.
+        let ass_program: Vec<String> = generate_ass(&ast.body, ast.entry_point, hardware_conf);
+        if args.verbose {
+            println!("Generated ASS code:");
+            for (line, inst) in ass_program.iter().enumerate() {
+                println!("{} | {}", line + 1, inst);
+            }
         }
-    }
 
-    // Output the ASS code into a .ass file of the same name.
-    if let Err(e) = write_to_file(&ass_program, &output_name) {
-        println!(
-            "Something went wrong while writing generated ASS to: {err_path} | Err: {e}",
-            err_path = output_name.display()
-        );
-        exit(1);
-    }
+        // Output the ASS code into a .ass file of the same name.
+        if let Err(e) = write_to_file(&ass_program, &output_name) {
+            println!(
+                "Something went wrong while writing generated ASS to: {err_path} | Err: {e}",
+                err_path = output_name.display()
+            );
+            exit(1);
+        }
+    */
 
     output_name
 }

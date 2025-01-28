@@ -12,7 +12,7 @@ use crate::utils::lines::Line;
 use std::any::Any;
 use std::fmt::{self, Display, Write};
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum ValueEnum {
     Int(i16),
     Float(f32),
@@ -146,15 +146,15 @@ pub struct Asm {
 
 pub struct Assignment {
     pub type_dec: Option<Box<dyn Node>>, // Optional type specifier, used for new variables
-    pub var: Box<dyn Node>, // Var being assigned TODO: Replace with Variable instead of dyn node
-    pub expression: Box<dyn Node>, // Varibale or Value being assigned to var
+    pub var: Option<Box<dyn Node>>, // Var being assigned TODO: Replace with Variable instead of dyn node
+    pub expression: Option<Box<dyn Node>>, // Varibale or Value being assigned to var
     pub line: Box<Line>,
 }
 
 pub struct BinaryExpression {
-    pub left: Box<dyn Node>,
-    pub op: BinaryOperator,
-    pub right: Box<dyn Node>,
+    pub left: Option<Box<dyn Node>>,
+    pub op: Option<BinaryOperator>,
+    pub right: Option<Box<dyn Node>>,
     pub line: Box<Line>,
 }
 
@@ -165,43 +165,43 @@ pub struct Block {
 
 /// Branches, (if-statements)
 pub struct Branch {
-    pub condition: Box<Condition>,
-    pub true_body: Block,          // If block
+    pub condition: Option<Box<Condition>>,
+    pub true_body: Option<Block>,  // If block
     pub false_body: Option<Block>, // Else block
     pub line: Box<Line>,
 }
 /// Buildint functions
 pub struct Builtin {
-    pub identifier: String,
+    pub identifier: Option<String>,
     pub params: Vec<Box<dyn Node>>,
     pub line: Box<Line>,
 }
 /// Condition, used by branches and loops
 pub struct Condition {
-    pub operator: ConditionalOperator,
-    pub left: Option<Box<dyn Node>>, // Variable or value
-    pub right: Box<dyn Node>,        // Variable or value
+    pub operator: Option<ConditionalOperator>,
+    pub left: Option<Box<dyn Node>>,  // Variable or value
+    pub right: Option<Box<dyn Node>>, // Variable or value
     pub line: Box<Line>,
 }
 
 pub struct Function {
     pub identifier: String,
-    pub params: Vec<Box<dyn Node>>, // Accept nodes as params, such as values or variables etc
-    pub body: Block,
+    pub params: Option<Vec<Box<dyn Node>>>, // Accept nodes as params, such as values or variables etc
+    pub body: Option<Block>,
     pub line: Box<Line>,
 }
 
 /// Loops, currently ony while is supported
 pub struct Loop {
     pub condition: Box<Condition>,
-    pub body: Block,
+    pub body: Option<Block>,
     pub line: Box<Line>,
 }
 
 /// Macros, used for special stuff like telling the compiler what memory it cannot touch
 pub struct Macro {
-    pub macro_type: MacroType,
-    pub macro_value: u16,
+    pub macro_type: Option<MacroType>,
+    pub macro_value: Option<u16>,
     pub line: Box<Line>,
 }
 
@@ -212,7 +212,7 @@ pub struct Return {
 }
 
 pub struct Type {
-    pub type_value: ValueEnum,
+    pub type_value: Option<ValueEnum>,
     pub line: Box<Line>,
 }
 
@@ -225,7 +225,7 @@ pub struct Variable {
 
 /// Value Node
 pub struct Value {
-    pub value: ValueEnum,
+    pub value: Option<ValueEnum>,
     pub line: Box<Line>,
 }
 
@@ -324,8 +324,9 @@ impl Node for Assignment {
         if let Some(dec) = &self.type_dec {
             dec.traverse_leaves(tree);
         }
-        self.var.traverse_leaves(tree);
-        self.expression.traverse_leaves(tree);
+
+        //self.var.traverse_leaves(tree);
+        //self.expression.traverse_leaves(tree);
 
         tree.end_child();
     }
@@ -361,16 +362,17 @@ impl Node for BinaryExpression {
 
     fn traverse_leaves(&self, tree: &mut ptree::TreeBuilder) {
         tree.begin_child(self.display());
-        self.left.traverse_leaves(tree);
+        /*self.left.traverse_leaves(tree);
 
-        let op: &str = match self.op {
-            BinaryOperator::Add => "+",
-            BinaryOperator::Sub => "-",
-            BinaryOperator::Mul => "*",
-            BinaryOperator::Div => "/",
-        };
-        tree.add_empty_child(op.to_string());
-        self.right.traverse_leaves(tree);
+                let op: &str = match self.op {
+                    BinaryOperator::Add => "+",
+                    BinaryOperator::Sub => "-",
+                    BinaryOperator::Mul => "*",
+                    BinaryOperator::Div => "/",
+                };
+                tree.add_empty_child(op.to_string());
+                self.right.traverse_leaves(tree);
+        */
         tree.end_child();
     }
 
@@ -443,8 +445,8 @@ impl Node for Branch {
     fn traverse_leaves(&self, tree: &mut ptree::TreeBuilder) {
         tree.begin_child(self.display());
 
-        self.condition.traverse_leaves(tree);
-        self.true_body.traverse_leaves(tree);
+        //self.condition.traverse_leaves(tree);
+        //self.true_body.traverse_leaves(tree);
         if let Some(body) = &self.false_body {
             body.traverse_leaves(tree);
         }
@@ -521,7 +523,7 @@ impl Node for Condition {
             left.traverse_leaves(tree);
         }
         tree.add_empty_child(format!("OP: {:?}", self.operator));
-        self.right.traverse_leaves(tree);
+        //self.right.traverse_leaves(tree);
 
         tree.end_child();
     }
@@ -532,18 +534,21 @@ impl Node for Condition {
 }
 impl Function {
     fn display_params(&self) -> String {
-        self.params.iter().fold(String::new(), |mut output, param| {
-            if !output.is_empty()
-                && (param.get_type() == AstType::Type
-                    || param.get_type() == AstType::Variable
-                    || param.get_type() == AstType::Value)
-            {
-                write!(output, ", ").unwrap();
-            }
-            write!(output, " {} ", param.display()).unwrap();
+        /*
+                self.params.iter().fold(String::new(), |mut output, param| {
+                    if !output.is_empty()
+                        && (param.get_type() == AstType::Type
+                            || param.get_type() == AstType::Variable
+                            || param.get_type() == AstType::Value)
+                    {
+                        write!(output, ", ").unwrap();
+                    }
+                    write!(output, " {} ", param.display()).unwrap();
 
-            output
-        })
+                    output
+                })
+        */
+        String::new()
     }
 }
 impl Node for Function {
@@ -556,7 +561,7 @@ impl Node for Function {
     }
 
     fn display(&self) -> String {
-        format!("{}({})", self.get_name(), self.display_params())
+        format!("Function: {}({})", self.get_name(), self.display_params())
     }
 
     fn get_type(&self) -> AstType {
@@ -564,11 +569,11 @@ impl Node for Function {
     }
 
     fn get_name(&self) -> String {
-        self.identifier.clone()
+        self.identifier.to_owned()
     }
 
     fn get_body(&self) -> &[Box<dyn Node>] {
-        &self.body.body
+        &[]
     }
 
     fn has_leaves(&self) -> bool {
@@ -608,8 +613,8 @@ impl Node for Loop {
     fn traverse_leaves(&self, tree: &mut ptree::TreeBuilder) {
         tree.begin_child(self.display());
 
-        self.condition.traverse_leaves(tree);
-        self.body.traverse_leaves(tree);
+        //self.condition.traverse_leaves(tree);
+        //self.body.traverse_leaves(tree);
 
         tree.end_child();
     }
@@ -751,7 +756,7 @@ impl Node for Variable {
 }
 impl Value {
     pub fn value_as_i16(&self) -> i16 {
-        match self.value {
+        match self.value.clone().unwrap() {
             ValueEnum::Int(val) => val,
             ValueEnum::Bool(val) => {
                 if val {
