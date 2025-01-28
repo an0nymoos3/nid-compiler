@@ -64,7 +64,10 @@ pub fn generate_ast(tokens: &mut VecDeque<Token>) -> Option<ast::Ast<dyn ast::No
     Some(ast)
 }
 
-/// First step of building AST, create nodes from Tokens
+/// First step of building AST, create nodes from Tokens.
+/// These nodes are stored in the order they were parsed by the
+/// tokenizer. They get grouped and sorted into a proper
+/// AST in later steps.
 fn generate_nodes(tokens: &mut VecDeque<Token>) -> Option<Vec<Box<dyn ast::Node>>> {
     let mut nodes: Vec<Box<dyn ast::Node>> = Vec::new();
 
@@ -119,6 +122,47 @@ fn generate_nodes(tokens: &mut VecDeque<Token>) -> Option<Vec<Box<dyn ast::Node>
                 token_type: token.token_type,
                 line: token.line.clone(),
             }),
+            TokenType::ArrayAccessOpen => todo!(),
+            TokenType::ArrayAccessClose => todo!(),
+            TokenType::BinaryOperator => {
+                let operator: ast::BinaryOperator = match token.value.as_str() {
+                    "+" => ast::BinaryOperator::Add,
+                    "-" => ast::BinaryOperator::Sub,
+                    "*" => ast::BinaryOperator::Mul,
+                    "/" => ast::BinaryOperator::Div,
+                    _ => {
+                        print_err(&token.line, &format!("Internal compiler error! Tried parsing: ({}) as an operator (+, -, *, /)", token.value), None);
+                        panic!("INTERNAL COMPILER ERROR! SEE ERRRO ABOVE!")
+                    }
+                };
+                Box::new(ast::BinaryExpression {
+                    left: None,
+                    op: Some(operator),
+                    right: None,
+                    line: token.line.clone(),
+                })
+            }
+            TokenType::Comparison => {
+                let operator: ast::ConditionalOperator = match token.value.as_str() {
+                    "==" => ast::ConditionalOperator::Eq,
+                    "!" => ast::ConditionalOperator::Not,
+                    "!=" => ast::ConditionalOperator::NotEq,
+                    ">" => ast::ConditionalOperator::GreatThan,
+                    "<" => ast::ConditionalOperator::LessThan,
+                    ">=" => ast::ConditionalOperator::GreatEq,
+                    "<=" => ast::ConditionalOperator::LessEq,
+                    _ => {
+                        print_err(&token.line, &format!("Internal compiler error! Tried parsing: ({}) as an comparison (==, <=, ...)", token.value), None);
+                        panic!("INTERNAL COMPILER ERROR! SEE ERRRO ABOVE!")
+                    }
+                };
+                Box::new(ast::Condition {
+                    left: None,
+                    operator: Some(operator),
+                    right: None,
+                    line: token.line.clone(),
+                })
+            }
             _ => {
                 print_err(
                     &token.line,
