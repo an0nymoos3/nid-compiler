@@ -226,3 +226,8 @@ fn generate_nodes(tokens: &mut VecDeque<Token>) -> Option<Vec<Box<dyn ast::Node>
 
     Some(nodes)
 }
+
+/// Links nodes together that are related to variable assignments.
+fn link_assignment_nodes(tree: &mut ast::Ast<dyn ast::Node>) {
+    for (i, node) in tree.body.iter_mut().enumerate() {}
+}
