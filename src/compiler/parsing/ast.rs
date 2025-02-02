@@ -10,7 +10,7 @@ use super::lexer::{Token, TokenType};
 use crate::utils::error::print_err;
 use crate::utils::lines::Line;
 use std::any::Any;
-use std::fmt::{self, Display, Write};
+use std::fmt::{self, Display};
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum ValueEnum {
@@ -19,6 +19,16 @@ pub enum ValueEnum {
     String(String),
     Char(char),
     Bool(bool),
+    Void,
+}
+
+#[derive(Debug, PartialEq, Clone)]
+pub enum TypeEnum {
+    Int,
+    Float,
+    String,
+    Char,
+    Bool,
     Void,
 }
 
@@ -32,13 +42,15 @@ pub enum BinaryOperator {
 
 #[derive(Debug)]
 pub enum ConditionalOperator {
-    Not,
     NotEq,
     Eq,
     GreatThan,
     LessThan,
     GreatEq,
     LessEq,
+    And,
+    Or,
+    Not,
 }
 
 #[derive(Debug, PartialEq)]
@@ -192,9 +204,14 @@ pub struct Function {
     pub line: Box<Line>,
 }
 
+pub struct Indicator {
+    pub var_type: TypeEnum,
+    pub line: Box<Line>,
+}
+
 /// Loops, currently ony while is supported
 pub struct Loop {
-    pub condition: Box<Condition>,
+    pub condition: Option<Box<Condition>>,
     pub body: Option<Block>,
     pub line: Box<Line>,
 }
@@ -220,7 +237,7 @@ pub struct Type {
 /// Variable Node
 pub struct Variable {
     pub identifier: String, // Identifier (name of variable)
-    pub var_type: Option<ValueEnum>,
+    pub var_type: Option<TypeEnum>,
     pub line: Box<Line>,
 }
 
@@ -595,6 +612,44 @@ impl Node for Function {
         Some(self.line.clone())
     }
 }
+impl Node for Indicator {
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
+
+    fn as_any_mut(&mut self) -> &mut dyn Any {
+        self
+    }
+
+    fn display(&self) -> String {
+        format!("Indicator: {}", self.get_name())
+    }
+
+    fn get_type(&self) -> AstType {
+        AstType::Function
+    }
+
+    fn get_name(&self) -> String {
+        format!("{:?}", self.var_type)
+    }
+
+    fn get_body(&self) -> &[Box<dyn Node>] {
+        &[]
+    }
+
+    fn has_leaves(&self) -> bool {
+        true
+    }
+
+    fn traverse_leaves(&self, tree: &mut ptree::TreeBuilder) {
+        tree.begin_child(self.display());
+        tree.end_child();
+    }
+
+    fn get_line(&self) -> Option<Box<Line>> {
+        Some(self.line.clone())
+    }
+}
 impl Node for Loop {
     fn as_any(&self) -> &dyn Any {
         self
@@ -842,7 +897,7 @@ impl Node for EmptyNode {
     }
 
     fn display(&self) -> String {
-        String::from("Debugging Node")
+        String::from("Empty Node")
     }
 
     fn get_type(&self) -> AstType {
@@ -854,7 +909,7 @@ impl Node for EmptyNode {
     }
 
     fn traverse_leaves(&self, tree: &mut ptree::TreeBuilder) {
-        tree.add_empty_child("DEBUGGING NODE!".to_string());
+        tree.add_empty_child("EMPTY NODE!".to_string());
     }
 
     fn get_line(&self) -> Option<Box<Line>> {

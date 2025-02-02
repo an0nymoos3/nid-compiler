@@ -13,11 +13,7 @@ use crate::{
         parsing::lexer::{export_tokens, tokenize},
         parsing::parser::generate_ast,
     },
-    utils::{
-        command_line::Args,
-        hardware_conf::Hardware,
-        nid_fs::{read_file, write_to_file},
-    },
+    utils::{command_line::Args, hardware_conf::Hardware, nid_fs::read_file},
 };
 
 /// The main compile function. Takes care of the overall logic of compilation while handing out the

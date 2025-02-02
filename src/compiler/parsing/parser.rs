@@ -27,7 +27,7 @@
     Branch,      // If conditions etc...
     Seperator,   // for identifying seperations for things like parameters (,)
     Punctuation, // . (used for accessing fields or structs)
-    Pointer,     // Same as ptrs in C and C++, points to a memory address
+    Pointer,     // Same as in C and C++, points to a memory address
     Reference,   // -- || --
     Return,      // Return statement
     Asm,         // Allows for inline assembly code
@@ -39,7 +39,7 @@
 
 use crate::utils::error::print_err;
 
-use super::ast::{self};
+use super::ast;
 use super::lexer::{Token, TokenType};
 use std::collections::VecDeque;
 
@@ -132,7 +132,7 @@ fn generate_nodes(tokens: &mut VecDeque<Token>) -> Option<Vec<Box<dyn ast::Node>
                     "/" => ast::BinaryOperator::Div,
                     _ => {
                         print_err(&token.line, &format!("Internal compiler error! Tried parsing: ({}) as an operator (+, -, *, /)", token.value), None);
-                        panic!("INTERNAL COMPILER ERROR! SEE ERRRO ABOVE!")
+                        panic!("INTERNAL COMPILER ERROR! SEE ERROR ABOVE!")
                     }
                 };
                 Box::new(ast::BinaryExpression {
@@ -145,7 +145,6 @@ fn generate_nodes(tokens: &mut VecDeque<Token>) -> Option<Vec<Box<dyn ast::Node>
             TokenType::Comparison => {
                 let operator: ast::ConditionalOperator = match token.value.as_str() {
                     "==" => ast::ConditionalOperator::Eq,
-                    "!" => ast::ConditionalOperator::Not,
                     "!=" => ast::ConditionalOperator::NotEq,
                     ">" => ast::ConditionalOperator::GreatThan,
                     "<" => ast::ConditionalOperator::LessThan,
@@ -153,7 +152,7 @@ fn generate_nodes(tokens: &mut VecDeque<Token>) -> Option<Vec<Box<dyn ast::Node>
                     "<=" => ast::ConditionalOperator::LessEq,
                     _ => {
                         print_err(&token.line, &format!("Internal compiler error! Tried parsing: ({}) as an comparison (==, <=, ...)", token.value), None);
-                        panic!("INTERNAL COMPILER ERROR! SEE ERRRO ABOVE!")
+                        panic!("INTERNAL COMPILER ERROR! SEE ERROR ABOVE!")
                     }
                 };
                 Box::new(ast::Condition {
@@ -163,6 +162,56 @@ fn generate_nodes(tokens: &mut VecDeque<Token>) -> Option<Vec<Box<dyn ast::Node>
                     line: token.line.clone(),
                 })
             }
+            TokenType::LogicOperator => {
+                let operator: ast::ConditionalOperator = match token.value.as_str() {
+                    "!" => ast::ConditionalOperator::Not,
+                    "&&" => ast::ConditionalOperator::And,
+                    "||" => ast::ConditionalOperator::Or,
+                    _ => {
+                        print_err(&token.line, &format!("Internal compiler error! Tried parsing: ({}) when expected (!, && or ||)", token.value), None);
+                        panic!("INTERNAL COMPILER ERROR! SEE ERROR ABOVE!")
+                    }
+                };
+                Box::new(ast::Condition {
+                    left: None,
+                    operator: Some(operator),
+                    right: None,
+                    line: token.line.clone(),
+                })
+            }
+            TokenType::TypeIndicator => {
+                let var_type: ast::TypeEnum = match token.value.as_str() {
+                    "int" => ast::TypeEnum::Int,
+                    "float" => ast::TypeEnum::Float,
+                    "string" => ast::TypeEnum::String,
+                    "char" => ast::TypeEnum::Char,
+                    "bool" => ast::TypeEnum::Bool,
+                    "void" => ast::TypeEnum::Void,
+                    _ => {
+                        print_err(&token.line, &format!("Internal compiler error! Tried parsing: ({}) when expected a type (int, float, string, ...)", token.value), None);
+                        panic!("INTERNAL COMPILER ERROR! SEE ERROR ABOVE!")
+                    }
+                };
+                Box::new(ast::Indicator {
+                    var_type,
+                    line: token.line.clone(),
+                })
+            }
+            TokenType::Loop => Box::new(ast::Loop {
+                condition: None,
+                body: None,
+                line: token.line.clone(),
+            }),
+            TokenType::Branch => Box::new(ast::Branch {
+                condition: None,
+                true_body: None,
+                false_body: None,
+                line: token.line.clone(),
+            }),
+            TokenType::Seperator => Box::new(ast::EmptyNode {
+                token_type: token.token_type,
+                line: token.line.clone(),
+            }),
             _ => {
                 print_err(
                     &token.line,

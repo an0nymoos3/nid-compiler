@@ -31,7 +31,7 @@ pub enum TokenType {
     Branch,      // If conditions etc...
     Seperator,   // for identifying seperations for things like parameters (,)
     Punctuation, // . (used for accessing fields or structs)
-    Pointer,     // Same as ptrs in C and C++, points to a memory address
+    Pointer,     // Same as in C and C++, points to a memory address
     Reference,   // -- || --
     Return,      // Return statement
     Asm,         // Allows for inline assembly code
@@ -279,15 +279,18 @@ pub fn tokenize(code: Vec<Line>) -> Option<VecDeque<Token>> {
          */
         } else if current_char == '!' {
             let value: String;
+            let token_type: TokenType;
             if *src_code.front().unwrap() == '=' {
                 value = String::from("!=");
+                token_type = TokenType::Comparison;
                 src_code.pop_front();
             } else {
                 value = String::from("!");
+                token_type = TokenType::LogicOperator;
             }
             token = Token {
                 value,
-                token_type: TokenType::LogicOperator,
+                token_type,
                 line: src_code.cur_line.clone(),
             }
 
