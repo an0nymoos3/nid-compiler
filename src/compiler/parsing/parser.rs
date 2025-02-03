@@ -51,11 +51,7 @@ pub fn generate_ast(tokens: &mut VecDeque<Token>) -> Option<ast::Ast<dyn ast::No
         None => return None,
     };
 
-    // Empty AST while rebuilding compiler
-    let ast = ast::Ast {
-        entry_point: 0,
-        body: nodes,
-    };
+    let ast: ast::Ast<dyn ast::Node> = ast::Ast::new(nodes);
 
     Some(ast)
 }
