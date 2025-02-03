@@ -307,7 +307,7 @@ pub fn tokenize(code: Vec<Line>) -> Option<VecDeque<Token>> {
             }
             token = Token {
                 value,
-                token_type: TokenType::LogicOperator,
+                token_type: TokenType::Comparison,
                 line: src_code.cur_line.clone(),
             }
 
@@ -324,7 +324,7 @@ pub fn tokenize(code: Vec<Line>) -> Option<VecDeque<Token>> {
             }
             token = Token {
                 value,
-                token_type: TokenType::LogicOperator,
+                token_type: TokenType::Comparison,
                 line: src_code.cur_line.clone(),
             }
 

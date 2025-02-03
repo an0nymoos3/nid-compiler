@@ -10,7 +10,7 @@ use super::lexer::{Token, TokenType};
 use crate::utils::error::print_err;
 use crate::utils::lines::Line;
 use std::any::Any;
-use std::fmt::{self, Display};
+use std::fmt::{self, Display, Write};
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum ValueEnum {
@@ -32,7 +32,7 @@ pub enum TypeEnum {
     Void,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum BinaryOperator {
     Add,
     Sub,
@@ -40,7 +40,7 @@ pub enum BinaryOperator {
     Div,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum ConditionalOperator {
     NotEq,
     Eq,
@@ -53,14 +53,14 @@ pub enum ConditionalOperator {
     Not,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum MacroType {
     PreAllocStart,
     PreAllocEnd,
 }
 
 /// Enum for easier identification of Node type
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub enum AstType {
     Asm,
     Assignment,
@@ -153,6 +153,7 @@ impl Display for dyn Node {
 * Wherever Box<dyn Node> is used, any type of Node can be used.
 */
 
+#[derive(Clone)]
 pub struct Asm {
     pub code: Vec<Token>,
 }
@@ -183,12 +184,14 @@ pub struct Branch {
     pub false_body: Option<Block>, // Else block
     pub line: Box<Line>,
 }
+
 /// Buildint functions
 pub struct Builtin {
     pub identifier: Option<String>,
     pub params: Vec<Box<dyn Node>>,
     pub line: Box<Line>,
 }
+
 /// Condition, used by branches and loops
 pub struct Condition {
     pub operator: Option<ConditionalOperator>,
@@ -201,6 +204,7 @@ pub struct Function {
     pub identifier: String,
     pub params: Option<Vec<Box<dyn Node>>>, // Accept nodes as params, such as values or variables etc
     pub body: Option<Block>,
+    pub return_type: Option<ValueEnum>,
     pub line: Box<Line>,
 }
 
@@ -348,8 +352,13 @@ impl Node for Assignment {
             dec.traverse_leaves(tree);
         }
 
-        //self.var.traverse_leaves(tree);
-        //self.expression.traverse_leaves(tree);
+        if let Some(x) = &self.var {
+            x.traverse_leaves(tree);
+        }
+
+        if let Some(x) = &self.expression {
+            x.traverse_leaves(tree);
+        }
 
         tree.end_child();
     }
@@ -385,17 +394,24 @@ impl Node for BinaryExpression {
 
     fn traverse_leaves(&self, tree: &mut ptree::TreeBuilder) {
         tree.begin_child(self.display());
-        /*self.left.traverse_leaves(tree);
+        if let Some(x) = &self.left {
+            x.traverse_leaves(tree);
+        }
 
-                let op: &str = match self.op {
-                    BinaryOperator::Add => "+",
-                    BinaryOperator::Sub => "-",
-                    BinaryOperator::Mul => "*",
-                    BinaryOperator::Div => "/",
-                };
-                tree.add_empty_child(op.to_string());
-                self.right.traverse_leaves(tree);
-        */
+        if let Some(x) = &self.op {
+            let op = match x {
+                BinaryOperator::Add => "+",
+                BinaryOperator::Sub => "-",
+                BinaryOperator::Mul => "*",
+                BinaryOperator::Div => "/",
+            };
+            tree.add_empty_child(op.to_string());
+        };
+
+        if let Some(x) = &self.right {
+            x.traverse_leaves(tree);
+        }
+
         tree.end_child();
     }
 
@@ -437,7 +453,9 @@ impl Node for Block {
     }
 
     fn traverse_leaves(&self, tree: &mut ptree::TreeBuilder) {
-        //traverse_ast_body(tree, &self.body, &self.display())
+        if let Some(x) = &self.body {
+            traverse_ast_body(tree, x, &self.display())
+        }
     }
 
     fn get_line(&self) -> Option<Box<Line>> {
@@ -468,8 +486,12 @@ impl Node for Branch {
     fn traverse_leaves(&self, tree: &mut ptree::TreeBuilder) {
         tree.begin_child(self.display());
 
-        //self.condition.traverse_leaves(tree);
-        //self.true_body.traverse_leaves(tree);
+        if let Some(x) = &self.condition {
+            x.traverse_leaves(tree);
+        }
+        if let Some(x) = &self.true_body {
+            x.traverse_leaves(tree);
+        }
         if let Some(body) = &self.false_body {
             body.traverse_leaves(tree);
         }
@@ -546,7 +568,9 @@ impl Node for Condition {
             left.traverse_leaves(tree);
         }
         tree.add_empty_child(format!("OP: {:?}", self.operator));
-        //self.right.traverse_leaves(tree);
+        if let Some(x) = &self.right {
+            x.traverse_leaves(tree);
+        }
 
         tree.end_child();
     }
@@ -557,21 +581,22 @@ impl Node for Condition {
 }
 impl Function {
     fn display_params(&self) -> String {
-        /*
-                self.params.iter().fold(String::new(), |mut output, param| {
-                    if !output.is_empty()
-                        && (param.get_type() == AstType::Type
-                            || param.get_type() == AstType::Variable
-                            || param.get_type() == AstType::Value)
-                    {
-                        write!(output, ", ").unwrap();
-                    }
-                    write!(output, " {} ", param.display()).unwrap();
-
-                    output
-                })
-        */
-        String::new()
+        let output = &self
+            .params
+            .iter()
+            .flatten()
+            .fold(String::new(), |mut output, param| {
+                if !output.is_empty()
+                    && (param.get_type() == AstType::Type
+                        || param.get_type() == AstType::Variable
+                        || param.get_type() == AstType::Value)
+                {
+                    write!(output, ", ").unwrap();
+                }
+                write!(output, " {} ", param.display()).unwrap();
+                output
+            });
+        output.clone()
     }
 }
 impl Node for Function {
@@ -674,8 +699,12 @@ impl Node for Loop {
     fn traverse_leaves(&self, tree: &mut ptree::TreeBuilder) {
         tree.begin_child(self.display());
 
-        //self.condition.traverse_leaves(tree);
-        //self.body.traverse_leaves(tree);
+        if let Some(x) = &self.condition {
+            x.traverse_leaves(tree);
+        }
+        if let Some(x) = &self.body {
+            x.traverse_leaves(tree);
+        }
 
         tree.end_child();
     }
@@ -813,20 +842,6 @@ impl Node for Variable {
 
     fn get_line(&self) -> Option<Box<Line>> {
         Some(self.line.clone())
-    }
-}
-impl Value {
-    pub fn value_as_i16(&self) -> i16 {
-        match self.value.clone().unwrap() {
-            ValueEnum::Int(val) => val,
-            ValueEnum::Bool(val) => {
-                if val {
-                    return 1;
-                }
-                0
-            }
-            _ => panic!("Types other than 16-bit integer not currently supported!"),
-        }
     }
 }
 impl Node for Value {

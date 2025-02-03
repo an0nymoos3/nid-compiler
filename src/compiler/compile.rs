@@ -5,6 +5,7 @@
 
 use std::{path::PathBuf, process::exit};
 
+use super::parsing::ast::export_ast;
 use super::parsing::lexer::remove_comments;
 use crate::utils::lines::{generate_lines, Line};
 use crate::{
@@ -41,8 +42,11 @@ pub fn compile(args: &Args, hardware_conf: &Hardware) -> PathBuf {
         None => exit(1),
     };
 
+    if args.verbose {
+        export_ast(&ast);
+    }
+
     /*
-        if args.verbose {}
 
         // Convert the AST into ASS code.
         let ass_program: Vec<String> = generate_ass(&ast.body, ast.entry_point, hardware_conf);

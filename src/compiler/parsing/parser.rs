@@ -51,10 +51,6 @@ pub fn generate_ast(tokens: &mut VecDeque<Token>) -> Option<ast::Ast<dyn ast::No
         None => return None,
     };
 
-    for node in nodes.iter() {
-        println!("{:?}", node.display());
-    }
-
     // Empty AST while rebuilding compiler
     let ast = ast::Ast {
         entry_point: 0,
@@ -99,6 +95,7 @@ fn generate_nodes(tokens: &mut VecDeque<Token>) -> Option<Vec<Box<dyn ast::Node>
                         identifier: token.value.clone(),
                         params: None,
                         body: None,
+                        return_type: None,
                         line: token.line.clone(),
                     })
                 } else {
@@ -212,6 +209,10 @@ fn generate_nodes(tokens: &mut VecDeque<Token>) -> Option<Vec<Box<dyn ast::Node>
                 token_type: token.token_type,
                 line: token.line.clone(),
             }),
+            TokenType::Eol => Box::new(ast::EmptyNode {
+                token_type: TokenType::Eol,
+                line: token.line.clone(),
+            }),
             _ => {
                 print_err(
                     &token.line,
@@ -229,5 +230,9 @@ fn generate_nodes(tokens: &mut VecDeque<Token>) -> Option<Vec<Box<dyn ast::Node>
 
 /// Links nodes together that are related to variable assignments.
 fn link_assignment_nodes(tree: &mut ast::Ast<dyn ast::Node>) {
-    for (i, node) in tree.body.iter_mut().enumerate() {}
+    for (i, node) in tree.body.iter_mut().enumerate() {
+        if node.get_type() == ast::AstType::Assignment {
+            let assign: &ast::Assignment = node.as_any().downcast_ref::<ast::Assignment>().unwrap();
+        }
+    }
 }
