@@ -206,17 +206,28 @@ fn generate_nodes(tokens: &mut VecDeque<Token>) -> Option<Vec<Box<dyn ast::Node>
                 line: token.line.clone(),
             }),
             TokenType::Seperator => Box::new(ast::EmptyNode {
-                token_type: token.token_type,
+                token_type: TokenType::Seperator,
+                line: token.line.clone(),
+            }),
+            TokenType::Return => Box::new(ast::Return {
+                return_value: None,
                 line: token.line.clone(),
             }),
             TokenType::Eol => Box::new(ast::EmptyNode {
                 token_type: TokenType::Eol,
                 line: token.line.clone(),
             }),
+            TokenType::Eof => Box::new(ast::EmptyNode {
+                token_type: TokenType::Eof,
+                line: token.line.clone(),
+            }),
             _ => {
                 print_err(
                     &token.line,
-                    &format!("Failed to parse a token: {}", token.value),
+                    &format!(
+                        "Failed to parse a token: {} of type: {:?}",
+                        token.value, token.token_type
+                    ),
                     None,
                 );
                 continue;
