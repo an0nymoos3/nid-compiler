@@ -54,6 +54,7 @@ pub fn generate_ast(tokens: &mut VecDeque<Token>) -> Option<ast::Ast<dyn ast::No
     let mut ast: ast::Ast<dyn ast::Node> = ast::Ast::new(nodes);
 
     // Process the AST
+    ast.body = parse_scopes(&mut VecDeque::from(ast.body));
     move_indicators(&mut ast);
 
     Some(ast)
@@ -119,9 +120,12 @@ fn generate_nodes(tokens: &mut VecDeque<Token>) -> Option<Vec<Box<dyn ast::Node>
                 token_type: TokenType::CloseParen,
                 line: token.line.clone(),
             }),
-            TokenType::OpenScope => Box::new(ast::Block { body: None }),
+            TokenType::OpenScope => Box::new(ast::Block {
+                body: None,
+                line: token.line.clone(),
+            }),
             TokenType::CloseScope => Box::new(ast::EmptyNode {
-                token_type: token.token_type,
+                token_type: TokenType::CloseScope,
                 line: token.line.clone(),
             }),
             TokenType::ArrayAccessOpen => todo!(),
@@ -247,7 +251,43 @@ fn generate_nodes(tokens: &mut VecDeque<Token>) -> Option<Vec<Box<dyn ast::Node>
 /// Performs necessary nesting of AST for later parsing
 /// such as bodies of if-statements and loops, or just
 /// function bodies of regular bodies.
-fn parse_scopes(tree: &mut ast::Ast<dyn ast::Node>) {}
+fn parse_scopes(body: &mut VecDeque<Box<dyn ast::Node>>) -> Vec<Box<dyn ast::Node>> {
+    let mut new_body: Vec<Box<dyn ast::Node>> = Vec::new();
+
+    while !body.is_empty() {
+        let mut cur_node: Box<dyn ast::Node> = body.pop_front().unwrap();
+
+        // New opening {
+        if cur_node.get_type() == ast::AstType::Block {
+            let block = cur_node.as_any_mut().downcast_mut::<ast::Block>().unwrap();
+            if block.body.is_some() {
+                print_err(
+                    &block.line,
+                    "Did not expect code block to already contain code!",
+                    None,
+                );
+                panic!("INTERNAL COMPILER ERROR! SEE ERROR ABOVE!")
+            }
+            block.body = Some(parse_scopes(body));
+        }
+
+        // Exit early if scope/block is closed
+        if cur_node.get_type() == ast::AstType::Empty
+            && cur_node
+                .as_any()
+                .downcast_ref::<ast::EmptyNode>()
+                .unwrap()
+                .token_type
+                == TokenType::CloseScope
+        {
+            return new_body;
+        }
+
+        new_body.push(cur_node);
+    }
+
+    new_body
+}
 
 /// Moves indicators to the next nodes in the Vec of nodes.
 fn move_indicators(tree: &mut ast::Ast<dyn ast::Node>) {

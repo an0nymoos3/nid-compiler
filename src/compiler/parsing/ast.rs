@@ -175,6 +175,7 @@ pub struct BinaryExpression {
 /// Code block, essentially scopes ({...})
 pub struct Block {
     pub body: Option<Vec<Box<dyn Node>>>,
+    pub line: Box<Line>,
 }
 
 /// Branches, (if-statements)
@@ -441,7 +442,7 @@ impl Node for Block {
     }
 
     fn get_body(&self) -> &[Box<dyn Node>] {
-        &[]
+        self.body.as_ref().unwrap()
     }
 
     fn get_name(&self) -> String {
