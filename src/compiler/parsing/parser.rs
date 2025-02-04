@@ -51,7 +51,10 @@ pub fn generate_ast(tokens: &mut VecDeque<Token>) -> Option<ast::Ast<dyn ast::No
         None => return None,
     };
 
-    let ast: ast::Ast<dyn ast::Node> = ast::Ast::new(nodes);
+    let mut ast: ast::Ast<dyn ast::Node> = ast::Ast::new(nodes);
+
+    // Process the AST
+    move_indicators(&mut ast);
 
     Some(ast)
 }
@@ -235,11 +238,72 @@ fn generate_nodes(tokens: &mut VecDeque<Token>) -> Option<Vec<Box<dyn ast::Node>
     Some(nodes)
 }
 
-/// Links nodes together that are related to variable assignments.
-fn link_assignment_nodes(tree: &mut ast::Ast<dyn ast::Node>) {
-    for (i, node) in tree.body.iter_mut().enumerate() {
-        if node.get_type() == ast::AstType::Assignment {
-            let assign: &ast::Assignment = node.as_any().downcast_ref::<ast::Assignment>().unwrap();
+/// Moves indicators to the next nodes in the Vec of nodes.
+fn move_indicators(tree: &mut ast::Ast<dyn ast::Node>) {
+    let mut remove_indexes: Vec<usize> = Vec::new();
+
+    for i in 0..tree.body.len() {
+        let is_indicator: bool = tree.body[i]
+            .as_any()
+            .downcast_ref::<ast::Indicator>()
+            .is_some();
+
+        if is_indicator {
+            let node_type: ast::AstType = tree.body[i + 1].get_type();
+            let indicator_type = tree.body[i]
+                .as_any()
+                .downcast_ref::<ast::Indicator>()
+                .unwrap()
+                .var_type
+                .clone();
+
+            match node_type {
+                ast::AstType::Function => {
+                    let func = tree.body[i + 1]
+                        .as_any_mut()
+                        .downcast_mut::<ast::Function>()
+                        .unwrap();
+                    if func.return_type.is_some() {
+                        print_err(&func.line,
+                            "Trying to set new type to a function that has already been declared with a type before!",
+                            None);
+                        panic!("INTERNAL COMPILER ERROR! SEE ERROR ABOVE!")
+                    }
+                    func.return_type = Some(indicator_type);
+                    remove_indexes.push(i);
+                }
+                ast::AstType::Variable => {
+                    let var = tree.body[i + 1]
+                        .as_any_mut()
+                        .downcast_mut::<ast::Variable>()
+                        .unwrap();
+
+                    if var.var_type.is_some() {
+                        print_err(&var.line,
+                            "Trying to set new type to a variable that has already been declared with a type before!",
+                            Some("Remove the type indicator in front of variable!"));
+                    }
+
+                    var.var_type = Some(indicator_type);
+                    remove_indexes.push(i);
+                }
+                _ => {
+                    print_err(
+                        &tree.body[i + 1].get_line().unwrap(),
+                        &format!(
+                            "Expected function or variable after type indicator! Found: {:?}",
+                            tree.body[i + 1].get_type()
+                        ),
+                        None,
+                    );
+                    continue;
+                }
+            }
         }
+    }
+
+    // Remove the indicators from the code body
+    for (iter, index) in remove_indexes.iter().enumerate() {
+        tree.body.remove(index - iter);
     }
 }

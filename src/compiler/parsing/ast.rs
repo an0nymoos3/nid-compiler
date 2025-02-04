@@ -160,7 +160,7 @@ pub struct Asm {
 
 pub struct Assignment {
     pub type_dec: Option<Box<dyn Node>>, // Optional type specifier, used for new variables
-    pub var: Option<Box<dyn Node>>, // Var being assigned TODO: Replace with Variable instead of dyn node
+    pub var: Option<Box<Variable>>, // Var being assigned TODO: Replace with Variable instead of dyn node
     pub expression: Option<Box<dyn Node>>, // Varibale or Value being assigned to var
     pub line: Box<Line>,
 }
@@ -204,7 +204,7 @@ pub struct Function {
     pub identifier: String,
     pub params: Option<Vec<Box<dyn Node>>>, // Accept nodes as params, such as values or variables etc
     pub body: Option<Block>,
-    pub return_type: Option<ValueEnum>,
+    pub return_type: Option<TypeEnum>,
     pub line: Box<Line>,
 }
 
