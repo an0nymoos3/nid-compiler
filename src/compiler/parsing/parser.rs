@@ -111,8 +111,14 @@ fn generate_nodes(tokens: &mut VecDeque<Token>) -> Option<Vec<Box<dyn ast::Node>
                 expression: None,
                 line: token.line.clone(),
             }),
-            TokenType::OpenParen => continue,
-            TokenType::CloseParen => continue,
+            TokenType::OpenParen => Box::new(ast::EmptyNode {
+                token_type: TokenType::OpenParen,
+                line: token.line.clone(),
+            }),
+            TokenType::CloseParen => Box::new(ast::EmptyNode {
+                token_type: TokenType::CloseParen,
+                line: token.line.clone(),
+            }),
             TokenType::OpenScope => Box::new(ast::Block { body: None }),
             TokenType::CloseScope => Box::new(ast::EmptyNode {
                 token_type: token.token_type,
@@ -237,6 +243,11 @@ fn generate_nodes(tokens: &mut VecDeque<Token>) -> Option<Vec<Box<dyn ast::Node>
 
     Some(nodes)
 }
+
+/// Performs necessary nesting of AST for later parsing
+/// such as bodies of if-statements and loops, or just
+/// function bodies of regular bodies.
+fn parse_scopes(tree: &mut ast::Ast<dyn ast::Node>) {}
 
 /// Moves indicators to the next nodes in the Vec of nodes.
 fn move_indicators(tree: &mut ast::Ast<dyn ast::Node>) {
