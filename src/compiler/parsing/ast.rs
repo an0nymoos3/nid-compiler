@@ -93,7 +93,7 @@ impl Ast<dyn Node> {
         loop {
             if index >= body.len() {
                 print_err(
-                    &Line::new(u32::MAX, String::new(), String::new()),
+                    &body.last().unwrap().get_line().unwrap(),
                     "Missing main()! (Reached EOF when searching for it)",
                     Some("Add a main() function."),
                 );
