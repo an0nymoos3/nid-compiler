@@ -196,8 +196,8 @@ pub struct Condition {
 
 pub struct Function {
     pub identifier: String,
-    pub params: Option<Vec<Box<dyn Node>>>, // Accept nodes as params, such as values or variables etc
-    pub body: Option<Block>,
+    pub params: Option<Vec<Rc<RefCell<dyn Node>>>>, // Accept nodes as params, such as values or variables etc
+    pub body: Option<Rc<RefCell<Block>>>,
     pub return_type: Option<TypeEnum>,
     pub line: Box<Line>,
 }
@@ -395,9 +395,7 @@ impl Node for BinaryExpression {
     }
 }
 impl Block {
-    fn get_body(&self) -> &[Rc<RefCell<dyn Node>>] {
-        self.body.as_ref().unwrap()
-    }
+    fn get_body(&self) -> Vec<Rc<RefCell<dyn Node>>> {}
 }
 impl Node for Block {
     fn as_any(&self) -> &dyn Any {
@@ -551,20 +549,20 @@ impl Function {
             .flatten()
             .fold(String::new(), |mut output, param| {
                 if !output.is_empty()
-                    && (param.get_type() == AstType::Type
-                        || param.get_type() == AstType::Variable
-                        || param.get_type() == AstType::Value)
+                    && (param.borrow().get_type() == AstType::Type
+                        || param.borrow().get_type() == AstType::Variable
+                        || param.borrow().get_type() == AstType::Value)
                 {
                     write!(output, ", ").unwrap();
                 }
-                write!(output, " {} ", param.display()).unwrap();
+                write!(output, " {} ", param.borrow().display()).unwrap();
                 output
             });
         output.clone()
     }
 }
 impl Function {
-    fn get_body(&self) -> &Option<Block> {
+    fn get_body(&self) -> &Option<Rc<RefCell<Block>>> {
         &self.body
     }
 }
@@ -846,7 +844,7 @@ pub fn export_ast(ast: &Ast<dyn Node>) {
             let func_node = node.as_any().downcast_ref::<Function>().unwrap();
             match func_node.get_body().as_slice().first() {
                 Some(block) => {
-                    traverse_ast_body(&mut tree, block.get_body(), &func_node.get_name());
+                    traverse_ast_body(&mut tree, block.borrow().get_body(), &func_node.get_name());
                 }
                 None => {
                     print_err(
@@ -878,7 +876,7 @@ fn traverse_ast_body(tree: &mut ptree::TreeBuilder, body: &[Rc<RefCell<dyn Node>
                 let func_node = node.as_any().downcast_ref::<Function>().unwrap();
                 match func_node.get_body().as_slice().first() {
                     Some(block) => {
-                        traverse_ast_body(tree, block.get_body(), &func_node.get_name());
+                        traverse_ast_body(tree, block.borrow().get_body(), &func_node.get_name());
                     }
                     None => {
                         print_err(

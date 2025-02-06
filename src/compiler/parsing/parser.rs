@@ -37,6 +37,7 @@
          // to touch
 */
 
+use crate::compiler::parsing::ast::Node;
 use crate::utils::error::print_err;
 
 use super::ast;
@@ -58,6 +59,7 @@ pub fn generate_ast(tokens: &mut VecDeque<Token>) -> Option<ast::Ast<dyn ast::No
     // Process the AST
     ast.body = parse_scopes(&mut VecDeque::from(ast.body));
     move_indicators(&mut ast);
+    populate_func_fields(&mut ast);
 
     Some(ast)
 }
@@ -362,6 +364,118 @@ fn move_indicators(tree: &mut ast::Ast<dyn ast::Node>) {
                     );
                     continue;
                 }
+            }
+        }
+    }
+
+    // Remove the indicators from the code body
+    for (iter, index) in remove_indexes.iter().enumerate() {
+        tree.body.remove(index - iter);
+    }
+}
+
+/// Finds parameters and function bodies to populate the fields of
+/// function nodes.
+fn populate_func_fields(tree: &mut ast::Ast<dyn ast::Node>) {
+    let mut remove_indexes: Vec<usize> = Vec::new();
+
+    for (i, item) in tree.body.iter().enumerate() {
+        let mut node = item.borrow_mut();
+
+        if node.get_type() == ast::AstType::Function {
+            let func_node = node.as_any_mut().downcast_mut::<ast::Function>().unwrap();
+            let mut new_params: Vec<Rc<RefCell<dyn ast::Node>>> = Vec::new();
+
+            if func_node.params.is_some() {
+                print_err(
+                    &func_node.line,
+                    &format!(
+                        "Function: {}() already has parsed parameters!",
+                        func_node.get_name()
+                    ),
+                    None,
+                );
+                panic!("INTERNAL COMPILER ERROR! SEE ERROR ABOVE!")
+            }
+
+            // Adds parameters to function node
+            let mut closing_paren_index: Option<usize> = None;
+            for j in i + 1..tree.body.len() {
+                let cur_node = tree.body[j].clone();
+                let borrowed_node = cur_node.borrow();
+
+                if borrowed_node.get_type() == ast::AstType::Empty {
+                    let empty_node = borrowed_node
+                        .as_any()
+                        .downcast_ref::<ast::EmptyNode>()
+                        .unwrap();
+
+                    if empty_node.token_type == TokenType::CloseParen {
+                        remove_indexes.push(j);
+                        func_node.params = Some(new_params);
+                        closing_paren_index = Some(j);
+                        break;
+                    } else if empty_node.token_type == TokenType::Seperator {
+                        remove_indexes.push(j);
+                    }
+                } else if borrowed_node.get_type() == ast::AstType::Value
+                    || borrowed_node.get_type() == ast::AstType::Variable
+                {
+                    new_params.push(cur_node.clone());
+                    remove_indexes.push(j);
+                } else {
+                    print_err(
+                        &borrowed_node.get_line().unwrap(),
+                        &format!(
+                            "Unknown node passed into function parameters! | Type: {:?}, Value: {}",
+                            borrowed_node.get_type(),
+                            borrowed_node.get_name()
+                        ),
+                        None,
+                    );
+                }
+            }
+
+            if closing_paren_index.is_none() {
+                print_err(
+                    &func_node.line,
+                    &format!(
+                        "Function: {}() missing closing parenthesis!",
+                        func_node.get_name()
+                    ),
+                    Some("Consider closing parenthesis after function decleration."),
+                );
+            }
+
+            // Adds fucntion body
+            let body_node = tree.body[closing_paren_index.unwrap() + 1].clone();
+            let borrowed_body = body_node.borrow();
+
+            if func_node.return_type.is_some() {
+                if borrowed_body.get_type() != ast::AstType::Block {
+                    print_err(
+                        &borrowed_body.get_line().unwrap(),
+                        "Expected a function body after function decleration!",
+                        Some("Consider adding a function body!"),
+                    );
+                } else {
+                    unsafe {
+                        // NOTE: Funky pointer coercion, if parsing goes wrong, this can be one of the
+                        // first places it happens
+                        let body: Rc<RefCell<ast::Block>> =
+                            Rc::from_raw(body_node.as_ptr() as *mut RefCell<ast::Block>);
+                        func_node.body = Some(body);
+                    }
+                    remove_indexes.push(closing_paren_index.unwrap() + 1);
+                }
+            } else if func_node.return_type.is_none()
+                && borrowed_body.get_type() == ast::AstType::Block
+            {
+                print_err(
+                    &borrowed_body.get_line().unwrap(),
+                    "Did not expect a function body as this is not a function decleration!",
+                    Some("Remove the function body or add a ; to show that the body is on a new line."),
+                );
             }
         }
     }
