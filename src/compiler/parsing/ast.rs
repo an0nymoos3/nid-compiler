@@ -77,7 +77,6 @@ pub enum AstType {
     Variable,
     Value,
     Macro,
-    Debug,
     Builtin,
     Empty,
 }
@@ -125,13 +124,7 @@ pub trait Node {
 
     fn display(&self) -> String;
 
-    fn has_leaves(&self) -> bool;
-
     fn traverse_leaves(&self, tree: &mut ptree::TreeBuilder);
-
-    fn is_block(&self) -> bool {
-        false
-    }
 
     fn get_name(&self) -> String {
         String::new()
@@ -304,10 +297,6 @@ impl Node for Asm {
         AstType::Asm
     }
 
-    fn has_leaves(&self) -> bool {
-        true
-    }
-
     fn traverse_leaves(&self, tree: &mut ptree::TreeBuilder) {
         tree.begin_child(self.display());
 
@@ -337,10 +326,6 @@ impl Node for Assignment {
 
     fn get_type(&self) -> AstType {
         AstType::Assignment
-    }
-
-    fn has_leaves(&self) -> bool {
-        true
     }
 
     fn traverse_leaves(&self, tree: &mut ptree::TreeBuilder) {
@@ -380,14 +365,6 @@ impl Node for BinaryExpression {
 
     fn get_type(&self) -> AstType {
         AstType::BinaryExpression
-    }
-
-    fn is_block(&self) -> bool {
-        false
-    }
-
-    fn has_leaves(&self) -> bool {
-        true
     }
 
     fn traverse_leaves(&self, tree: &mut ptree::TreeBuilder) {
@@ -439,16 +416,8 @@ impl Node for Block {
         AstType::Block
     }
 
-    fn is_block(&self) -> bool {
-        true
-    }
-
     fn get_name(&self) -> String {
         String::from("Block")
-    }
-
-    fn has_leaves(&self) -> bool {
-        true
     }
 
     fn traverse_leaves(&self, tree: &mut ptree::TreeBuilder) {
@@ -484,10 +453,6 @@ impl Node for Branch {
 
     fn get_type(&self) -> AstType {
         AstType::Branch
-    }
-
-    fn has_leaves(&self) -> bool {
-        true
     }
 
     fn traverse_leaves(&self, tree: &mut ptree::TreeBuilder) {
@@ -527,10 +492,6 @@ impl Node for Builtin {
         AstType::Builtin
     }
 
-    fn has_leaves(&self) -> bool {
-        true
-    }
-
     fn traverse_leaves(&self, tree: &mut ptree::TreeBuilder) {
         tree.begin_child(self.display());
 
@@ -562,10 +523,6 @@ impl Node for Condition {
 
     fn get_type(&self) -> AstType {
         AstType::Condition
-    }
-
-    fn has_leaves(&self) -> bool {
-        true
     }
 
     fn traverse_leaves(&self, tree: &mut ptree::TreeBuilder) {
@@ -632,10 +589,6 @@ impl Node for Function {
         self.identifier.to_owned()
     }
 
-    fn has_leaves(&self) -> bool {
-        true
-    }
-
     fn traverse_leaves(&self, tree: &mut ptree::TreeBuilder) {
         tree.begin_child(self.display());
         tree.end_child();
@@ -664,10 +617,6 @@ impl Node for Indicator {
 
     fn get_name(&self) -> String {
         format!("{:?}", self.var_type)
-    }
-
-    fn has_leaves(&self) -> bool {
-        true
     }
 
     fn traverse_leaves(&self, tree: &mut ptree::TreeBuilder) {
@@ -699,10 +648,6 @@ impl Node for Loop {
 
     fn get_type(&self) -> AstType {
         AstType::Loop
-    }
-
-    fn has_leaves(&self) -> bool {
-        true
     }
 
     fn traverse_leaves(&self, tree: &mut ptree::TreeBuilder) {
@@ -739,10 +684,6 @@ impl Node for Macro {
         AstType::Macro
     }
 
-    fn has_leaves(&self) -> bool {
-        true
-    }
-
     fn traverse_leaves(&self, tree: &mut ptree::TreeBuilder) {
         tree.begin_child(self.display());
 
@@ -771,10 +712,6 @@ impl Node for Return {
 
     fn get_type(&self) -> AstType {
         AstType::Return
-    }
-
-    fn has_leaves(&self) -> bool {
-        true
     }
 
     fn traverse_leaves(&self, tree: &mut ptree::TreeBuilder) {
@@ -810,10 +747,6 @@ impl Node for Type {
         AstType::Type
     }
 
-    fn has_leaves(&self) -> bool {
-        true
-    }
-
     fn traverse_leaves(&self, tree: &mut ptree::TreeBuilder) {
         tree.begin_child(self.display());
 
@@ -841,10 +774,6 @@ impl Node for Variable {
         AstType::Variable
     }
 
-    fn has_leaves(&self) -> bool {
-        true
-    }
-
     fn traverse_leaves(&self, tree: &mut ptree::TreeBuilder) {
         tree.add_empty_child(self.display());
     }
@@ -868,10 +797,6 @@ impl Node for Value {
 
     fn get_type(&self) -> AstType {
         AstType::Value
-    }
-
-    fn has_leaves(&self) -> bool {
-        true
     }
 
     fn traverse_leaves(&self, tree: &mut ptree::TreeBuilder) {
@@ -898,10 +823,6 @@ impl Node for EmptyNode {
 
     fn get_type(&self) -> AstType {
         AstType::Empty
-    }
-
-    fn has_leaves(&self) -> bool {
-        true
     }
 
     fn traverse_leaves(&self, tree: &mut ptree::TreeBuilder) {

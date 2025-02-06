@@ -1,8 +1,10 @@
+#[allow(dead_code)]
 pub enum TokenizerError {
     EmptySourceCode,
     UnexpectedChar,
 }
 
+#[allow(dead_code)]
 pub enum ParserError {
     InvalidIdentifier,
     InvalidOperator,
@@ -17,8 +19,10 @@ pub enum ParserError {
     UnknownVarOrVal,
 }
 
+#[allow(dead_code)]
 pub enum CodeGenError {}
 
+#[allow(dead_code)]
 pub enum AssemblerError {
     UnknownInst,
 }
