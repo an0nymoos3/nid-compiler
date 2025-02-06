@@ -41,7 +41,9 @@ use crate::utils::error::print_err;
 
 use super::ast;
 use super::lexer::{Token, TokenType};
+use std::cell::RefCell;
 use std::collections::VecDeque;
+use std::rc::Rc;
 
 /// Entry point for building AST. It takes a Dequeue of Tokens and iterates over
 /// them until EOF is reached, indicating the AST its complete.
@@ -64,70 +66,70 @@ pub fn generate_ast(tokens: &mut VecDeque<Token>) -> Option<ast::Ast<dyn ast::No
 /// These nodes are stored in the order they were parsed by the
 /// tokenizer. They get grouped and sorted into a proper
 /// AST in later steps.
-fn generate_nodes(tokens: &mut VecDeque<Token>) -> Option<Vec<Box<dyn ast::Node>>> {
-    let mut nodes: Vec<Box<dyn ast::Node>> = Vec::new();
+fn generate_nodes(tokens: &mut VecDeque<Token>) -> Option<Vec<Rc<RefCell<dyn ast::Node>>>> {
+    let mut nodes: Vec<Rc<RefCell<dyn ast::Node>>> = Vec::new();
 
     for (i, token) in tokens.iter().enumerate() {
-        let new_node: Box<dyn ast::Node> = match token.token_type {
-            TokenType::Integer => Box::new(ast::Value {
+        let new_node: Rc<RefCell<dyn ast::Node>> = match token.token_type {
+            TokenType::Integer => Rc::new(RefCell::new(ast::Value {
                 value: Some(ast::ValueEnum::Int(token.value.parse::<i16>().unwrap())),
                 line: token.line.clone(),
-            }),
-            TokenType::Floating => Box::new(ast::Value {
+            })),
+            TokenType::Floating => Rc::new(RefCell::new(ast::Value {
                 value: Some(ast::ValueEnum::Float(token.value.parse::<f32>().unwrap())),
                 line: token.line.clone(),
-            }),
-            TokenType::String => Box::new(ast::Value {
+            })),
+            TokenType::String => Rc::new(RefCell::new(ast::Value {
                 value: Some(ast::ValueEnum::String(token.value.clone())),
                 line: token.line.clone(),
-            }),
-            TokenType::Char => Box::new(ast::Value {
+            })),
+            TokenType::Char => Rc::new(RefCell::new(ast::Value {
                 value: Some(ast::ValueEnum::Char(token.value.parse::<char>().unwrap())),
                 line: token.line.clone(),
-            }),
-            TokenType::Bool => Box::new(ast::Value {
+            })),
+            TokenType::Bool => Rc::new(RefCell::new(ast::Value {
                 value: Some(ast::ValueEnum::Bool(token.value.parse::<bool>().unwrap())),
                 line: token.line.clone(),
-            }),
+            })),
             TokenType::Identifier => {
                 if tokens.get(i + 1).unwrap().token_type == TokenType::OpenParen {
-                    Box::new(ast::Function {
+                    Rc::new(RefCell::new(ast::Function {
                         identifier: token.value.clone(),
                         params: None,
                         body: None,
                         return_type: None,
                         line: token.line.clone(),
-                    })
+                    }))
                 } else {
-                    Box::new(ast::Variable {
+                    Rc::new(RefCell::new(ast::Variable {
                         identifier: token.value.clone(),
                         var_type: None,
                         line: token.line.clone(),
-                    })
+                    }))
                 }
             }
-            TokenType::Assignment => Box::new(ast::Assignment {
+            TokenType::Assignment => Rc::new(RefCell::new(ast::Assignment {
                 type_dec: None,
                 var: None,
                 expression: None,
                 line: token.line.clone(),
-            }),
-            TokenType::OpenParen => Box::new(ast::EmptyNode {
+            })),
+            TokenType::OpenParen => Rc::new(RefCell::new(ast::EmptyNode {
                 token_type: TokenType::OpenParen,
                 line: token.line.clone(),
-            }),
-            TokenType::CloseParen => Box::new(ast::EmptyNode {
+            })),
+            TokenType::CloseParen => Rc::new(RefCell::new(ast::EmptyNode {
                 token_type: TokenType::CloseParen,
                 line: token.line.clone(),
-            }),
-            TokenType::OpenScope => Box::new(ast::Block {
+            })),
+            TokenType::OpenScope => Rc::new(RefCell::new(ast::Block {
                 body: None,
                 line: token.line.clone(),
-            }),
-            TokenType::CloseScope => Box::new(ast::EmptyNode {
+            })),
+            TokenType::CloseScope => Rc::new(RefCell::new(ast::EmptyNode {
                 token_type: TokenType::CloseScope,
                 line: token.line.clone(),
-            }),
+            })),
             TokenType::ArrayAccessOpen => todo!(),
             TokenType::ArrayAccessClose => todo!(),
             TokenType::BinaryOperator => {
@@ -141,12 +143,12 @@ fn generate_nodes(tokens: &mut VecDeque<Token>) -> Option<Vec<Box<dyn ast::Node>
                         panic!("INTERNAL COMPILER ERROR! SEE ERROR ABOVE!")
                     }
                 };
-                Box::new(ast::BinaryExpression {
+                Rc::new(RefCell::new(ast::BinaryExpression {
                     left: None,
                     op: Some(operator),
                     right: None,
                     line: token.line.clone(),
-                })
+                }))
             }
             TokenType::Comparison => {
                 let operator: ast::ConditionalOperator = match token.value.as_str() {
@@ -161,12 +163,12 @@ fn generate_nodes(tokens: &mut VecDeque<Token>) -> Option<Vec<Box<dyn ast::Node>
                         panic!("INTERNAL COMPILER ERROR! SEE ERROR ABOVE!")
                     }
                 };
-                Box::new(ast::Condition {
+                Rc::new(RefCell::new(ast::Condition {
                     left: None,
                     operator: Some(operator),
                     right: None,
                     line: token.line.clone(),
-                })
+                }))
             }
             TokenType::LogicOperator => {
                 let operator: ast::ConditionalOperator = match token.value.as_str() {
@@ -178,12 +180,12 @@ fn generate_nodes(tokens: &mut VecDeque<Token>) -> Option<Vec<Box<dyn ast::Node>
                         panic!("INTERNAL COMPILER ERROR! SEE ERROR ABOVE!")
                     }
                 };
-                Box::new(ast::Condition {
+                Rc::new(RefCell::new(ast::Condition {
                     left: None,
                     operator: Some(operator),
                     right: None,
                     line: token.line.clone(),
-                })
+                }))
             }
             TokenType::TypeIndicator => {
                 let var_type: ast::TypeEnum = match token.value.as_str() {
@@ -198,38 +200,38 @@ fn generate_nodes(tokens: &mut VecDeque<Token>) -> Option<Vec<Box<dyn ast::Node>
                         panic!("INTERNAL COMPILER ERROR! SEE ERROR ABOVE!")
                     }
                 };
-                Box::new(ast::Indicator {
+                Rc::new(RefCell::new(ast::Indicator {
                     var_type,
                     line: token.line.clone(),
-                })
+                }))
             }
-            TokenType::Loop => Box::new(ast::Loop {
+            TokenType::Loop => Rc::new(RefCell::new(ast::Loop {
                 condition: None,
                 body: None,
                 line: token.line.clone(),
-            }),
-            TokenType::Branch => Box::new(ast::Branch {
+            })),
+            TokenType::Branch => Rc::new(RefCell::new(ast::Branch {
                 condition: None,
                 true_body: None,
                 false_body: None,
                 line: token.line.clone(),
-            }),
-            TokenType::Seperator => Box::new(ast::EmptyNode {
+            })),
+            TokenType::Seperator => Rc::new(RefCell::new(ast::EmptyNode {
                 token_type: TokenType::Seperator,
                 line: token.line.clone(),
-            }),
-            TokenType::Return => Box::new(ast::Return {
+            })),
+            TokenType::Return => Rc::new(RefCell::new(ast::Return {
                 return_value: None,
                 line: token.line.clone(),
-            }),
-            TokenType::Eol => Box::new(ast::EmptyNode {
+            })),
+            TokenType::Eol => Rc::new(RefCell::new(ast::EmptyNode {
                 token_type: TokenType::Eol,
                 line: token.line.clone(),
-            }),
-            TokenType::Eof => Box::new(ast::EmptyNode {
+            })),
+            TokenType::Eof => Rc::new(RefCell::new(ast::EmptyNode {
                 token_type: TokenType::Eof,
                 line: token.line.clone(),
-            }),
+            })),
             _ => {
                 print_err(
                     &token.line,
@@ -251,15 +253,21 @@ fn generate_nodes(tokens: &mut VecDeque<Token>) -> Option<Vec<Box<dyn ast::Node>
 /// Performs necessary nesting of AST for later parsing
 /// such as bodies of if-statements and loops, or just
 /// function bodies of regular bodies.
-fn parse_scopes(body: &mut VecDeque<Box<dyn ast::Node>>) -> Vec<Box<dyn ast::Node>> {
-    let mut new_body: Vec<Box<dyn ast::Node>> = Vec::new();
+fn parse_scopes(
+    body: &mut VecDeque<Rc<RefCell<dyn ast::Node>>>,
+) -> Vec<Rc<RefCell<dyn ast::Node>>> {
+    let mut new_body: Vec<Rc<RefCell<dyn ast::Node>>> = Vec::new();
 
     while !body.is_empty() {
-        let mut cur_node: Box<dyn ast::Node> = body.pop_front().unwrap();
+        let cur_node = body.pop_front().unwrap();
 
         // New opening {
-        if cur_node.get_type() == ast::AstType::Block {
-            let block = cur_node.as_any_mut().downcast_mut::<ast::Block>().unwrap();
+        if cur_node.borrow().get_type() == ast::AstType::Block {
+            let mut block_node = cur_node.borrow_mut();
+            let block = block_node
+                .as_any_mut()
+                .downcast_mut::<ast::Block>()
+                .unwrap();
             if block.body.is_some() {
                 print_err(
                     &block.line,
@@ -272,8 +280,9 @@ fn parse_scopes(body: &mut VecDeque<Box<dyn ast::Node>>) -> Vec<Box<dyn ast::Nod
         }
 
         // Exit early if scope/block is closed
-        if cur_node.get_type() == ast::AstType::Empty
+        if cur_node.borrow().get_type() == ast::AstType::Empty
             && cur_node
+                .borrow()
                 .as_any()
                 .downcast_ref::<ast::EmptyNode>()
                 .unwrap()
@@ -295,13 +304,15 @@ fn move_indicators(tree: &mut ast::Ast<dyn ast::Node>) {
 
     for i in 0..tree.body.len() {
         let is_indicator: bool = tree.body[i]
+            .borrow()
             .as_any()
             .downcast_ref::<ast::Indicator>()
             .is_some();
 
         if is_indicator {
-            let node_type: ast::AstType = tree.body[i + 1].get_type();
+            let node_type: ast::AstType = tree.body[i + 1].borrow().get_type();
             let indicator_type = tree.body[i]
+                .borrow()
                 .as_any()
                 .downcast_ref::<ast::Indicator>()
                 .unwrap()
@@ -310,7 +321,8 @@ fn move_indicators(tree: &mut ast::Ast<dyn ast::Node>) {
 
             match node_type {
                 ast::AstType::Function => {
-                    let func = tree.body[i + 1]
+                    let mut func_node = tree.body[i + 1].borrow_mut();
+                    let func = func_node
                         .as_any_mut()
                         .downcast_mut::<ast::Function>()
                         .unwrap();
@@ -324,7 +336,8 @@ fn move_indicators(tree: &mut ast::Ast<dyn ast::Node>) {
                     remove_indexes.push(i);
                 }
                 ast::AstType::Variable => {
-                    let var = tree.body[i + 1]
+                    let mut var_node = tree.body[i + 1].borrow_mut();
+                    let var = var_node
                         .as_any_mut()
                         .downcast_mut::<ast::Variable>()
                         .unwrap();
@@ -340,10 +353,10 @@ fn move_indicators(tree: &mut ast::Ast<dyn ast::Node>) {
                 }
                 _ => {
                     print_err(
-                        &tree.body[i + 1].get_line().unwrap(),
+                        &tree.body[i + 1].borrow().get_line().unwrap(),
                         &format!(
                             "Expected function or variable after type indicator! Found: {:?}",
-                            tree.body[i + 1].get_type()
+                            tree.body[i + 1].borrow().get_type()
                         ),
                         None,
                     );

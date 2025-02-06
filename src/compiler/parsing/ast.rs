@@ -10,7 +10,9 @@ use super::lexer::{Token, TokenType};
 use crate::utils::error::print_err;
 use crate::utils::lines::Line;
 use std::any::Any;
+use std::cell::RefCell;
 use std::fmt::{self, Display, Write};
+use std::rc::Rc;
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum ValueEnum {
@@ -83,26 +85,26 @@ pub enum AstType {
 #[derive(Debug)]
 pub struct Ast<T: Node + ?Sized> {
     pub entry_point: usize, // Entry point index
-    pub body: Vec<Box<T>>,
+    pub body: Vec<Rc<RefCell<T>>>,
 }
 
 impl Ast<dyn Node> {
     /// Finds the entry point of a program (main())
-    pub fn new(body: Vec<Box<dyn Node>>) -> Self {
+    pub fn new(body: Vec<Rc<RefCell<dyn Node>>>) -> Self {
         let mut index: usize = 0;
+
         loop {
             if index >= body.len() {
+                let last_node = body.last().unwrap().borrow_mut();
                 print_err(
-                    &body.last().unwrap().get_line().unwrap(),
+                    &last_node.get_line().unwrap(),
                     "Missing main()! (Reached EOF when searching for it)",
                     Some("Add a main() function."),
                 );
                 std::process::exit(1);
             }
 
-            // TODO: Remove the allow()
-            #[allow(clippy::borrowed_box)]
-            let node: &Box<dyn Node> = body.get(index).unwrap();
+            let node = body[index].borrow_mut();
             if node.get_name() == "main" {
                 break; // Only break if it's the main decleration
             }
@@ -118,7 +120,9 @@ impl Ast<dyn Node> {
 
 pub trait Node {
     fn as_any(&self) -> &dyn Any; // Method needed for downcasting
+
     fn as_any_mut(&mut self) -> &mut dyn Any;
+
     fn display(&self) -> String;
 
     fn has_leaves(&self) -> bool;
@@ -127,10 +131,6 @@ pub trait Node {
 
     fn is_block(&self) -> bool {
         false
-    }
-
-    fn get_body(&self) -> &[Box<dyn Node>] {
-        &[]
     }
 
     fn get_name(&self) -> String {
@@ -174,7 +174,7 @@ pub struct BinaryExpression {
 
 /// Code block, essentially scopes ({...})
 pub struct Block {
-    pub body: Option<Vec<Box<dyn Node>>>,
+    pub body: Option<Vec<Rc<RefCell<dyn Node>>>>,
     pub line: Box<Line>,
 }
 
@@ -251,9 +251,6 @@ pub struct Value {
     pub value: Option<ValueEnum>,
     pub line: Box<Line>,
 }
-
-/// Debug trait. TODO: Remove this
-pub struct DebugNode;
 
 pub struct EmptyNode {
     pub token_type: TokenType,
@@ -420,6 +417,11 @@ impl Node for BinaryExpression {
         Some(self.line.clone())
     }
 }
+impl Block {
+    fn get_body(&self) -> &[Rc<RefCell<dyn Node>>] {
+        self.body.as_ref().unwrap()
+    }
+}
 impl Node for Block {
     fn as_any(&self) -> &dyn Any {
         self
@@ -441,10 +443,6 @@ impl Node for Block {
         true
     }
 
-    fn get_body(&self) -> &[Box<dyn Node>] {
-        self.body.as_ref().unwrap()
-    }
-
     fn get_name(&self) -> String {
         String::from("Block")
     }
@@ -461,6 +459,14 @@ impl Node for Block {
 
     fn get_line(&self) -> Option<Box<Line>> {
         None
+    }
+}
+impl Branch {
+    fn get_true_body(&self) -> &Option<Block> {
+        &self.true_body
+    }
+    fn get_false_body(&self) -> &Option<Block> {
+        &self.false_body
     }
 }
 impl Node for Branch {
@@ -600,6 +606,11 @@ impl Function {
         output.clone()
     }
 }
+impl Function {
+    fn get_body(&self) -> &Option<Block> {
+        &self.body
+    }
+}
 impl Node for Function {
     fn as_any(&self) -> &dyn Any {
         self
@@ -619,10 +630,6 @@ impl Node for Function {
 
     fn get_name(&self) -> String {
         self.identifier.to_owned()
-    }
-
-    fn get_body(&self) -> &[Box<dyn Node>] {
-        &[]
     }
 
     fn has_leaves(&self) -> bool {
@@ -659,10 +666,6 @@ impl Node for Indicator {
         format!("{:?}", self.var_type)
     }
 
-    fn get_body(&self) -> &[Box<dyn Node>] {
-        &[]
-    }
-
     fn has_leaves(&self) -> bool {
         true
     }
@@ -674,6 +677,11 @@ impl Node for Indicator {
 
     fn get_line(&self) -> Option<Box<Line>> {
         Some(self.line.clone())
+    }
+}
+impl Loop {
+    fn get_body(&self) -> &Option<Block> {
+        &self.body
     }
 }
 impl Node for Loop {
@@ -874,35 +882,7 @@ impl Node for Value {
         Some(self.line.clone())
     }
 }
-impl Node for DebugNode {
-    fn as_any(&self) -> &dyn Any {
-        self
-    }
 
-    fn as_any_mut(&mut self) -> &mut dyn Any {
-        self
-    }
-
-    fn display(&self) -> String {
-        String::from("Debugging Node")
-    }
-
-    fn get_type(&self) -> AstType {
-        AstType::Debug
-    }
-
-    fn has_leaves(&self) -> bool {
-        true
-    }
-
-    fn traverse_leaves(&self, tree: &mut ptree::TreeBuilder) {
-        tree.add_empty_child("DEBUGGING NODE!".to_string());
-    }
-
-    fn get_line(&self) -> Option<Box<Line>> {
-        None
-    }
-}
 impl Node for EmptyNode {
     fn as_any(&self) -> &dyn Any {
         self
@@ -939,9 +919,25 @@ pub fn export_ast(ast: &Ast<dyn Node>) {
     // Build a tree using a TreeBuilder
     let mut tree = ptree::TreeBuilder::new("program".to_string());
 
-    for i in 0..ast.body.len() {
-        if ast.body[i].get_type() == AstType::Function {
-            traverse_ast_body(&mut tree, ast.body[i].get_body(), &ast.body[i].display())
+    for item in ast.body.iter() {
+        let node = item.borrow_mut();
+        if node.get_type() == AstType::Function {
+            let func_node = node.as_any().downcast_ref::<Function>().unwrap();
+            match func_node.get_body().as_slice().first() {
+                Some(block) => {
+                    traverse_ast_body(&mut tree, block.get_body(), &func_node.get_name());
+                }
+                None => {
+                    print_err(
+                        &func_node.line,
+                        &format!(
+                            "No body associated with function: {}()",
+                            func_node.get_name()
+                        ),
+                        Some("Add a function body."),
+                    );
+                }
+            };
         }
     }
     let pretty_tree = tree.build();
@@ -951,19 +947,37 @@ pub fn export_ast(ast: &Ast<dyn Node>) {
 }
 
 /// Recursive function to traverse the body of an AST
-fn traverse_ast_body(tree: &mut ptree::TreeBuilder, body: &[Box<dyn Node>], branch: &str) {
+fn traverse_ast_body(tree: &mut ptree::TreeBuilder, body: &[Rc<RefCell<dyn Node>>], branch: &str) {
     tree.begin_child(branch.to_string());
 
-    for node in body.iter() {
-        if let Some(func) = node.as_any().downcast_ref::<Function>() {
-            traverse_ast_body(tree, func.get_body(), &node.get_name());
-        }
-        if node.is_block() {
-            traverse_ast_body(tree, node.get_body(), &node.get_name());
-        } else if node.has_leaves() {
-            node.traverse_leaves(tree);
+    for item in body.iter() {
+        let node = item.borrow_mut();
+        match node.get_type() {
+            AstType::Function => {
+                let func_node = node.as_any().downcast_ref::<Function>().unwrap();
+                match func_node.get_body().as_slice().first() {
+                    Some(block) => {
+                        traverse_ast_body(tree, block.get_body(), &func_node.get_name());
+                    }
+                    None => {
+                        print_err(
+                            &func_node.line,
+                            &format!("No body associated with function: {}", func_node.get_name()),
+                            Some("Add a function body."),
+                        );
+                    }
+                };
+            }
+            AstType::Block => {
+                let block_node = node.as_any().downcast_ref::<Block>().unwrap();
+                traverse_ast_body(tree, block_node.get_body(), &node.get_name());
+            }
+            _ => {
+                node.traverse_leaves(tree);
+            }
         }
     }
+
     tree.end_child();
 }
 

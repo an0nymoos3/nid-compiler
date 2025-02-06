@@ -17,7 +17,9 @@ pub fn print_err(line: &Line, err: &str, solution: Option<&str>) {
     println!("{err}");
     println!("=> {}:{}\n", line.filename, line.line_num);
 
-    println!("{:<offset$} | ... ", line.line_num - 1);
+    if line.line_num > 1 {
+        println!("{:<offset$} | ... ", line.line_num - 1);
+    }
     println!("{:<offset$} | {}", line.line_num, line.code.trim());
     println!("{:<offset$} | ... ", line.line_num + 1);
 
