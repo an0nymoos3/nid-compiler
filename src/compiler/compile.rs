@@ -43,7 +43,7 @@ pub fn compile(args: &Args, hardware_conf: &Hardware) -> PathBuf {
     };
 
     if args.verbose {
-        export_ast(&ast);
+        export_ast(ast);
     }
 
     /*

@@ -124,8 +124,6 @@ pub trait Node {
 
     fn display(&self) -> String;
 
-    fn traverse_leaves(&self, tree: &mut ptree::TreeBuilder);
-
     fn get_name(&self) -> String {
         String::new()
     }
@@ -297,16 +295,6 @@ impl Node for Asm {
         AstType::Asm
     }
 
-    fn traverse_leaves(&self, tree: &mut ptree::TreeBuilder) {
-        tree.begin_child(self.display());
-
-        for inst in self.code.iter() {
-            tree.add_empty_child(inst.value.to_string());
-        }
-
-        tree.end_child();
-    }
-
     fn get_line(&self) -> Option<Box<Line>> {
         None
     }
@@ -326,24 +314,6 @@ impl Node for Assignment {
 
     fn get_type(&self) -> AstType {
         AstType::Assignment
-    }
-
-    fn traverse_leaves(&self, tree: &mut ptree::TreeBuilder) {
-        tree.begin_child(self.display());
-
-        if let Some(dec) = &self.type_dec {
-            dec.traverse_leaves(tree);
-        }
-
-        if let Some(x) = &self.var {
-            x.traverse_leaves(tree);
-        }
-
-        if let Some(x) = &self.expression {
-            x.traverse_leaves(tree);
-        }
-
-        tree.end_child();
     }
 
     fn get_line(&self) -> Option<Box<Line>> {
@@ -367,35 +337,9 @@ impl Node for BinaryExpression {
         AstType::BinaryExpression
     }
 
-    fn traverse_leaves(&self, tree: &mut ptree::TreeBuilder) {
-        tree.begin_child(self.display());
-        if let Some(x) = &self.left {
-            x.traverse_leaves(tree);
-        }
-
-        if let Some(x) = &self.op {
-            let op = match x {
-                BinaryOperator::Add => "+",
-                BinaryOperator::Sub => "-",
-                BinaryOperator::Mul => "*",
-                BinaryOperator::Div => "/",
-            };
-            tree.add_empty_child(op.to_string());
-        };
-
-        if let Some(x) = &self.right {
-            x.traverse_leaves(tree);
-        }
-
-        tree.end_child();
-    }
-
     fn get_line(&self) -> Option<Box<Line>> {
         Some(self.line.clone())
     }
-}
-impl Block {
-    fn get_body(&self) -> Vec<Rc<RefCell<dyn Node>>> {}
 }
 impl Node for Block {
     fn as_any(&self) -> &dyn Any {
@@ -416,12 +360,6 @@ impl Node for Block {
 
     fn get_name(&self) -> String {
         String::from("Block")
-    }
-
-    fn traverse_leaves(&self, tree: &mut ptree::TreeBuilder) {
-        if let Some(x) = &self.body {
-            traverse_ast_body(tree, x, &self.display())
-        }
     }
 
     fn get_line(&self) -> Option<Box<Line>> {
@@ -453,22 +391,6 @@ impl Node for Branch {
         AstType::Branch
     }
 
-    fn traverse_leaves(&self, tree: &mut ptree::TreeBuilder) {
-        tree.begin_child(self.display());
-
-        if let Some(x) = &self.condition {
-            x.traverse_leaves(tree);
-        }
-        if let Some(x) = &self.true_body {
-            x.traverse_leaves(tree);
-        }
-        if let Some(body) = &self.false_body {
-            body.traverse_leaves(tree);
-        }
-
-        tree.end_child();
-    }
-
     fn get_line(&self) -> Option<Box<Line>> {
         Some(self.line.clone())
     }
@@ -490,18 +412,6 @@ impl Node for Builtin {
         AstType::Builtin
     }
 
-    fn traverse_leaves(&self, tree: &mut ptree::TreeBuilder) {
-        tree.begin_child(self.display());
-
-        tree.add_empty_child(format!("Identifier: {:?}", self.identifier));
-
-        for param in &self.params {
-            tree.add_empty_child(format!("Param: {param}"));
-        }
-
-        tree.end_child();
-    }
-
     fn get_line(&self) -> Option<Box<Line>> {
         Some(self.line.clone())
     }
@@ -521,20 +431,6 @@ impl Node for Condition {
 
     fn get_type(&self) -> AstType {
         AstType::Condition
-    }
-
-    fn traverse_leaves(&self, tree: &mut ptree::TreeBuilder) {
-        tree.begin_child(self.display());
-
-        if let Some(left) = &self.left {
-            left.traverse_leaves(tree);
-        }
-        tree.add_empty_child(format!("OP: {:?}", self.operator));
-        if let Some(x) = &self.right {
-            x.traverse_leaves(tree);
-        }
-
-        tree.end_child();
     }
 
     fn get_line(&self) -> Option<Box<Line>> {
@@ -587,11 +483,6 @@ impl Node for Function {
         self.identifier.to_owned()
     }
 
-    fn traverse_leaves(&self, tree: &mut ptree::TreeBuilder) {
-        tree.begin_child(self.display());
-        tree.end_child();
-    }
-
     fn get_line(&self) -> Option<Box<Line>> {
         Some(self.line.clone())
     }
@@ -615,11 +506,6 @@ impl Node for Indicator {
 
     fn get_name(&self) -> String {
         format!("{:?}", self.var_type)
-    }
-
-    fn traverse_leaves(&self, tree: &mut ptree::TreeBuilder) {
-        tree.begin_child(self.display());
-        tree.end_child();
     }
 
     fn get_line(&self) -> Option<Box<Line>> {
@@ -648,19 +534,6 @@ impl Node for Loop {
         AstType::Loop
     }
 
-    fn traverse_leaves(&self, tree: &mut ptree::TreeBuilder) {
-        tree.begin_child(self.display());
-
-        if let Some(x) = &self.condition {
-            x.traverse_leaves(tree);
-        }
-        if let Some(x) = &self.body {
-            x.traverse_leaves(tree);
-        }
-
-        tree.end_child();
-    }
-
     fn get_line(&self) -> Option<Box<Line>> {
         Some(self.line.clone())
     }
@@ -680,15 +553,6 @@ impl Node for Macro {
 
     fn get_type(&self) -> AstType {
         AstType::Macro
-    }
-
-    fn traverse_leaves(&self, tree: &mut ptree::TreeBuilder) {
-        tree.begin_child(self.display());
-
-        tree.add_empty_child(format!("Type: {:?}", self.macro_type));
-        tree.add_empty_child(format!("Value: {:?}", self.macro_value));
-
-        tree.end_child();
     }
 
     fn get_line(&self) -> Option<Box<Line>> {
@@ -712,18 +576,6 @@ impl Node for Return {
         AstType::Return
     }
 
-    fn traverse_leaves(&self, tree: &mut ptree::TreeBuilder) {
-        tree.begin_child(self.display());
-
-        if let Some(return_val) = &self.return_value {
-            return_val.traverse_leaves(tree);
-        } else {
-            tree.add_empty_child("None".to_string());
-        }
-
-        tree.end_child();
-    }
-
     fn get_line(&self) -> Option<Box<Line>> {
         Some(self.line.clone())
     }
@@ -743,12 +595,6 @@ impl Node for Type {
 
     fn get_type(&self) -> AstType {
         AstType::Type
-    }
-
-    fn traverse_leaves(&self, tree: &mut ptree::TreeBuilder) {
-        tree.begin_child(self.display());
-
-        tree.end_child();
     }
 
     fn get_line(&self) -> Option<Box<Line>> {
@@ -772,10 +618,6 @@ impl Node for Variable {
         AstType::Variable
     }
 
-    fn traverse_leaves(&self, tree: &mut ptree::TreeBuilder) {
-        tree.add_empty_child(self.display());
-    }
-
     fn get_line(&self) -> Option<Box<Line>> {
         Some(self.line.clone())
     }
@@ -795,10 +637,6 @@ impl Node for Value {
 
     fn get_type(&self) -> AstType {
         AstType::Value
-    }
-
-    fn traverse_leaves(&self, tree: &mut ptree::TreeBuilder) {
-        tree.add_empty_child(self.display());
     }
 
     fn get_line(&self) -> Option<Box<Line>> {
@@ -823,81 +661,9 @@ impl Node for EmptyNode {
         AstType::Empty
     }
 
-    fn traverse_leaves(&self, tree: &mut ptree::TreeBuilder) {
-        tree.add_empty_child("EMPTY NODE!".to_string());
-    }
-
     fn get_line(&self) -> Option<Box<Line>> {
         Some(self.line.clone())
     }
-}
-
-/// Debugging function. Prints all nodes in AST to terminal.
-pub fn export_ast(ast: &Ast<dyn Node>) {
-    println!("AST:");
-    // Build a tree using a TreeBuilder
-    let mut tree = ptree::TreeBuilder::new("program".to_string());
-
-    for item in ast.body.iter() {
-        let node = item.borrow_mut();
-        if node.get_type() == AstType::Function {
-            let func_node = node.as_any().downcast_ref::<Function>().unwrap();
-            match func_node.get_body().as_slice().first() {
-                Some(block) => {
-                    traverse_ast_body(&mut tree, block.borrow().get_body(), &func_node.get_name());
-                }
-                None => {
-                    print_err(
-                        &func_node.line,
-                        &format!(
-                            "No body associated with function: {}()",
-                            func_node.get_name()
-                        ),
-                        Some("Add a function body."),
-                    );
-                }
-            };
-        }
-    }
-    let pretty_tree = tree.build();
-
-    // Print out the tree using default formatting
-    ptree::print_tree(&pretty_tree).expect("Failed to draw AST!");
-}
-
-/// Recursive function to traverse the body of an AST
-fn traverse_ast_body(tree: &mut ptree::TreeBuilder, body: &[Rc<RefCell<dyn Node>>], branch: &str) {
-    tree.begin_child(branch.to_string());
-
-    for item in body.iter() {
-        let node = item.borrow_mut();
-        match node.get_type() {
-            AstType::Function => {
-                let func_node = node.as_any().downcast_ref::<Function>().unwrap();
-                match func_node.get_body().as_slice().first() {
-                    Some(block) => {
-                        traverse_ast_body(tree, block.borrow().get_body(), &func_node.get_name());
-                    }
-                    None => {
-                        print_err(
-                            &func_node.line,
-                            &format!("No body associated with function: {}", func_node.get_name()),
-                            Some("Add a function body."),
-                        );
-                    }
-                };
-            }
-            AstType::Block => {
-                let block_node = node.as_any().downcast_ref::<Block>().unwrap();
-                traverse_ast_body(tree, block_node.get_body(), &node.get_name());
-            }
-            _ => {
-                node.traverse_leaves(tree);
-            }
-        }
-    }
-
-    tree.end_child();
 }
 
 /// For prettier debug AST
@@ -907,4 +673,39 @@ fn is_new_asm_instruction(instruction: &str) -> bool {
         "andi", "or", "ori", "jmp", "jsr", "ret", "beq", "bne", "bpl", "bmi", "bge", "blt",
     ];
     reserved_words.contains(&instruction)
+}
+
+/// Debugging function. Prints all nodes in AST to terminal.
+pub fn export_ast(ast: Ast<dyn Node>) {
+    // Build a tree using a TreeBuilder
+    let mut tree = ptree::TreeBuilder::new("AST".to_string());
+
+    for item in ast.body {
+        ast_display(item, &mut tree);
+    }
+
+    let pretty_tree = tree.build();
+
+    // Print out the tree using default formatting
+    ptree::print_tree(&pretty_tree).expect("Failed to draw AST!");
+}
+
+/// Adds node correctly to the ptree
+fn ast_display(node: Rc<RefCell<dyn Node>>, tree: &mut ptree::TreeBuilder) {
+    let bor_node = node.borrow();
+    let node_type = bor_node.get_type();
+
+    match node_type {
+        AstType::Function => {
+            tree.begin_child(bor_node.display());
+
+            let func_node = bor_node.as_any().downcast_ref::<Function>();
+
+            tree.end_child();
+        }
+        AstType::Block => {}
+        _ => {
+            println!("Doing nothing");
+        }
+    }
 }
