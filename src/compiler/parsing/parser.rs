@@ -66,6 +66,7 @@ pub fn generate_ast(tokens: VecDeque<Token>) -> Option<ast::Ast<dyn ast::Node>> 
 /// tokenizer. They get grouped and sorted into a proper
 /// AST in later steps.
 fn generate_nodes(tokens: VecDeque<Token>) -> Option<Vec<*mut dyn ast::Node>> {
+    let mut failed_ast: bool = false;
     let mut nodes: Vec<*mut dyn ast::Node> = Vec::new();
 
     for (i, token) in tokens.iter().enumerate() {
@@ -139,7 +140,9 @@ fn generate_nodes(tokens: VecDeque<Token>) -> Option<Vec<*mut dyn ast::Node>> {
                     "/" => ast::BinaryOperator::Div,
                     _ => {
                         print_err(&token.line, &format!("Internal compiler error! Tried parsing: ({}) as an operator (+, -, *, /)", token.value), None);
-                        panic!("INTERNAL COMPILER ERROR! SEE ERROR ABOVE!")
+                        failed_ast = true;
+                        ast::BinaryOperator::Add // Use a default value to allow the compiler to
+                                                 // catch more issues while parsing.
                     }
                 };
                 alloc_node(ast::BinaryExpression {
@@ -159,7 +162,9 @@ fn generate_nodes(tokens: VecDeque<Token>) -> Option<Vec<*mut dyn ast::Node>> {
                     "<=" => ast::ConditionalOperator::LessEq,
                     _ => {
                         print_err(&token.line, &format!("Internal compiler error! Tried parsing: ({}) as an comparison (==, <=, ...)", token.value), None);
-                        panic!("INTERNAL COMPILER ERROR! SEE ERROR ABOVE!")
+                        failed_ast = true;
+                        ast::ConditionalOperator::Eq // Use a default value to allow the compiler to
+                                                     // catch more issues while parsing.
                     }
                 };
                 alloc_node(ast::Condition {
@@ -196,7 +201,9 @@ fn generate_nodes(tokens: VecDeque<Token>) -> Option<Vec<*mut dyn ast::Node>> {
                     "void" => ast::TypeEnum::Void,
                     _ => {
                         print_err(&token.line, &format!("Internal compiler error! Tried parsing: ({}) when expected a type (int, float, string, ...)", token.value), None);
-                        panic!("INTERNAL COMPILER ERROR! SEE ERROR ABOVE!")
+                        failed_ast = true;
+                        ast::TypeEnum::Int // Use a default value to allow the compiler to
+                                           // catch more issues while parsing.
                     }
                 };
                 alloc_node(ast::Indicator {
@@ -245,6 +252,10 @@ fn generate_nodes(tokens: VecDeque<Token>) -> Option<Vec<*mut dyn ast::Node>> {
             }
         };
         nodes.push(new_node);
+    }
+
+    if failed_ast {
+        return None;
     }
 
     Some(nodes)
