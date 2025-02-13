@@ -358,6 +358,7 @@ fn populate_func_fields(tree: &mut ast::Ast<dyn ast::Node>) {
     let mut remove_indexes: Vec<usize> = Vec::new();
 
     for (i, item) in tree.body.iter().enumerate() {
+        // Add parameters to function
         unsafe {
             if (**item).get_type() == ast::AstType::Function {
                 let func_ptr = *item as *mut ast::Function;

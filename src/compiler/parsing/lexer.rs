@@ -115,6 +115,8 @@ pub fn remove_comments(file_content: &str) -> String {
 
 /// Converts the source code from a continuous string of text to a queue of tokens.
 pub fn tokenize(code: Vec<Line>) -> Option<VecDeque<Token>> {
+    let mut failed_trokenize: bool = false;
+
     // Returns queue with tokens.
     let mut token_queue: VecDeque<Token> = VecDeque::new();
     let mut code_dequeue: VecDeque<Line> = VecDeque::from(code);
@@ -337,7 +339,8 @@ pub fn tokenize(code: Vec<Line>) -> Option<VecDeque<Token>> {
                     &src_code.cur_line.clone(),
                     "Missing second '|' in logical OR operation!",
                     Some("Add second '|'"),
-                )
+                );
+                failed_trokenize = true;
             }
 
             token = Token {
@@ -374,6 +377,7 @@ pub fn tokenize(code: Vec<Line>) -> Option<VecDeque<Token>> {
                     "More than one '\' is not allowed!",
                     None,
                 );
+                failed_trokenize = true;
             }
 
         /*
@@ -439,11 +443,17 @@ pub fn tokenize(code: Vec<Line>) -> Option<VecDeque<Token>> {
                     &format!("Invalid character detected! | {current_char}"),
                     None,
                 );
+                failed_trokenize = true;
             }
             continue; // If not invalid character, jump to next loop
                       // TODO: Replace with error handling and error message
         }
         token_queue.push_back(token);
+    }
+
+    // Signal that something went wrong when tokenizing and cancel the rest of the compilation.
+    if failed_trokenize {
+        return None;
     }
 
     token_queue.push_back(Token {

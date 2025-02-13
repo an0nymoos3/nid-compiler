@@ -671,8 +671,9 @@ fn ast_display(node_ptr: *mut dyn Node, tree: &mut ptree::TreeBuilder) {
         match (*node_ptr).get_type() {
             AstType::Function => {
                 let func_ptr = node_ptr as *mut Function;
-                tree.add_empty_child((*func_ptr).display());
+                tree.begin_child((*func_ptr).display());
                 ast_display((*func_ptr).body, tree);
+                tree.end_child();
             }
             AstType::Block => {
                 tree.begin_child((*node_ptr).display());
