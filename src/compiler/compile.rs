@@ -27,7 +27,7 @@ pub fn compile(args: &Args, hardware_conf: &Hardware) -> PathBuf {
     let lines: Vec<Line> = generate_lines(&source_code_no_comments, &args.filename);
 
     // Generate Tokens from the source code.
-    let mut tokens = match tokenize(lines) {
+    let tokens = match tokenize(lines) {
         Some(t) => t,
         None => exit(1),
     };
@@ -37,7 +37,7 @@ pub fn compile(args: &Args, hardware_conf: &Hardware) -> PathBuf {
     }
 
     // Use the Tokens to create an AST of the NID program.
-    let ast: Ast<dyn Node> = match generate_ast(&mut tokens) {
+    let ast: Ast<dyn Node> = match generate_ast(tokens) {
         Some(tree) => tree,
         None => exit(1),
     };

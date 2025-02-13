@@ -9,10 +9,9 @@
 use super::lexer::{Token, TokenType};
 use crate::utils::error::print_err;
 use crate::utils::lines::Line;
-use std::any::Any;
-use std::cell::RefCell;
+use std::alloc::{alloc, dealloc, Layout};
 use std::fmt::{self, Display, Write};
-use std::rc::Rc;
+use std::ptr::write;
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum ValueEnum {
@@ -71,9 +70,9 @@ pub enum AstType {
     Branch,
     Condition,
     Function,
+    Indicator,
     Loop,
     Return,
-    Type,
     Variable,
     Value,
     Macro,
@@ -84,28 +83,49 @@ pub enum AstType {
 #[derive(Debug)]
 pub struct Ast<T: Node + ?Sized> {
     pub entry_point: usize, // Entry point index
-    pub body: Vec<Rc<RefCell<T>>>,
+    pub body: Vec<*mut T>,
 }
 
 impl Ast<dyn Node> {
     /// Finds the entry point of a program (main())
-    pub fn new(body: Vec<Rc<RefCell<dyn Node>>>) -> Self {
+    pub fn new(body: Vec<*mut dyn Node>) -> Self {
         let mut index: usize = 0;
 
         loop {
             if index >= body.len() {
-                let last_node = body.last().unwrap().borrow_mut();
-                print_err(
-                    &last_node.get_line().unwrap(),
-                    "Missing main()! (Reached EOF when searching for it)",
-                    Some("Add a main() function."),
-                );
+                let last_node_ptr = *body.last().unwrap();
+
+                if last_node_ptr.is_null() {
+                    print_err(
+                        &Line::new(index as u32, String::new(), String::from("N/A")),
+                        "Missing main()! (Reached EOF when searching for it)",
+                        Some("Add a main() function."),
+                    );
+                }
+
+                unsafe {
+                    let line = (*last_node_ptr).get_line().unwrap_or(Box::new(Line::new(
+                        index as u32,
+                        String::new(),
+                        String::from("N/A"),
+                    )));
+
+                    print_err(
+                        &line,
+                        "Missing main()! (Reached EOF when searching for it)",
+                        Some("Add a main() function."),
+                    );
+                }
                 std::process::exit(1);
             }
 
-            let node = body[index].borrow_mut();
-            if node.get_name() == "main" {
-                break; // Only break if it's the main decleration
+            let node = body[index];
+            if !node.is_null() {
+                unsafe {
+                    if (*node).get_name() == "main" {
+                        break; // Only break if it's the main decleration
+                    }
+                }
             }
             index += 1;
         }
@@ -118,10 +138,6 @@ impl Ast<dyn Node> {
 }
 
 pub trait Node {
-    fn as_any(&self) -> &dyn Any; // Method needed for downcasting
-
-    fn as_any_mut(&mut self) -> &mut dyn Any;
-
     fn display(&self) -> String;
 
     fn get_name(&self) -> String {
@@ -131,10 +147,67 @@ pub trait Node {
     fn get_type(&self) -> AstType;
 
     fn get_line(&self) -> Option<Box<Line>>;
+
+    fn get_mem_layout(&self) -> Layout;
 }
 impl Display for dyn Node {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.display())
+    }
+}
+
+/*
+* NOTE: I fucking hate this solution. But this is impl
+* basically just here to allow null_mut() for
+* the Node trait.
+*/
+impl Node for u32 {
+    fn display(&self) -> String {
+        unreachable!()
+    }
+
+    fn get_type(&self) -> AstType {
+        unreachable!()
+    }
+
+    fn get_line(&self) -> Option<Box<Line>> {
+        unreachable!()
+    }
+
+    fn get_name(&self) -> String {
+        unreachable!()
+    }
+
+    fn get_mem_layout(&self) -> Layout {
+        unreachable!()
+    }
+}
+
+/// Performs a dynamic (heap) allocation of a node
+pub fn alloc_node<T: Node + 'static>(node: T) -> *mut dyn Node {
+    let layout = node.get_mem_layout();
+    let ptr: *mut u8;
+
+    unsafe {
+        // Allocate memory
+        ptr = alloc(layout);
+
+        // Set value of memory
+        write(ptr as *mut T, node);
+    }
+
+    if ptr.is_null() {
+        panic!("INTERNAL COMPILER ERROR! COULD NOT ALLOCATE NODE!")
+    }
+
+    ptr as *mut T
+}
+
+/// Deallocates node
+pub fn dealloc_node<T: Node + 'static + ?Sized>(node_ptr: *mut T) {
+    unsafe {
+        let layout = (*node_ptr).get_mem_layout();
+        dealloc(node_ptr as *mut u8, layout);
     }
 }
 
@@ -150,52 +223,52 @@ pub struct Asm {
 }
 
 pub struct Assignment {
-    pub type_dec: Option<Box<dyn Node>>, // Optional type specifier, used for new variables
-    pub var: Option<Box<Variable>>, // Var being assigned TODO: Replace with Variable instead of dyn node
-    pub expression: Option<Box<dyn Node>>, // Varibale or Value being assigned to var
+    pub type_dec: *mut dyn Node, // Optional type specifier, used for new variables
+    pub var: *mut Variable, // Var being assigned TODO: Replace with Variable instead of dyn node
+    pub expression: *mut dyn Node, // Varibale or Value being assigned to var
     pub line: Box<Line>,
 }
 
 pub struct BinaryExpression {
-    pub left: Option<Box<dyn Node>>,
+    pub left: *mut dyn Node,
     pub op: Option<BinaryOperator>,
-    pub right: Option<Box<dyn Node>>,
+    pub right: *mut dyn Node,
     pub line: Box<Line>,
 }
 
 /// Code block, essentially scopes ({...})
 pub struct Block {
-    pub body: Option<Vec<Rc<RefCell<dyn Node>>>>,
+    pub body: Vec<*mut dyn Node>,
     pub line: Box<Line>,
 }
 
 /// Branches, (if-statements)
 pub struct Branch {
-    pub condition: Option<Box<Condition>>,
-    pub true_body: Option<Block>,  // If block
-    pub false_body: Option<Block>, // Else block
+    pub condition: *mut Condition,
+    pub true_body: *mut Block,  // If block
+    pub false_body: *mut Block, // Else block
     pub line: Box<Line>,
 }
 
 /// Buildint functions
 pub struct Builtin {
     pub identifier: Option<String>,
-    pub params: Vec<Box<dyn Node>>,
+    pub params: Vec<*mut dyn Node>,
     pub line: Box<Line>,
 }
 
 /// Condition, used by branches and loops
 pub struct Condition {
     pub operator: Option<ConditionalOperator>,
-    pub left: Option<Box<dyn Node>>,  // Variable or value
-    pub right: Option<Box<dyn Node>>, // Variable or value
+    pub left: *mut dyn Node,  // Variable or value
+    pub right: *mut dyn Node, // Variable or value
     pub line: Box<Line>,
 }
 
 pub struct Function {
     pub identifier: String,
-    pub params: Option<Vec<Rc<RefCell<dyn Node>>>>, // Accept nodes as params, such as values or variables etc
-    pub body: Option<Rc<RefCell<Block>>>,
+    pub params: Vec<*mut dyn Node>, // Accept nodes as params, such as values or variables etc
+    pub body: *mut Block,
     pub return_type: Option<TypeEnum>,
     pub line: Box<Line>,
 }
@@ -207,8 +280,8 @@ pub struct Indicator {
 
 /// Loops, currently ony while is supported
 pub struct Loop {
-    pub condition: Option<Box<Condition>>,
-    pub body: Option<Block>,
+    pub condition: *mut Condition,
+    pub body: *mut Block,
     pub line: Box<Line>,
 }
 
@@ -221,12 +294,7 @@ pub struct Macro {
 
 /// Return statement, can either contain a return value or not.
 pub struct Return {
-    pub return_value: Option<Box<dyn Node>>, // Variable, Value or None
-    pub line: Box<Line>,
-}
-
-pub struct Type {
-    pub type_value: Option<ValueEnum>,
+    pub return_value: *mut dyn Node, // Variable, Value or None
     pub line: Box<Line>,
 }
 
@@ -243,6 +311,7 @@ pub struct Value {
     pub line: Box<Line>,
 }
 
+#[derive(Debug)]
 pub struct EmptyNode {
     pub token_type: TokenType,
     pub line: Box<Line>,
@@ -279,14 +348,6 @@ impl Asm {
     }
 }
 impl Node for Asm {
-    fn as_any(&self) -> &dyn Any {
-        self
-    }
-
-    fn as_any_mut(&mut self) -> &mut dyn Any {
-        self
-    }
-
     fn display(&self) -> String {
         String::from("Asm")
     }
@@ -298,16 +359,12 @@ impl Node for Asm {
     fn get_line(&self) -> Option<Box<Line>> {
         None
     }
+
+    fn get_mem_layout(&self) -> Layout {
+        Layout::new::<Self>()
+    }
 }
 impl Node for Assignment {
-    fn as_any(&self) -> &dyn Any {
-        self
-    }
-
-    fn as_any_mut(&mut self) -> &mut dyn Any {
-        self
-    }
-
     fn display(&self) -> String {
         String::from("Assignment")
     }
@@ -319,16 +376,12 @@ impl Node for Assignment {
     fn get_line(&self) -> Option<Box<Line>> {
         Some(self.line.clone())
     }
+
+    fn get_mem_layout(&self) -> Layout {
+        Layout::new::<Self>()
+    }
 }
 impl Node for BinaryExpression {
-    fn as_any(&self) -> &dyn Any {
-        self
-    }
-
-    fn as_any_mut(&mut self) -> &mut dyn Any {
-        self
-    }
-
     fn display(&self) -> String {
         String::from("BinaryExpression")
     }
@@ -340,16 +393,12 @@ impl Node for BinaryExpression {
     fn get_line(&self) -> Option<Box<Line>> {
         Some(self.line.clone())
     }
+
+    fn get_mem_layout(&self) -> Layout {
+        Layout::new::<Self>()
+    }
 }
 impl Node for Block {
-    fn as_any(&self) -> &dyn Any {
-        self
-    }
-
-    fn as_any_mut(&mut self) -> &mut dyn Any {
-        self
-    }
-
     fn display(&self) -> String {
         String::from("Block")
     }
@@ -365,24 +414,12 @@ impl Node for Block {
     fn get_line(&self) -> Option<Box<Line>> {
         None
     }
-}
-impl Branch {
-    fn get_true_body(&self) -> &Option<Block> {
-        &self.true_body
-    }
-    fn get_false_body(&self) -> &Option<Block> {
-        &self.false_body
+
+    fn get_mem_layout(&self) -> Layout {
+        Layout::new::<Self>()
     }
 }
 impl Node for Branch {
-    fn as_any(&self) -> &dyn Any {
-        self
-    }
-
-    fn as_any_mut(&mut self) -> &mut dyn Any {
-        self
-    }
-
     fn display(&self) -> String {
         String::from("Branch")
     }
@@ -394,16 +431,12 @@ impl Node for Branch {
     fn get_line(&self) -> Option<Box<Line>> {
         Some(self.line.clone())
     }
+
+    fn get_mem_layout(&self) -> Layout {
+        Layout::new::<Self>()
+    }
 }
 impl Node for Builtin {
-    fn as_any(&self) -> &dyn Any {
-        self
-    }
-
-    fn as_any_mut(&mut self) -> &mut dyn Any {
-        self
-    }
-
     fn display(&self) -> String {
         String::from("Builtin")
     }
@@ -415,16 +448,12 @@ impl Node for Builtin {
     fn get_line(&self) -> Option<Box<Line>> {
         Some(self.line.clone())
     }
+
+    fn get_mem_layout(&self) -> Layout {
+        Layout::new::<Self>()
+    }
 }
 impl Node for Condition {
-    fn as_any(&self) -> &dyn Any {
-        self
-    }
-
-    fn as_any_mut(&mut self) -> &mut dyn Any {
-        self
-    }
-
     fn display(&self) -> String {
         String::from("Condition")
     }
@@ -436,41 +465,32 @@ impl Node for Condition {
     fn get_line(&self) -> Option<Box<Line>> {
         Some(self.line.clone())
     }
+
+    fn get_mem_layout(&self) -> Layout {
+        Layout::new::<Self>()
+    }
 }
 impl Function {
     fn display_params(&self) -> String {
-        let output = &self
+        let output = self
             .params
             .iter()
-            .flatten()
-            .fold(String::new(), |mut output, param| {
+            .fold(String::new(), |mut output, param| unsafe {
                 if !output.is_empty()
-                    && (param.borrow().get_type() == AstType::Type
-                        || param.borrow().get_type() == AstType::Variable
-                        || param.borrow().get_type() == AstType::Value)
+                    && !param.is_null()
+                    && ((**param).get_type() == AstType::Indicator
+                        || (**param).get_type() == AstType::Variable
+                        || (**param).get_type() == AstType::Value)
                 {
                     write!(output, ", ").unwrap();
                 }
-                write!(output, " {} ", param.borrow().display()).unwrap();
+                write!(output, " {} ", (**param).display()).unwrap();
                 output
             });
         output.clone()
     }
 }
-impl Function {
-    fn get_body(&self) -> &Option<Rc<RefCell<Block>>> {
-        &self.body
-    }
-}
 impl Node for Function {
-    fn as_any(&self) -> &dyn Any {
-        self
-    }
-
-    fn as_any_mut(&mut self) -> &mut dyn Any {
-        self
-    }
-
     fn display(&self) -> String {
         format!("Function: {}({})", self.get_name(), self.display_params())
     }
@@ -486,22 +506,18 @@ impl Node for Function {
     fn get_line(&self) -> Option<Box<Line>> {
         Some(self.line.clone())
     }
+
+    fn get_mem_layout(&self) -> Layout {
+        Layout::new::<Self>()
+    }
 }
 impl Node for Indicator {
-    fn as_any(&self) -> &dyn Any {
-        self
-    }
-
-    fn as_any_mut(&mut self) -> &mut dyn Any {
-        self
-    }
-
     fn display(&self) -> String {
         format!("Indicator: {}", self.get_name())
     }
 
     fn get_type(&self) -> AstType {
-        AstType::Function
+        AstType::Indicator
     }
 
     fn get_name(&self) -> String {
@@ -511,21 +527,12 @@ impl Node for Indicator {
     fn get_line(&self) -> Option<Box<Line>> {
         Some(self.line.clone())
     }
-}
-impl Loop {
-    fn get_body(&self) -> &Option<Block> {
-        &self.body
+
+    fn get_mem_layout(&self) -> Layout {
+        Layout::new::<Self>()
     }
 }
 impl Node for Loop {
-    fn as_any(&self) -> &dyn Any {
-        self
-    }
-
-    fn as_any_mut(&mut self) -> &mut dyn Any {
-        self
-    }
-
     fn display(&self) -> String {
         String::from("Loop")
     }
@@ -537,16 +544,12 @@ impl Node for Loop {
     fn get_line(&self) -> Option<Box<Line>> {
         Some(self.line.clone())
     }
+
+    fn get_mem_layout(&self) -> Layout {
+        Layout::new::<Self>()
+    }
 }
 impl Node for Macro {
-    fn as_any(&self) -> &dyn Any {
-        self
-    }
-
-    fn as_any_mut(&mut self) -> &mut dyn Any {
-        self
-    }
-
     fn display(&self) -> String {
         String::from("Macro")
     }
@@ -558,16 +561,12 @@ impl Node for Macro {
     fn get_line(&self) -> Option<Box<Line>> {
         Some(self.line.clone())
     }
+
+    fn get_mem_layout(&self) -> Layout {
+        Layout::new::<Self>()
+    }
 }
 impl Node for Return {
-    fn as_any(&self) -> &dyn Any {
-        self
-    }
-
-    fn as_any_mut(&mut self) -> &mut dyn Any {
-        self
-    }
-
     fn display(&self) -> String {
         "Return".to_string()
     }
@@ -579,37 +578,12 @@ impl Node for Return {
     fn get_line(&self) -> Option<Box<Line>> {
         Some(self.line.clone())
     }
-}
-impl Node for Type {
-    fn as_any(&self) -> &dyn Any {
-        self
-    }
 
-    fn as_any_mut(&mut self) -> &mut dyn Any {
-        self
-    }
-
-    fn display(&self) -> String {
-        format!("Type: {:?}", self.type_value)
-    }
-
-    fn get_type(&self) -> AstType {
-        AstType::Type
-    }
-
-    fn get_line(&self) -> Option<Box<Line>> {
-        Some(self.line.clone())
+    fn get_mem_layout(&self) -> Layout {
+        Layout::new::<Self>()
     }
 }
 impl Node for Variable {
-    fn as_any(&self) -> &dyn Any {
-        self
-    }
-
-    fn as_any_mut(&mut self) -> &mut dyn Any {
-        self
-    }
-
     fn display(&self) -> String {
         format!("Variable: {}", self.identifier)
     }
@@ -621,16 +595,12 @@ impl Node for Variable {
     fn get_line(&self) -> Option<Box<Line>> {
         Some(self.line.clone())
     }
+
+    fn get_mem_layout(&self) -> Layout {
+        Layout::new::<Self>()
+    }
 }
 impl Node for Value {
-    fn as_any(&self) -> &dyn Any {
-        self
-    }
-
-    fn as_any_mut(&mut self) -> &mut dyn Any {
-        self
-    }
-
     fn display(&self) -> String {
         format!("Value: {:?}", self.value)
     }
@@ -642,17 +612,13 @@ impl Node for Value {
     fn get_line(&self) -> Option<Box<Line>> {
         Some(self.line.clone())
     }
+
+    fn get_mem_layout(&self) -> Layout {
+        Layout::new::<Self>()
+    }
 }
 
 impl Node for EmptyNode {
-    fn as_any(&self) -> &dyn Any {
-        self
-    }
-
-    fn as_any_mut(&mut self) -> &mut dyn Any {
-        self
-    }
-
     fn display(&self) -> String {
         String::from("Empty Node")
     }
@@ -663,6 +629,10 @@ impl Node for EmptyNode {
 
     fn get_line(&self) -> Option<Box<Line>> {
         Some(self.line.clone())
+    }
+
+    fn get_mem_layout(&self) -> Layout {
+        Layout::new::<Self>()
     }
 }
 
@@ -691,21 +661,30 @@ pub fn export_ast(ast: Ast<dyn Node>) {
 }
 
 /// Adds node correctly to the ptree
-fn ast_display(node: Rc<RefCell<dyn Node>>, tree: &mut ptree::TreeBuilder) {
-    let bor_node = node.borrow();
-    let node_type = bor_node.get_type();
-
-    match node_type {
-        AstType::Function => {
-            tree.begin_child(bor_node.display());
-
-            let func_node = bor_node.as_any().downcast_ref::<Function>();
-
-            tree.end_child();
+/// NOTE: Unsafe function
+fn ast_display(node_ptr: *mut dyn Node, tree: &mut ptree::TreeBuilder) {
+    unsafe {
+        if (*node_ptr).get_type() == AstType::Empty {
+            return;
         }
-        AstType::Block => {}
-        _ => {
-            println!("Doing nothing");
+
+        match (*node_ptr).get_type() {
+            AstType::Function => {
+                let func_ptr = node_ptr as *mut Function;
+                tree.add_empty_child((*func_ptr).display());
+                ast_display((*func_ptr).body, tree);
+            }
+            AstType::Block => {
+                tree.begin_child((*node_ptr).display());
+                for node in (*(node_ptr as *mut Block)).body.iter() {
+                    ast_display(*node, tree);
+                }
+
+                tree.end_child();
+            }
+            _ => {
+                tree.add_empty_child((*node_ptr).display());
+            }
         }
     }
 }
