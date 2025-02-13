@@ -585,7 +585,7 @@ impl Node for Return {
 }
 impl Node for Variable {
     fn display(&self) -> String {
-        format!("Variable: {}", self.identifier)
+        format!("Variable: {} ({:?})", self.identifier, self.var_type)
     }
 
     fn get_type(&self) -> AstType {
