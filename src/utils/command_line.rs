@@ -77,7 +77,7 @@ pub fn build_args() -> Args {
 /// Prints this not so helpful help message.
 pub fn print_help() {
     let mut message: String = String::new();
-    message.push_str("nidc [options] [target].nid\n");
+    message.push_str("Usage: nidc <target>.nid [options]\n\n");
     message.push_str("Options:\n");
     message.push_str("-h  | --help                  Prints this message.\n");
     message.push_str("-v  | --verbose               Run compiler in verbose mode.\n");
@@ -86,6 +86,8 @@ pub fn print_help() {
     message
         .push_str("-c  | --compile-only          Compile to ASS, without assembling to binary.\n");
     message.push_str("-a  | --assemble-only         Only assemble a .ass file.\n");
+    message.push_str("-ot | --output-tokens         Prints the detected source code tokens. (Useful for compiler debugging)\n");
+    message.push_str("-oa | --output-ast            Prints the generated abstract syntax tree. (Useful for compiler debugging)\n");
 
     println!("{}", message);
 }
