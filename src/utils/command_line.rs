@@ -64,10 +64,10 @@ pub fn build_args() -> Args {
             args.assemble_only = true;
         }
         if arg == "--output-tokens" || arg == "-ot" {
-            args.assemble_only = true;
+            args.output_tokens = true;
         }
         if arg == "--output-ast" || arg == "-oa" {
-            args.assemble_only = true;
+            args.output_ast = true;
         }
     }
 
