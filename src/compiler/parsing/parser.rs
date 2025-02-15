@@ -230,6 +230,7 @@ fn generate_nodes(tokens: VecDeque<Token>) -> Option<Vec<*mut dyn ast::Node>> {
                 return_value: null_mut::<u32>(),
                 line: token.line.clone(),
             }),
+            TokenType::Asm => alloc_node(ast::Asm { code: Vec::new() }),
             TokenType::Eol => alloc_node(ast::EmptyNode {
                 token_type: TokenType::Eol,
                 line: token.line.clone(),
@@ -248,6 +249,7 @@ fn generate_nodes(tokens: VecDeque<Token>) -> Option<Vec<*mut dyn ast::Node>> {
                     ),
                     None,
                 );
+                failed_ast = true;
                 continue;
             }
         };

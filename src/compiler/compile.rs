@@ -29,20 +29,26 @@ pub fn compile(args: &Args, hardware_conf: &Hardware) -> PathBuf {
     // Generate Tokens from the source code.
     let tokens = match tokenize(lines) {
         Some(t) => t,
-        None => exit(1),
+        None => {
+            println!("Failed building tokenization! Exiting early...\nCompilation failed.");
+            exit(1)
+        }
     };
 
-    if args.verbose {
+    if args.output_tokens {
         export_tokens(&tokens);
     }
 
     // Use the Tokens to create an AST of the NID program.
     let ast: Ast<dyn Node> = match generate_ast(tokens) {
         Some(tree) => tree,
-        None => exit(1),
+        None => {
+            println!("Failed building AST! Exiting early...\nCompilation failed.");
+            exit(1)
+        }
     };
 
-    if args.verbose {
+    if args.output_ast {
         export_ast(ast);
     }
 

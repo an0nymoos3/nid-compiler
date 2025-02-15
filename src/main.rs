@@ -33,7 +33,9 @@ fn main() {
     let hardware_conf: Hardware = if args.hardware_conf.exists() {
         Hardware::from(&args.hardware_conf)
     } else {
-        println!("No valid hardware config file passed! Using default config.");
+        if args.verbose {
+            println!("No valid hardware config file passed! Using default config.");
+        }
         Hardware::default()
     };
 
@@ -41,7 +43,9 @@ fn main() {
 
     // Compile NID program
     let ass_out_file: Option<PathBuf> = if !args.assemble_only {
-        println!("Compiling...");
+        if args.verbose {
+            println!("Compiling...");
+        }
         Some(compile(&args, &hardware_conf))
     } else {
         None
@@ -49,7 +53,9 @@ fn main() {
 
     // Run assembler
     let _bin_out_file: Option<PathBuf> = if !args.compile_only {
-        println!("Assembling...");
+        if args.verbose {
+            println!("Assembling...");
+        }
         Some(assemble_program(&args, &ass_out_file.unwrap()))
     } else {
         None
