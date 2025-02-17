@@ -55,7 +55,7 @@ pub fn generate_ast(tokens: VecDeque<Token>) -> Option<ast::Ast<dyn ast::Node>> 
 
     // Process the AST
     ast.body = parse_scopes(&mut VecDeque::from(ast.body));
-    move_indicators(&mut ast);
+    move_indicators(&mut ast.body);
     populate_func_fields(&mut ast);
 
     Some(ast)
@@ -303,18 +303,22 @@ fn parse_scopes(body: &mut VecDeque<*mut dyn ast::Node>) -> Vec<*mut dyn ast::No
 }
 
 /// Moves indicators to the next nodes in the Vec of nodes.
-fn move_indicators(tree: &mut ast::Ast<dyn ast::Node>) {
+fn move_indicators(block: &mut Vec<*mut dyn Node>) {
     let mut remove_indexes: Vec<usize> = Vec::new();
 
     unsafe {
-        for i in 0..tree.body.len() {
-            if (*tree.body[i]).get_type() == ast::AstType::Indicator {
-                let node_type: ast::AstType = (*tree.body[i + 1]).get_type();
-                let indicator_type = (*(tree.body[i] as *mut ast::Indicator)).var_type.clone();
+        for i in 0..block.len() {
+            if (*block[i]).get_type() == ast::AstType::Block {
+                move_indicators(&mut (*(block[i] as *mut ast::Block)).body)
+            }
+
+            if (*block[i]).get_type() == ast::AstType::Indicator {
+                let node_type: ast::AstType = (*block[i + 1]).get_type();
+                let indicator_type = (*(block[i] as *mut ast::Indicator)).var_type.clone();
 
                 match node_type {
                     ast::AstType::Function => {
-                        let func_node_ptr = tree.body[i + 1] as *mut ast::Function;
+                        let func_node_ptr = block[i + 1] as *mut ast::Function;
                         if (*func_node_ptr).return_type.is_some() {
                             print_err(&(*func_node_ptr).line,
                             "Trying to set new type to a function that has already been declared with a type before!",
@@ -326,10 +330,10 @@ fn move_indicators(tree: &mut ast::Ast<dyn ast::Node>) {
 
                         // Since we only care about using the Enum field we can now deallocate the
                         // indicator node.
-                        dealloc_node(tree.body[i]);
+                        dealloc_node(block[i]);
                     }
                     ast::AstType::Variable => {
-                        let var_node_ptr = tree.body[i + 1] as *mut ast::Variable;
+                        let var_node_ptr = block[i + 1] as *mut ast::Variable;
                         if (*var_node_ptr).var_type.is_some() {
                             print_err(&(*var_node_ptr).line,
                             "Trying to set new type to a variable that has already been declared with a type before!",
@@ -341,14 +345,14 @@ fn move_indicators(tree: &mut ast::Ast<dyn ast::Node>) {
 
                         // Since we only care about using the Enum field we can now deallocate the
                         // indicator node.
-                        dealloc_node(tree.body[i]);
+                        dealloc_node(block[i]);
                     }
                     _ => {
                         print_err(
-                            &(*tree.body[i + 1]).get_line().unwrap(),
+                            &(*block[i + 1]).get_line().unwrap(),
                             &format!(
                                 "Expected function or variable after type indicator! Found: {:?}",
-                                (*tree.body[i + 1]).get_type()
+                                (*block[i + 1]).get_type()
                             ),
                             None,
                         );
@@ -361,7 +365,7 @@ fn move_indicators(tree: &mut ast::Ast<dyn ast::Node>) {
 
     // Remove the indicators from the code body
     for (iter, index) in remove_indexes.iter().enumerate() {
-        tree.body.remove(index - iter);
+        block.remove(index - iter);
     }
 }
 
