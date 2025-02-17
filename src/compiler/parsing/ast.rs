@@ -20,7 +20,6 @@ pub enum ValueEnum {
     String(String),
     Char(char),
     Bool(bool),
-    Void,
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -646,12 +645,12 @@ fn is_new_asm_instruction(instruction: &str) -> bool {
 }
 
 /// Debugging function. Prints all nodes in AST to terminal.
-pub fn export_ast(ast: Ast<dyn Node>) {
+pub fn export_ast(ast: &Ast<dyn Node>) {
     // Build a tree using a TreeBuilder
     let mut tree = ptree::TreeBuilder::new("AST".to_string());
 
-    for item in ast.body {
-        ast_display(item, &mut tree);
+    for item in ast.body.iter() {
+        ast_display(*item, &mut tree);
     }
 
     let pretty_tree = tree.build();

@@ -5,6 +5,7 @@
 
 use std::{path::PathBuf, process::exit};
 
+use super::ir::symbol_table::{generate_table, type_check};
 use super::parsing::ast::export_ast;
 use super::parsing::lexer::remove_comments;
 use crate::utils::lines::{generate_lines, Line};
@@ -34,7 +35,6 @@ pub fn compile(args: &Args, hardware_conf: &Hardware) -> PathBuf {
             exit(1)
         }
     };
-
     if args.output_tokens {
         export_tokens(&tokens);
     }
@@ -47,9 +47,15 @@ pub fn compile(args: &Args, hardware_conf: &Hardware) -> PathBuf {
             exit(1)
         }
     };
-
     if args.output_ast {
-        export_ast(ast);
+        export_ast(&ast);
+    }
+
+    // Perform a type check of the program using a symbol table
+    let sym_table = generate_table(&ast);
+    if type_check(&sym_table).is_err() {
+        println!("Program failed type check! See errors above.");
+        exit(1);
     }
 
     /*
