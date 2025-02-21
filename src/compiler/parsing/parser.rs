@@ -40,9 +40,10 @@
 use crate::compiler::parsing::ast::Node;
 use crate::utils::error::print_err;
 
-use super::ast::alloc_node;
-use super::ast::{self, dealloc_node};
+use super::ast::{self, Variable};
+use super::ast::{alloc_node, dealloc_node};
 use super::lexer::{Token, TokenType};
+use super::scope_stack::ParserStack;
 use std::collections::VecDeque;
 use std::ptr::null_mut;
 
@@ -57,6 +58,7 @@ pub fn generate_ast(tokens: VecDeque<Token>) -> Option<ast::Ast<dyn ast::Node>> 
     ast.body = parse_scopes(&mut VecDeque::from(ast.body));
     move_indicators(&mut ast.body);
     populate_func_fields(&mut ast);
+    infer_types(&ast);
 
     Some(ast)
 }
@@ -292,6 +294,7 @@ fn parse_scopes(body: &mut VecDeque<*mut dyn ast::Node>) -> Vec<*mut dyn ast::No
             if (*cur_node_ptr).get_type() == ast::AstType::Empty
                 && (*(cur_node_ptr as *mut ast::EmptyNode)).token_type == TokenType::CloseScope
             {
+                new_body.push(cur_node_ptr);
                 return new_body;
             }
         }
@@ -468,5 +471,115 @@ fn populate_func_fields(tree: &mut ast::Ast<dyn ast::Node>) {
     // Remove the indicators from the code body
     for (iter, index) in remove_indexes.iter().enumerate() {
         tree.body.remove(index - iter);
+    }
+}
+
+/// Infers the types of variables throughout the program
+fn infer_types(tree: &ast::Ast<dyn ast::Node>) {
+    let mut stack: ParserStack = ParserStack::new();
+    stack.add_scope();
+
+    let mut body = VecDeque::from(tree.body.clone());
+
+    while !body.is_empty() {
+        let ptr = body.pop_front().unwrap();
+
+        unsafe {
+            // Variables that have a type already can be added to the stack, while
+            // variables lacking have to find an identifier in the stack to
+            // get their inference from.
+            if (*ptr).get_type() == ast::AstType::Variable {
+                let var_ptr = ptr as *mut ast::Variable;
+
+                // If variable has type indicator
+                if (*var_ptr).var_type.is_some() {
+                    stack
+                        .push_var(var_ptr)
+                        .expect("INTERNAL COMPILER ERROR WHILE INFERING VARIABLE TYPES!");
+                    continue;
+                }
+
+                // If variable does not have a type indicator
+                match stack.find_var(&(*var_ptr).identifier) {
+                    Some(other_var_ptr) => (*var_ptr).var_type = (*other_var_ptr).var_type.clone(),
+                    None => {
+                        print_err(
+                            &(*var_ptr).line,
+                            &format!("Can't infer the type of {}", (*var_ptr).identifier),
+                            Some(&format!(
+                                "Consider adding a type indicator in front of {}, e.g. int {}",
+                                (*var_ptr).identifier,
+                                (*var_ptr).identifier
+                            )),
+                        );
+                    }
+                }
+            }
+
+            // For blocks we just append the body to the program we're parsing
+            if (*ptr).get_type() == ast::AstType::Block {
+                // When new block starts, create a new scope, for potentially new declared
+                // variables
+                stack.add_scope();
+
+                let block_ptr = ptr as *mut ast::Block;
+                let mut block_body = VecDeque::from((*block_ptr).body.clone());
+
+                while !block_body.is_empty() {
+                    body.push_front(block_body.pop_back().unwrap());
+                }
+            }
+
+            // In the function Node 2 things have to be done.
+            // 1. Any parameters have to be pushed.
+            // 2. The body has to be appended to the program body we're parsing
+            if (*ptr).get_type() == ast::AstType::Function {
+                // When new block starts, create a new scope, for potentially new declared
+                // variables
+                stack.add_scope();
+
+                let func_ptr = ptr as *mut ast::Function;
+
+                // Add parameter variables
+                for param_ptr in (*func_ptr).params.iter() {
+                    if (**param_ptr).get_type() == ast::AstType::Variable {
+                        let var_ptr = *param_ptr as *mut Variable;
+
+                        if (*var_ptr).var_type.is_some() {
+                            stack
+                                .push_var(var_ptr)
+                                .expect("INTERNAL COMPILER ERROR WHILE INFERING VARIABLE TYPES!");
+                        } else {
+                            print_err(
+                                &(*var_ptr).line,
+                                &format!(
+                                    "Parameter {} is missing type decleration!",
+                                    (*var_ptr).identifier
+                                ),
+                                Some(&format!(
+                                    "Consider adding a type indicator in front of {}, e.g. int {}",
+                                    (*var_ptr).identifier,
+                                    (*var_ptr).identifier
+                                )),
+                            );
+                        }
+                    }
+                }
+
+                // Append the body to the program
+                let mut func_body = VecDeque::from((*(*func_ptr).body).body.clone());
+
+                while !func_body.is_empty() {
+                    body.push_front(func_body.pop_back().unwrap());
+                }
+            }
+
+            // Remove a scope when moving out of a body
+            if (*ptr).get_type() == ast::AstType::Empty
+                && (*(ptr as *mut ast::EmptyNode)).token_type == TokenType::CloseScope
+            {
+                stack.remove_scope();
+            }
+        }
     }
 }

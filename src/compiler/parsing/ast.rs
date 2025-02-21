@@ -411,7 +411,7 @@ impl Node for Block {
     }
 
     fn get_line(&self) -> Option<Box<Line>> {
-        None
+        Some(self.line.clone())
     }
 
     fn get_mem_layout(&self) -> Layout {
