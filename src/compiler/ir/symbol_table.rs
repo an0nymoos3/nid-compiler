@@ -1,5 +1,11 @@
+use std::collections::VecDeque;
+use std::fmt::Write;
+
 use crate::{
-    compiler::parsing::ast::{Ast, AstType, Block, Function, Node, TypeEnum, Variable},
+    compiler::parsing::{
+        ast::{Ast, AstType, Block, EmptyNode, Function, Node, TypeEnum, Variable},
+        lexer::TokenType,
+    },
     utils::error::print_err,
 };
 
@@ -23,124 +29,109 @@ struct SymbolElem {
     node: *mut dyn Node,
 }
 
+struct SymbolStack {
+    stack: Vec<String>,
+}
+
+impl SymbolStack {
+    pub fn push_stack(&mut self, scope: &str) {
+        if self.stack.len() == 1 && &self.stack[0] == "global" {
+            self.stack.remove(0);
+        }
+        self.stack.push(scope.to_string());
+    }
+
+    pub fn pop_stack(&mut self) {
+        self.stack.pop();
+
+        if self.stack.is_empty() {
+            self.stack.push(String::from("global"));
+        }
+    }
+
+    pub fn get_current_stack(&self) -> String {
+        self.stack.iter().fold(String::new(), |mut output, s| {
+            let _ = write!(output, "-{}", s);
+            output
+        })
+    }
+}
+
 /// Creates a new symbol table from an AST.
 pub fn generate_table(tree: &Ast<dyn Node>) -> SymbolTable {
     let mut elems: Vec<SymbolElem> = Vec::new();
+    let mut stack = SymbolStack {
+        stack: vec![String::from("global")],
+    };
 
-    for node in tree.body.iter() {
+    let mut body = VecDeque::from(tree.body.clone());
+
+    while !body.is_empty() {
+        let ptr = body.pop_front().unwrap();
+
         unsafe {
-            // NOTE: This inner code is duplicate of traverse_ast_block
-            // however it is because anything in this function is classed
-            // as global, while in traverse_ast_block it is a local scope.
-
-            // Variables are a simple case, just add them to the vec
-            if (**node).get_type() == AstType::Variable {
-                let var_ptr = *node as *mut Variable;
-                elems.push(SymbolElem {
+            // Add vairables to table
+            if (*ptr).get_type() == AstType::Variable {
+                let var_ptr = ptr as *mut Variable;
+                let var_elem = SymbolElem {
                     identifier: (*var_ptr).identifier.clone(),
-                    scope: String::from("Global"),
-                    data_type: (*var_ptr).var_type.as_ref().unwrap().clone(),
-                    node: *node,
-                });
+                    scope: stack.get_current_stack(),
+                    data_type: (*var_ptr).var_type.clone().unwrap(),
+                    node: ptr,
+                };
+                elems.push(var_elem);
             }
 
-            // Fucntions require that you add them and their body (the body requires that you
-            // change the scope)
-            if (**node).get_type() == AstType::Function {
-                let func_ptr = *node as *mut Function;
-                elems.push(SymbolElem {
-                    identifier: (*func_ptr).identifier.clone(),
-                    scope: String::from("Global"),
-                    data_type: (*func_ptr).return_type.as_ref().unwrap().clone(),
-                    node: *node,
-                });
+            if (*ptr).get_type() == AstType::Block {
+                // When new block starts, create a new scope, for potentially new declared
+                // variables
+                stack.push_stack("block");
 
-                let mut inner_elems = traverse_ast_block(
-                    (*func_ptr).body,
-                    &format!(
-                        "{}:{}:{}",
-                        (**node).get_line().unwrap().filename,
-                        (*func_ptr).identifier,
-                        (**node).get_line().unwrap().line_num
-                    ),
-                );
-                elems.append(&mut inner_elems);
+                let block_ptr = ptr as *mut Block;
+                let mut block_body = VecDeque::from((*block_ptr).body.clone());
+
+                while !block_body.is_empty() {
+                    body.push_front(block_body.pop_back().unwrap());
+                }
             }
 
-            // Treat Block types like the body of a Function
-            if (**node).get_type() == AstType::Block {
-                let mut inner_elems = traverse_ast_block(
-                    *node as *mut Block,
-                    &format!(
-                        "{}:{}",
-                        (**node).get_line().unwrap().filename,
-                        (**node).get_line().unwrap().line_num
-                    ),
-                );
-                elems.append(&mut inner_elems);
+            if (*ptr).get_type() == AstType::Function {
+                let func_ptr = ptr as *mut Function;
+
+                stack.push_stack(&(*func_ptr).identifier);
+
+                stack.push_stack("params");
+                for param_ptr in (*func_ptr).params.iter() {
+                    if (**param_ptr).get_type() == AstType::Variable {
+                        let var_ptr = *param_ptr as *mut Variable;
+                        let var_elem = SymbolElem {
+                            identifier: (*var_ptr).identifier.clone(),
+                            scope: stack.get_current_stack(),
+                            data_type: (*var_ptr).var_type.clone().unwrap(),
+                            node: ptr,
+                        };
+                        elems.push(var_elem);
+                    }
+                }
+                stack.pop_stack();
+
+                // Append the body to the program
+                let mut func_body = VecDeque::from((*(*func_ptr).body).body.clone());
+                while !func_body.is_empty() {
+                    body.push_front(func_body.pop_back().unwrap());
+                }
+            }
+
+            // Remove a scope when moving out of a body
+            if (*ptr).get_type() == AstType::Empty
+                && (*(ptr as *mut EmptyNode)).token_type == TokenType::CloseScope
+            {
+                stack.pop_stack();
             }
         }
     }
 
     SymbolTable { elems }
-}
-
-/// Helper function for recursively traversing the AST
-fn traverse_ast_block(block: *mut Block, scope_name: &str) -> Vec<SymbolElem> {
-    let mut elems: Vec<SymbolElem> = Vec::new();
-
-    unsafe {
-        for node in (*block).body.iter() {
-            // Variables are a simple case, just add them to the vec
-            if (**node).get_type() == AstType::Variable {
-                let var_ptr = *node as *mut Variable;
-                elems.push(SymbolElem {
-                    identifier: (*var_ptr).identifier.clone(),
-                    scope: String::from(scope_name),
-                    data_type: (*var_ptr).var_type.as_ref().unwrap().clone(),
-                    node: *node,
-                });
-            }
-
-            // Fucntions require that you add them and their body (the body requires that you
-            // change the scope)
-            if (**node).get_type() == AstType::Function {
-                let func_ptr = *node as *mut Function;
-                elems.push(SymbolElem {
-                    identifier: (*func_ptr).identifier.clone(),
-                    scope: String::from(scope_name),
-                    data_type: (*func_ptr).return_type.as_ref().unwrap().clone(),
-                    node: *node,
-                });
-
-                let mut inner_elems = traverse_ast_block(
-                    (*func_ptr).body,
-                    &format!(
-                        "{}:{}:{}",
-                        (**node).get_line().unwrap().filename,
-                        (*func_ptr).identifier,
-                        (**node).get_line().unwrap().line_num
-                    ),
-                );
-                elems.append(&mut inner_elems);
-            }
-
-            // Treat Block types like the body of a Function
-            if (**node).get_type() == AstType::Block {
-                let mut inner_elems = traverse_ast_block(
-                    *node as *mut Block,
-                    &format!(
-                        "{}:{}",
-                        (**node).get_line().unwrap().filename,
-                        (**node).get_line().unwrap().line_num
-                    ),
-                );
-                elems.append(&mut inner_elems);
-            }
-        }
-    }
-
-    elems
 }
 
 /// Performs a type check of all variables in the
@@ -186,12 +177,12 @@ pub fn type_check(table: &SymbolTable) -> Result<(), ()> {
 /// Debugging function for printing SymbolTable to verify that
 /// compiler correctly detected identfiers, scopes and types
 pub fn display_table(table: &SymbolTable) {
-    let ident_offset = 10;
+    let ident_offset = 20;
     let scope_offset = 20;
     let type_offset = 7;
 
-    println!("| Identifier | Scope                | Type    |");
-    println!("|------------|----------------------|---------|");
+    println!("| Identifier           | Scope                | Type    |");
+    println!("|----------------------|----------------------|---------|");
 
     for var in table.elems.iter() {
         println!(
@@ -202,5 +193,5 @@ pub fn display_table(table: &SymbolTable) {
         );
     }
 
-    println!("|---------------------------------------------|");
+    println!("|-------------------------------------------------------|");
 }

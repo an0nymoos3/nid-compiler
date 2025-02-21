@@ -568,7 +568,6 @@ fn infer_types(tree: &ast::Ast<dyn ast::Node>) {
 
                 // Append the body to the program
                 let mut func_body = VecDeque::from((*(*func_ptr).body).body.clone());
-
                 while !func_body.is_empty() {
                     body.push_front(func_body.pop_back().unwrap());
                 }
