@@ -13,9 +13,12 @@ pub fn print_err(line: &Line, err: &str, solution: Option<&str>) {
 
     let offset: usize = max(l2, l3); // Compare n2 and n3 in case of n3 overflowing
 
-    println!("\nERROR:");
+    println!("\n\x1b[31mERROR:\x1b[0m");
     println!("{err}");
-    println!("=> {}:{}\n", line.filename, line.line_num);
+    println!(
+        "\x1b[33mFound in =>\x1b[0m {}:{}\n",
+        line.filename, line.line_num
+    );
 
     if line.line_num > 1 {
         println!("{:<offset$} | ... ", line.line_num - 1);
@@ -24,7 +27,7 @@ pub fn print_err(line: &Line, err: &str, solution: Option<&str>) {
     println!("{:<offset$} | ... ", line.line_num + 1);
 
     if let Some(fix) = solution {
-        println!("\nPossible fix: {}", fix);
+        println!("\n\x1b[32mPossible fix:\x1b[0m {}", fix);
     }
 
     println!();
