@@ -19,7 +19,7 @@ pub struct SymbolTable {
 struct SymbolElem {
     identifier: String,
     scope: String,
-    elem_type: TypeEnum,
+    data_type: TypeEnum,
     node: *mut dyn Node,
 }
 
@@ -39,7 +39,7 @@ pub fn generate_table(tree: &Ast<dyn Node>) -> SymbolTable {
                 elems.push(SymbolElem {
                     identifier: (*var_ptr).identifier.clone(),
                     scope: String::from("Global"),
-                    elem_type: (*var_ptr).var_type.as_ref().unwrap().clone(),
+                    data_type: (*var_ptr).var_type.as_ref().unwrap().clone(),
                     node: *node,
                 });
             }
@@ -51,7 +51,7 @@ pub fn generate_table(tree: &Ast<dyn Node>) -> SymbolTable {
                 elems.push(SymbolElem {
                     identifier: (*func_ptr).identifier.clone(),
                     scope: String::from("Global"),
-                    elem_type: (*func_ptr).return_type.as_ref().unwrap().clone(),
+                    data_type: (*func_ptr).return_type.as_ref().unwrap().clone(),
                     node: *node,
                 });
 
@@ -97,7 +97,7 @@ fn traverse_ast_block(block: *mut Block, scope_name: &str) -> Vec<SymbolElem> {
                 elems.push(SymbolElem {
                     identifier: (*var_ptr).identifier.clone(),
                     scope: String::from(scope_name),
-                    elem_type: (*var_ptr).var_type.as_ref().unwrap().clone(),
+                    data_type: (*var_ptr).var_type.as_ref().unwrap().clone(),
                     node: *node,
                 });
             }
@@ -109,7 +109,7 @@ fn traverse_ast_block(block: *mut Block, scope_name: &str) -> Vec<SymbolElem> {
                 elems.push(SymbolElem {
                     identifier: (*func_ptr).identifier.clone(),
                     scope: String::from(scope_name),
-                    elem_type: (*func_ptr).return_type.as_ref().unwrap().clone(),
+                    data_type: (*func_ptr).return_type.as_ref().unwrap().clone(),
                     node: *node,
                 });
 
@@ -154,20 +154,20 @@ pub fn type_check(table: &SymbolTable) -> Result<(), ()> {
 
             if elem_i.identifier == elem_j.identifier
                 && elem_i.scope == elem_j.scope
-                && elem_i.elem_type != elem_j.elem_type
+                && elem_i.data_type != elem_j.data_type
             {
                 unsafe {
                     print_err(
                         &(*elem_j.node).get_line().unwrap(),
                         &format!(
                             "Missmatched types! \nExpected {:?}, but got {:?}",
-                            elem_i.elem_type, elem_j.elem_type
+                            elem_i.data_type, elem_j.data_type
                         ),
                         Some(&format!(
                             "Change {:?} {} to {:?} {}",
-                            elem_j.elem_type,
+                            elem_j.data_type,
                             elem_j.identifier,
-                            elem_i.elem_type,
+                            elem_i.data_type,
                             elem_j.identifier
                         )),
                     );
@@ -198,7 +198,7 @@ pub fn display_table(table: &SymbolTable) {
             "| {:<ident_offset$} | {:<scope_offset$} | {:<type_offset$} |",
             var.identifier,
             var.scope,
-            format!("{:?}", var.elem_type)
+            format!("{:?}", var.data_type)
         );
     }
 
