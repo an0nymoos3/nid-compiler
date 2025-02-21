@@ -182,3 +182,25 @@ pub fn type_check(table: &SymbolTable) -> Result<(), ()> {
     }
     Ok(())
 }
+
+/// Debugging function for printing SymbolTable to verify that
+/// compiler correctly detected identfiers, scopes and types
+pub fn display_table(table: &SymbolTable) {
+    let ident_offset = 10;
+    let scope_offset = 20;
+    let type_offset = 7;
+
+    println!("| Identifier | Scope                | Type    |");
+    println!("|------------|----------------------|---------|");
+
+    for var in table.elems.iter() {
+        println!(
+            "| {:<ident_offset$} | {:<scope_offset$} | {:<type_offset$} |",
+            var.identifier,
+            var.scope,
+            format!("{:?}", var.elem_type)
+        );
+    }
+
+    println!("|---------------------------------------------|");
+}
