@@ -1,6 +1,11 @@
 /*
 * IR:er, is a stupid name, meant to represent that this file handles
 * conversion from AST to the NID compilers Intermediate Representation (IR).
+*
+* TODO:
+* - Keep track of when new variables are created and give them a new %tmp{} register.
+* - Implement assignments.
+* - Implement comparisons / branching.
 */
 use std::collections::VecDeque;
 
