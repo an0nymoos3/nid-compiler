@@ -1,12 +1,9 @@
 use std::collections::VecDeque;
 use std::fmt::Write;
 
-use crate::{
-    compiler::parsing::{
-        ast::{Ast, AstType, Block, EmptyNode, Function, Node, TypeEnum, Variable},
-        lexer::TokenType,
-    },
-    utils::error::print_err,
+use crate::compiler::parsing::{
+    ast::{Ast, AstType, Block, EmptyNode, Function, Node, TypeEnum, Variable},
+    lexer::TokenType,
 };
 
 /// NID representation of a symbol table, simply a Vec of symbol elements.
@@ -135,38 +132,9 @@ pub fn generate_table(tree: &Ast<dyn Node>) -> SymbolTable {
 }
 
 /// Performs a type check of all variables in the
+/// TODO: Implement type checking for variable assignments.
 pub fn type_check(table: &SymbolTable) -> Result<(), ()> {
-    let mut failed_check: bool = false;
-
-    for i in 0..table.elems.len() - 1 {
-        let elem_i = &table.elems[i];
-        for j in 1..table.elems.len() {
-            let elem_j = &table.elems[j];
-
-            if elem_i.identifier == elem_j.identifier
-                && elem_i.scope == elem_j.scope
-                && elem_i.data_type != elem_j.data_type
-            {
-                unsafe {
-                    print_err(
-                        &(*elem_j.node).get_line().unwrap(),
-                        &format!(
-                            "Missmatched types! \nExpected {:?}, but got {:?}",
-                            elem_i.data_type, elem_j.data_type
-                        ),
-                        Some(&format!(
-                            "Change {:?} {} to {:?} {}",
-                            elem_j.data_type,
-                            elem_j.identifier,
-                            elem_i.data_type,
-                            elem_j.identifier
-                        )),
-                    );
-                    failed_check = true;
-                }
-            }
-        }
-    }
+    let failed_check: bool = false;
 
     if failed_check {
         return Err(());

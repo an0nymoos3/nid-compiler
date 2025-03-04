@@ -19,6 +19,7 @@ pub struct Args {
     pub string_output: bool,
     pub output_tokens: bool,
     pub output_ast: bool,
+    pub output_symbols: bool,
 }
 
 /// Reads and returns the correct command line args passed by user.
@@ -33,6 +34,7 @@ pub fn build_args() -> Args {
         assemble_only: false,
         output_tokens: false,
         output_ast: false,
+        output_symbols: false,
     };
 
     let cmd_line: Vec<String> = env::args().collect();
@@ -68,6 +70,9 @@ pub fn build_args() -> Args {
         }
         if arg == "--output-ast" || arg == "-oa" {
             args.output_ast = true;
+        }
+        if arg == "--output-symbols" || arg == "-os" {
+            args.output_symbols = true;
         }
     }
 

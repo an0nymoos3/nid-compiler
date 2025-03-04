@@ -5,6 +5,7 @@
 
 use std::{path::PathBuf, process::exit};
 
+use super::ir::irer::generate_ir;
 use super::ir::symbol_table::{display_table, generate_table, type_check};
 use super::parsing::ast::export_ast;
 use super::parsing::lexer::remove_comments;
@@ -53,11 +54,24 @@ pub fn compile(args: &Args, hardware_conf: &Hardware) -> PathBuf {
 
     // Perform a type check of the program using a symbol table
     let sym_table = generate_table(&ast);
-    display_table(&sym_table);
+
+    if args.output_symbols {
+        display_table(&sym_table);
+    }
+
     if type_check(&sym_table).is_err() {
         println!("Program failed type check! See errors above.");
         exit(1);
     }
+
+    // Convert AST into IR for optimizations before converting to ASS
+    let ir = generate_ir(&ast);
+
+    println!();
+    for inst in ir {
+        println!("{inst}")
+    }
+    println!();
 
     output_name
 }
