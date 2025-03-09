@@ -421,7 +421,7 @@ impl Block {
         self.body = self
             .body
             .iter()
-            .filter(|ptr| **ptr != rmv_ptr)
+            .filter(|ptr| !std::ptr::addr_eq(**ptr, rmv_ptr))
             .cloned()
             .collect::<Vec<*mut dyn Node>>();
     }
