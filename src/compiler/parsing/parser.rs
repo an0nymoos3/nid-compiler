@@ -60,6 +60,10 @@ pub fn generate_ast(tokens: VecDeque<Token>) -> Option<ast::Ast<dyn ast::Node>> 
     populate_func_fields(&mut ast);
     infer_types(&ast);
 
+    if parse_assignments(&mut ast).is_err() {
+        return None;
+    }
+
     Some(ast)
 }
 
@@ -111,7 +115,6 @@ fn generate_nodes(tokens: VecDeque<Token>) -> Option<Vec<*mut dyn ast::Node>> {
                 }
             }
             TokenType::Assignment => alloc_node(ast::Assignment {
-                type_dec: null_mut::<u32>(),
                 var: null_mut(),
                 expression: null_mut::<u32>(),
                 line: token.line.clone(),
@@ -581,4 +584,69 @@ fn infer_types(tree: &ast::Ast<dyn ast::Node>) {
             }
         }
     }
+}
+
+fn parse_assignments(tree: &mut ast::Ast<dyn ast::Node>) -> Result<(), ()> {
+    let mut failed_parsing: bool = false;
+    let mut body: VecDeque<*mut dyn ast::Node> = VecDeque::from(tree.body.clone());
+    let mut last_node_ptr: *mut dyn ast::Node = null_mut::<u32>();
+
+    let mut remove_indexes: Vec<usize> = Vec::new();
+
+    let mut i: usize = 0;
+    while !body.is_empty() {
+        let ptr = body.pop_front().unwrap();
+
+        unsafe {
+            if (*ptr).get_type() == ast::AstType::Assignment {
+                if (*last_node_ptr).get_type() == ast::AstType::Value {
+                    print_err(
+                        &(*ptr).get_line().unwrap(),
+                        "Cannot assign a new value to a constant!",
+                        None,
+                    );
+                    failed_parsing = true;
+                }
+
+                println!("{:?}", (*last_node_ptr).get_type());
+                if (*last_node_ptr).get_type() == ast::AstType::Variable {
+                    let assign_ptr = ptr as *mut ast::Assignment;
+                    let var_ptr = last_node_ptr as *mut ast::Variable;
+
+                    (*assign_ptr).var = var_ptr;
+                    remove_indexes.push(i - 1);
+                }
+            }
+
+            // If block was found, copy all pointers over to body
+            if (*ptr).get_type() == ast::AstType::Block {
+                let block_ptr = ptr as *mut ast::Block;
+                for node_ptr in (*block_ptr).body.iter() {
+                    body.push_back(*node_ptr);
+                }
+            }
+
+            // If function was found, copy all pointers over to body
+            if (*ptr).get_type() == ast::AstType::Block {
+                let func_ptr = ptr as *mut ast::Function;
+                let block_ptr = (*func_ptr).body;
+                for node_ptr in (*block_ptr).body.iter() {
+                    body.push_back(*node_ptr);
+                }
+            }
+        }
+
+        last_node_ptr = ptr;
+        i += 1;
+    }
+
+    // Remove pointers to variables, expressions, etc.. that have been moved into assignment statements
+    for (i, idx) in remove_indexes.iter().enumerate() {
+        tree.body.remove(idx - i);
+    }
+
+    if failed_parsing {
+        return Err(());
+    }
+    Ok(())
 }

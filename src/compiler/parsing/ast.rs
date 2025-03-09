@@ -222,7 +222,6 @@ pub struct Asm {
 }
 
 pub struct Assignment {
-    pub type_dec: *mut dyn Node, // Optional type specifier, used for new variables
     pub var: *mut Variable, // Var being assigned TODO: Replace with Variable instead of dyn node
     pub expression: *mut dyn Node, // Varibale or Value being assigned to var
     pub line: Box<Line>,
@@ -679,6 +678,16 @@ fn ast_display(node_ptr: *mut dyn Node, tree: &mut ptree::TreeBuilder) {
                 for node in (*(node_ptr as *mut Block)).body.iter() {
                     ast_display(*node, tree);
                 }
+
+                tree.end_child();
+            }
+            AstType::Assignment => {
+                tree.begin_child((*node_ptr).display());
+
+                let assign_ptr = node_ptr as *mut Assignment;
+
+                //ast_display((*assign_ptr).var, tree);
+                //ast_display((*assign_ptr).expression, tree);
 
                 tree.end_child();
             }
