@@ -598,22 +598,27 @@ fn parse_assignments(tree: &mut ast::Ast) -> Result<(), ()> {
 
         unsafe {
             if (*ptr).get_type() == ast::AstType::Assignment {
-                if (*last_node_ptr).get_type() == ast::AstType::Value {
+                if (*last_node_ptr).get_type() != ast::AstType::Variable {
                     print_err(
                         &(*ptr).get_line().unwrap(),
-                        "Cannot assign a new value to a constant!",
+                        "Can only assign new values to variables!",
                         None,
                     );
                     failed_parsing = true;
                 }
 
-                if (*last_node_ptr).get_type() == ast::AstType::Variable {
-                    let assign_ptr = ptr as *mut ast::Assignment;
-                    let var_ptr = last_node_ptr as *mut ast::Variable;
+                // Add variable to assignment
+                let assign_ptr = ptr as *mut ast::Assignment;
+                let var_ptr = last_node_ptr as *mut ast::Variable;
 
-                    (*assign_ptr).var = var_ptr;
-                    tree.body.remove_item(var_ptr);
-                }
+                (*assign_ptr).var = var_ptr;
+                tree.body.remove_item(var_ptr);
+
+                // Add the next node to assignemnt, should already be parsed
+                // so we don't need to handle anything for it.
+                let next_ptr = body.pop_front().unwrap();
+                (*assign_ptr).expression = next_ptr;
+                tree.body.remove_item(next_ptr);
             }
 
             // If block was found, copy all pointers over to body

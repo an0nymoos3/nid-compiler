@@ -717,7 +717,7 @@ fn ast_display(node_ptr: *mut dyn Node, tree: &mut ptree::TreeBuilder) {
                 let assign_ptr = node_ptr as *mut Assignment;
 
                 ast_display((*assign_ptr).var, tree);
-                //ast_display((*assign_ptr).expression, tree);
+                ast_display((*assign_ptr).expression, tree);
 
                 tree.end_child();
             }
