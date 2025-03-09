@@ -49,14 +49,14 @@ use std::ptr::null_mut;
 
 /// Entry point for building AST. It takes a Dequeue of Tokens and iterates over
 /// them until EOF is reached, indicating the AST its complete.
-pub fn generate_ast(tokens: VecDeque<Token>) -> Option<ast::Ast<dyn ast::Node>> {
+pub fn generate_ast(tokens: VecDeque<Token>) -> Option<ast::Ast> {
     let nodes = generate_nodes(tokens)?;
 
-    let mut ast: ast::Ast<dyn ast::Node> = ast::Ast::new(nodes);
+    let mut ast: ast::Ast = ast::Ast::new(nodes);
 
     // Process the AST
-    ast.body = parse_scopes(&mut VecDeque::from(ast.body));
-    move_indicators(&mut ast.body);
+    ast.body.body = parse_scopes(&mut VecDeque::from(ast.body.body));
+    move_indicators(&mut ast.body.body);
     populate_func_fields(&mut ast);
     infer_types(&ast);
 
@@ -377,10 +377,10 @@ fn move_indicators(block: &mut Vec<*mut dyn Node>) {
 
 /// Finds parameters and function bodies to populate the fields of
 /// function nodes.
-fn populate_func_fields(tree: &mut ast::Ast<dyn ast::Node>) {
+fn populate_func_fields(tree: &mut ast::Ast) {
     let mut remove_indexes: Vec<usize> = Vec::new();
 
-    for (i, item) in tree.body.iter().enumerate() {
+    for (i, item) in tree.body.body.iter().enumerate() {
         // Add parameters to function
         unsafe {
             if (**item).get_type() == ast::AstType::Function {
@@ -401,8 +401,8 @@ fn populate_func_fields(tree: &mut ast::Ast<dyn ast::Node>) {
 
                 // Adds parameters to function node
                 let mut closing_paren_index: Option<usize> = None;
-                for j in i + 1..tree.body.len() {
-                    let cur_node_ptr = tree.body[j];
+                for j in i + 1..tree.body.body.len() {
+                    let cur_node_ptr = tree.body.body[j];
 
                     if (*cur_node_ptr).get_type() == ast::AstType::Empty {
                         let empty_node_ptr = cur_node_ptr as *mut ast::EmptyNode;
@@ -445,7 +445,8 @@ fn populate_func_fields(tree: &mut ast::Ast<dyn ast::Node>) {
                 }
 
                 // Adds fucntion body
-                let body_node_ptr = tree.body[closing_paren_index.unwrap() + 1] as *mut ast::Block;
+                let body_node_ptr =
+                    tree.body.body[closing_paren_index.unwrap() + 1] as *mut ast::Block;
 
                 if (*func_ptr).return_type.is_some() {
                     if (*body_node_ptr).get_type() != ast::AstType::Block {
@@ -473,16 +474,16 @@ fn populate_func_fields(tree: &mut ast::Ast<dyn ast::Node>) {
 
     // Remove the indicators from the code body
     for (iter, index) in remove_indexes.iter().enumerate() {
-        tree.body.remove(index - iter);
+        tree.body.body.remove(index - iter);
     }
 }
 
 /// Infers the types of variables throughout the program
-fn infer_types(tree: &ast::Ast<dyn ast::Node>) {
+fn infer_types(tree: &ast::Ast) {
     let mut stack: ParserStack = ParserStack::new();
     stack.add_scope();
 
-    let mut body = VecDeque::from(tree.body.clone());
+    let mut body = VecDeque::from(tree.body.body.clone());
 
     while !body.is_empty() {
         let ptr = body.pop_front().unwrap();
@@ -586,14 +587,12 @@ fn infer_types(tree: &ast::Ast<dyn ast::Node>) {
     }
 }
 
-fn parse_assignments(tree: &mut ast::Ast<dyn ast::Node>) -> Result<(), ()> {
+/// Moves variables and values into the assignment node they are associated with.
+fn parse_assignments(tree: &mut ast::Ast) -> Result<(), ()> {
     let mut failed_parsing: bool = false;
-    let mut body: VecDeque<*mut dyn ast::Node> = VecDeque::from(tree.body.clone());
+    let mut body: VecDeque<*mut dyn ast::Node> = VecDeque::from(tree.body.body.clone());
     let mut last_node_ptr: *mut dyn ast::Node = null_mut::<u32>();
 
-    let mut remove_indexes: Vec<usize> = Vec::new();
-
-    let mut i: usize = 0;
     while !body.is_empty() {
         let ptr = body.pop_front().unwrap();
 
@@ -608,13 +607,12 @@ fn parse_assignments(tree: &mut ast::Ast<dyn ast::Node>) -> Result<(), ()> {
                     failed_parsing = true;
                 }
 
-                println!("{:?}", (*last_node_ptr).get_type());
                 if (*last_node_ptr).get_type() == ast::AstType::Variable {
                     let assign_ptr = ptr as *mut ast::Assignment;
                     let var_ptr = last_node_ptr as *mut ast::Variable;
 
                     (*assign_ptr).var = var_ptr;
-                    remove_indexes.push(i - 1);
+                    tree.body.remove_item(var_ptr);
                 }
             }
 
@@ -627,7 +625,7 @@ fn parse_assignments(tree: &mut ast::Ast<dyn ast::Node>) -> Result<(), ()> {
             }
 
             // If function was found, copy all pointers over to body
-            if (*ptr).get_type() == ast::AstType::Block {
+            if (*ptr).get_type() == ast::AstType::Function {
                 let func_ptr = ptr as *mut ast::Function;
                 let block_ptr = (*func_ptr).body;
                 for node_ptr in (*block_ptr).body.iter() {
@@ -637,12 +635,6 @@ fn parse_assignments(tree: &mut ast::Ast<dyn ast::Node>) -> Result<(), ()> {
         }
 
         last_node_ptr = ptr;
-        i += 1;
-    }
-
-    // Remove pointers to variables, expressions, etc.. that have been moved into assignment statements
-    for (i, idx) in remove_indexes.iter().enumerate() {
-        tree.body.remove(idx - i);
     }
 
     if failed_parsing {

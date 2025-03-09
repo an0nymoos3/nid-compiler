@@ -41,7 +41,7 @@ pub fn compile(args: &Args, hardware_conf: &Hardware) -> PathBuf {
     }
 
     // Use the Tokens to create an AST of the NID program.
-    let ast: Ast<dyn Node> = match generate_ast(tokens) {
+    let ast: Ast = match generate_ast(tokens) {
         Some(tree) => tree,
         None => {
             println!("Failed building AST! Exiting early...\nCompilation failed.");

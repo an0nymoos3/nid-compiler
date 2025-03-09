@@ -11,10 +11,10 @@
 use crate::compiler::parsing::ast::{self, AstType};
 use std::collections::VecDeque;
 
-pub fn ast_to_stack_code(tree: &ast::Ast<dyn ast::Node>) -> Vec<String> {
+pub fn ast_to_stack_code(tree: &ast::Ast) -> Vec<String> {
     let mut ir: Vec<String> = Vec::new();
 
-    let mut body = VecDeque::from(tree.body.clone());
+    let mut body = VecDeque::from(tree.body.body.clone());
 
     while !body.is_empty() {
         let node = body.pop_front().unwrap();

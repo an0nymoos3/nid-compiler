@@ -55,13 +55,13 @@ impl SymbolStack {
 }
 
 /// Creates a new symbol table from an AST.
-pub fn generate_table(tree: &Ast<dyn Node>) -> SymbolTable {
+pub fn generate_table(tree: &Ast) -> SymbolTable {
     let mut elems: Vec<SymbolElem> = Vec::new();
     let mut stack = SymbolStack {
         stack: vec![String::from("global")],
     };
 
-    let mut body = VecDeque::from(tree.body.clone());
+    let mut body = VecDeque::from(tree.body.body.clone());
 
     while !body.is_empty() {
         let ptr = body.pop_front().unwrap();

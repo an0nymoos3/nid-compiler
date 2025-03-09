@@ -80,19 +80,19 @@ pub enum AstType {
 }
 
 #[derive(Debug)]
-pub struct Ast<T: Node + ?Sized> {
+pub struct Ast {
     pub entry_point: usize, // Entry point index
-    pub body: Vec<*mut T>,
+    pub body: Block,
 }
 
-impl Ast<dyn Node> {
+impl Ast {
     /// Finds the entry point of a program (main())
-    pub fn new(body: Vec<*mut dyn Node>) -> Self {
+    pub fn new(body_vec: Vec<*mut dyn Node>) -> Self {
         let mut index: usize = 0;
 
         loop {
-            if index >= body.len() {
-                let last_node_ptr = *body.last().unwrap();
+            if index >= body_vec.len() {
+                let last_node_ptr = *body_vec.last().unwrap();
 
                 if last_node_ptr.is_null() {
                     print_err(
@@ -118,7 +118,7 @@ impl Ast<dyn Node> {
                 std::process::exit(1);
             }
 
-            let node = body[index];
+            let node = body_vec[index];
             if !node.is_null() {
                 unsafe {
                     if (*node).get_name() == "main" {
@@ -128,6 +128,11 @@ impl Ast<dyn Node> {
             }
             index += 1;
         }
+
+        let body = Block {
+            body: body_vec,
+            line: Box::new(Line::new(0, String::new(), String::new())),
+        };
 
         Self {
             body,
@@ -235,6 +240,7 @@ pub struct BinaryExpression {
 }
 
 /// Code block, essentially scopes ({...})
+#[derive(Debug)]
 pub struct Block {
     pub body: Vec<*mut dyn Node>,
     pub line: Box<Line>,
@@ -394,6 +400,30 @@ impl Node for BinaryExpression {
 
     fn get_mem_layout(&self) -> Layout {
         Layout::new::<Self>()
+    }
+}
+impl Block {
+    pub fn remove_item(&mut self, rmv_ptr: *mut dyn Node) {
+        for node in self.body.iter() {
+            unsafe {
+                if (**node).get_type() == AstType::Function {
+                    let func_ptr = *node as *mut Function;
+                    (*(*func_ptr).body).remove_item(rmv_ptr);
+                }
+                if (**node).get_type() == AstType::Block {
+                    let block_ptr = *node as *mut Block;
+                    (*block_ptr).remove_item(rmv_ptr);
+                }
+            }
+        }
+
+        // Remove the matching pointer
+        self.body = self
+            .body
+            .iter()
+            .filter(|ptr| **ptr != rmv_ptr)
+            .cloned()
+            .collect::<Vec<*mut dyn Node>>();
     }
 }
 impl Node for Block {
@@ -644,11 +674,11 @@ fn is_new_asm_instruction(instruction: &str) -> bool {
 }
 
 /// Debugging function. Prints all nodes in AST to terminal.
-pub fn export_ast(ast: &Ast<dyn Node>) {
+pub fn export_ast(ast: &Ast) {
     // Build a tree using a TreeBuilder
     let mut tree = ptree::TreeBuilder::new("AST".to_string());
 
-    for item in ast.body.iter() {
+    for item in ast.body.body.iter() {
         ast_display(*item, &mut tree);
     }
 
@@ -686,7 +716,7 @@ fn ast_display(node_ptr: *mut dyn Node, tree: &mut ptree::TreeBuilder) {
 
                 let assign_ptr = node_ptr as *mut Assignment;
 
-                //ast_display((*assign_ptr).var, tree);
+                ast_display((*assign_ptr).var, tree);
                 //ast_display((*assign_ptr).expression, tree);
 
                 tree.end_child();
